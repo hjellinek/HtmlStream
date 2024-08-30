@@ -1,0 +1,39 @@
+(DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
+
+(FILECREATED "29-Aug-2024 16:42:19" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;5 1803   
+
+      :EDIT-BY hdj
+
+      :CHANGES-TO (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING)
+                  (VARS XCCS-UNICODE-DUMPERCOMS)
+
+      :PREVIOUS-DATE "29-Aug-2024 15:19:06" {DSK}<Users>hjellinek>XCCS-UNICODE-DUMPER.;1)
+
+
+(PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
+
+(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FUNCTIONS DUMP-XCCS-UNICODE-MAPPING)))
+
+(CL:DEFUN DUMP-XCCS-UNICODE-MAPPING ()                       (* ; "Edited 29-Aug-2024 16:42 by hdj")
+
+   (* ;; "Dump the mapping from XCCS to Unicode character codes as JSON")
+                                                             (* ; "Edited 29-Aug-2024 15:30 by hdj")
+   (CL:WITH-OPEN-STREAM [OUT (OPENSTREAM "XCCS-to-Unicode.js" 'OUTPUT NIL '((FORMAT :UTF-8]
+          (LINELENGTH T OUT)
+          (CL:FORMAT OUT "const t = [];~%%")
+          (LET ((NUM-MAPPINGS 0)
+                (MAX-UNICODE 0))
+               (CL:DOTIMES (X 65535)
+                   [LET [(IN-UNICODE (CONDITIONS:HANDLER-CASE (XTOUCODE X)
+                                            (INTERLISP-ERROR (E)
+                                                   NIL]
+                        (CL:IF IN-UNICODE
+                            (PROGN (CL:FORMAT OUT "t[~D]=~D;~%%" X IN-UNICODE)
+                                   (SETQ NUM-MAPPINGS (IPLUS 1 NUM-MAPPINGS))
+                                   (SETQ MAX-UNICODE (MAX IN-UNICODE MAX-UNICODE))))])
+               (CL:FORMAT OUT "const xccs_to_unicode = t;~%%")
+               (CL:FORMAT OUT "const max_unicode = ~D;~%%" MAX-UNICODE)
+               (CL:FORMAT OUT "// ~d mappings~%%" NUM-MAPPINGS))))
+(DECLARE%: DONTCOPY
+  (FILEMAP (NIL (527 1780 (DUMP-XCCS-UNICODE-MAPPING 527 . 1780)))))
+STOP
