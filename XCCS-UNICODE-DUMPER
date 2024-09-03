@@ -1,10 +1,13 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 2-Sep-2024 14:55:27" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;7 3451   
+(FILECREATED " 3-Sep-2024 13:54:03" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;12 4817   
 
       :EDIT-BY hdj
 
       :CHANGES-TO (FNS LOAD-BROWSER-FONT-METRICS)
+                  (VARS XCCS-UNICODE-DUMPERCOMS)
+                  (FUNCTIONS SKIP-32-NULL-WIDTHS DUMP-XCCS-UNICODE-MAPPING)
+                  (VARIABLES *NUM-XCCS-WIDTHS* *MIN-XCCS-CODE*)
 
       :PREVIOUS-DATE " 2-Sep-2024 12:13:55" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;6)
@@ -12,10 +15,11 @@
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
-(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FUNCTIONS DUMP-XCCS-UNICODE-MAPPING)
-                                (FNS LOAD-BROWSER-FONT-METRICS)))
+(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FUNCTIONS DUMP-XCCS-UNICODE-MAPPING SKIP-32-NULL-WIDTHS)
+                                (FNS LOAD-BROWSER-FONT-METRICS)
+                                (VARIABLES *MIN-XCCS-CODE* *NUM-XCCS-WIDTHS*)))
 
-(CL:DEFUN DUMP-XCCS-UNICODE-MAPPING ()                       (* ; "Edited  2-Sep-2024 11:57 by hdj")
+(CL:DEFUN DUMP-XCCS-UNICODE-MAPPING ()                       (* ; "Edited  2-Sep-2024 16:23 by hdj")
                                                              (* ; "Edited 30-Aug-2024 12:24 by hdj")
 
    (* ;; "Dump the mapping from XCCS to Unicode character codes as JSON")
@@ -25,43 +29,63 @@
           (CL:FORMAT OUT "// use a short temp variable name!~%%")
           (CL:FORMAT OUT "const t = [];~%%")
           (LET ((NUM-MAPPINGS 0)
-                (MAX-UNICODE 0))
-               [for X from 32 to 65535 do (LET [(IN-UNICODE (CONDITIONS:HANDLER-CASE (XTOUCODE X)
-                                                                   (INTERLISP-ERROR (E)
-                                                                          NIL]
-                                               (CL:IF IN-UNICODE
-                                                   (PROGN (CL:FORMAT OUT "t[~D]=~D;~%%" IN-UNICODE X)
-                                                          (SETQ NUM-MAPPINGS (IPLUS 1 NUM-MAPPINGS))
-                                                          (SETQ MAX-UNICODE (MAX IN-UNICODE 
-                                                                                 MAX-UNICODE))))]
-               (CL:FORMAT OUT "const unicode_to_xccs = t;~%%")
-               (CL:FORMAT OUT "const max_unicode = ~D;~%%" MAX-UNICODE)
+                (MAX-XCCS 0))
+               [for U from 32 to 65535 do (LET [(IN-XCCS (CONDITIONS:HANDLER-CASE (UTOXCODE U)
+                                                                (INTERLISP-ERROR (E)
+                                                                       NIL]
+                                               (CL:IF IN-XCCS
+                                                   (PROGN (CL:FORMAT OUT "t[~D]=~D;~%%" U IN-XCCS)
+                                                          (CL:INCF NUM-MAPPINGS)
+                                                          (SETQ MAX-XCCS (MAX MAX-XCCS IN-XCCS))))]
+               (CL:FORMAT OUT "const xccs_to_unicode = t;~%%")
+               (CL:FORMAT OUT "const max_xccs = ~d;~%%" MAX-XCCS)
                (CL:FORMAT OUT "const num_mappings = ~D;~%%" NUM-MAPPINGS))))
+
+(CL:DEFUN SKIP-32-NULL-WIDTHS (LIST)                         (* ; "Edited  3-Sep-2024 12:49 by hdj")
+   [CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR LIST])
 (DEFINEQ
 
 (LOAD-BROWSER-FONT-METRICS
-  [LAMBDA (FILE-NAME)                                        (* ; "Edited  2-Sep-2024 14:41 by hdj")
-    (CL:WITH-OPEN-STREAM [IN (OPENSTREAM FILE-NAME 'INPUT NIL '((FORMAT :THROUGH]
-           (LET* ((METRICS (READ IN))
-                  (OBJECT-NAME (CAR METRICS))
-                  (USER-AGENT (CADDDR METRICS)))
+  [LAMBDA (FILE-NAME)                                        (* ; "Edited  3-Sep-2024 12:56 by hdj")
+    (CL:WITH-OPEN-STREAM
+     [IN (OPENSTREAM FILE-NAME 'INPUT NIL '((FORMAT :THROUGH]
+     (LET* ((METRICS (READ IN))
+            (OBJECT-NAME (CAR METRICS))
+            (USER-AGENT (CADDDR METRICS)))
 
-                 (* ;; "CAR = 'metrics.  CADR = list of plist of 'name 'height 'xccsWidths")
+           (* ;; "CAR = 'metrics.  CADR = list of plist of 'name 'height 'xccsWidths")
 
-                 (* ;; "xccsWidths is a list of character widths indexed by XCCS code")
+           (* ;; "xccsWidths is a list of character widths indexed by XCCS code")
 
-                 (COND
-                    ((NEQ 'metrics OBJECT-NAME)
-                     (ERROR "Expecting 'metrics'")))
-                 (CL:FORMAT T "Collected from ~s~%%" USER-AGENT)
-                 (for FONT-MEASUREMENT in (CADR METRICS)
-                    do (LET [(FONT-NAME (LISTGET FONT-MEASUREMENT 'name))
-                             (LINE-HEIGHT (LISTGET FONT-MEASUREMENT 'height))
-                             (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT 'xccsWidths]
-                            (CL:FORMAT T "Font ~s: height ~d, ~d widths~%%" FONT-NAME LINE-HEIGHT
-                                   (LENGTH CHAR-WIDTHS])
+           (COND
+              ((NEQ 'metrics OBJECT-NAME)
+               (ERROR "Expecting 'metrics'")))
+           (CL:FORMAT T "Collected from ~s~%%" USER-AGENT)
+           (for FONT-MEASUREMENT in (CADR METRICS)
+              collect (LET [(FONT-NAME (LISTGET FONT-MEASUREMENT 'name))
+                            (LINE-HEIGHT (LISTGET FONT-MEASUREMENT 'height))
+                            (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT 'xccsWidths]
+                           (CL:FORMAT T "Font ~s: height ~d, ~d widths~%%" FONT-NAME LINE-HEIGHT
+                                  (LENGTH CHAR-WIDTHS))
+                           (LET ((CODE-TO-WIDTH (ARRAY *NUM-XCCS-WIDTHS* 'FLOATP NIL 0)))
+                                (for WIDTH in (SKIP-32-NULL-WIDTHS CHAR-WIDTHS) as XCCS-CODE
+                                   from *MIN-XCCS-CODE*
+                                   do (if WIDTH
+                                          then (SETA CODE-TO-WIDTH (- XCCS-CODE *MIN-XCCS-CODE*)
+                                                     WIDTH)))
+                                (CL:FORMAT T "Finished filling array.~%%")
+                                (CL:FORMAT T "Testing: Char width ' ' = ~d~%%"
+                                       (ELT CODE-TO-WIDTH (- (CHARCODE " ")
+                                                             *MIN-XCCS-CODE*)))
+                                (CONS FONT-NAME CODE-TO-WIDTH])
 )
+
+(CL:DEFCONSTANT *MIN-XCCS-CODE* 32
+   "The minimum character code we'll store widths for")
+
+(CL:DEFCONSTANT *NUM-XCCS-WIDTHS* (- 65536 *MIN-XCCS-CODE*)
+                                  "Maximum number of widths in a font")
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (558 2219 (DUMP-XCCS-UNICODE-MAPPING 558 . 2219)) (2220 3428 (LOAD-BROWSER-FONT-METRICS 
-2230 . 3426)))))
+  (FILEMAP (NIL (846 2372 (DUMP-XCCS-UNICODE-MAPPING 846 . 2372)) (2374 2560 (SKIP-32-NULL-WIDTHS 2374
+ . 2560)) (2561 4561 (LOAD-BROWSER-FONT-METRICS 2571 . 4559)))))
 STOP
