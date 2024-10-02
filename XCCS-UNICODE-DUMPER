@@ -1,16 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 3-Sep-2024 13:54:03" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;12 4817   
-
-      :EDIT-BY hdj
+(FILECREATED " 2-Oct-2024 14:27:42" {DSK}<Users>hjellinek>Projects>TrySVG>XCCS-UNICODE-DUMPER.;1 4753   
 
       :CHANGES-TO (FNS LOAD-BROWSER-FONT-METRICS)
-                  (VARS XCCS-UNICODE-DUMPERCOMS)
-                  (FUNCTIONS SKIP-32-NULL-WIDTHS DUMP-XCCS-UNICODE-MAPPING)
-                  (VARIABLES *NUM-XCCS-WIDTHS* *MIN-XCCS-CODE*)
 
-      :PREVIOUS-DATE " 2-Sep-2024 12:13:55" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;6)
+      :PREVIOUS-DATE "27-Sep-2024 09:44:56" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;13)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
@@ -63,21 +58,23 @@
            (CL:FORMAT T "Collected from ~s~%%" USER-AGENT)
            (for FONT-MEASUREMENT in (CADR METRICS)
               collect (LET [(FONT-NAME (LISTGET FONT-MEASUREMENT 'name))
+                            (FONT-FAMILY (LISTGET FONT-MEASUREMENT 'family))
+                            (FONT-SIZE (LISTGET FONT-MEASUREMENT 'size))
                             (LINE-HEIGHT (LISTGET FONT-MEASUREMENT 'height))
                             (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT 'xccsWidths]
-                           (CL:FORMAT T "Font ~s: height ~d, ~d widths~%%" FONT-NAME LINE-HEIGHT
-                                  (LENGTH CHAR-WIDTHS))
+                           (CL:FORMAT T "Font ~s, ~A: height ~d, ~d widths~%%" FONT-FAMILY FONT-SIZE
+                                  LINE-HEIGHT (LENGTH CHAR-WIDTHS))
                            (LET ((CODE-TO-WIDTH (ARRAY *NUM-XCCS-WIDTHS* 'FLOATP NIL 0)))
                                 (for WIDTH in (SKIP-32-NULL-WIDTHS CHAR-WIDTHS) as XCCS-CODE
                                    from *MIN-XCCS-CODE*
                                    do (if WIDTH
                                           then (SETA CODE-TO-WIDTH (- XCCS-CODE *MIN-XCCS-CODE*)
                                                      WIDTH)))
-                                (CL:FORMAT T "Finished filling array.~%%")
-                                (CL:FORMAT T "Testing: Char width ' ' = ~d~%%"
+                                (CL:FORMAT T "  Testing: Char width ' ' = ~d~%%"
                                        (ELT CODE-TO-WIDTH (- (CHARCODE " ")
                                                              *MIN-XCCS-CODE*)))
-                                (CONS FONT-NAME CODE-TO-WIDTH])
+                                (CONS (CONS FONT-FAMILY FONT-SIZE)
+                                      CODE-TO-WIDTH])
 )
 
 (CL:DEFCONSTANT *MIN-XCCS-CODE* 32
@@ -86,6 +83,6 @@
 (CL:DEFCONSTANT *NUM-XCCS-WIDTHS* (- 65536 *MIN-XCCS-CODE*)
                                   "Maximum number of widths in a font")
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (846 2372 (DUMP-XCCS-UNICODE-MAPPING 846 . 2372)) (2374 2560 (SKIP-32-NULL-WIDTHS 2374
- . 2560)) (2561 4561 (LOAD-BROWSER-FONT-METRICS 2571 . 4559)))))
+  (FILEMAP (NIL (632 2158 (DUMP-XCCS-UNICODE-MAPPING 632 . 2158)) (2160 2346 (SKIP-32-NULL-WIDTHS 2160
+ . 2346)) (2347 4497 (LOAD-BROWSER-FONT-METRICS 2357 . 4495)))))
 STOP
