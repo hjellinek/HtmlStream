@@ -1,9 +1,9 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 9-Oct-2024 14:19:40" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;7 1011   
+(FILECREATED " 9-Oct-2024 15:23:11" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;8 1823   
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE)
-                  (VARS HTMLSTREAMTESTCOMS)
+      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-SIMPLE)
 
       :PREVIOUS-DATE " 2-Oct-2024 16:20:28" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;1)
@@ -11,7 +11,8 @@
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
 
-(RPAQQ HTMLSTREAMTESTCOMS ((FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE)))
+(RPAQQ HTMLSTREAMTESTCOMS ((FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS
+                                  )))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "/tmp/one-page-simple.html"))
    "Simple text + graphics test for a single-page document"
@@ -22,6 +23,20 @@
           (MOVETO 40 50 HTMLSTREAM)
           (CL:FORMAT HTMLSTREAM "Third line: Moved to 40, 50.")
           FILE-NAME))
+
+(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS (&OPTIONAL (FILE-NAME 
+                                                                 "/tmp/one-page-simple-graphics.html"
+                                                                   ))
+   "Simple text + graphics test for a single-page document"
+   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
+          (CL:FORMAT HTMLSTREAM "First line!")
+          (TERPRI HTMLSTREAM)
+          (CL:FORMAT HTMLSTREAM "Second line.")
+          (MOVETO 40 50 HTMLSTREAM)
+          (CL:FORMAT HTMLSTREAM "Third line: Moved to 40, 50.")
+          (DRAWCIRCLE 140 150 130 NIL NIL HTMLSTREAM)
+          FILE-NAME))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (502 988 (HTMLTEST.ONE-PAGE-SIMPLE 502 . 988)))))
+  (FILEMAP (NIL (615 1101 (HTMLTEST.ONE-PAGE-SIMPLE 615 . 1101)) (1103 1800 (
+HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1103 . 1800)))))
 STOP
