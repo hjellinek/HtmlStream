@@ -1,57 +1,40 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 1-Oct-2024 17:32:36" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;10 14571  
+(FILECREATED " 9-Oct-2024 14:19:40" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;28 23644  
 
-      :CHANGES-TO (FUNCTIONS HTML.BACKCOLOR HTML.BOTTOMMARGIN HTML.CLOSEFN HTML.COLOR HTML.LEFTMARGIN
-                         HTML.RIGHTMARGIN HTML.TOPMARGIN HTML.XPOSITION HTML.YPOSITION CHECK-OPEN 
-                         OPENHTMLSTREAM)
+      :CHANGES-TO (FUNCTIONS HTML.CHARWIDTH HTML.CLOSEFN HTML.MOVETO HTML.OUTPUT-TEXT HTML.OUTCHARFN
+                         HTML.TERPRI \HTML.CHARWIDTH HTML.OUTPUT-GRAPHICS HTML.WRITE-PREFACE 
+                         OPENHTMLSTREAM \HTMLSTREAM.INIT CHECK-OPEN HTML.BACKCOLOR HTML.BOTTOMMARGIN
+                         HTML.CLIPPINGREGION HTML.COLOR HTML.FONT HTML.LEFTMARGIN HTML.LINEFEED 
+                         HTML.OPERATION HTML.RESET HTML.RIGHTMARGIN HTML.SCALE HTML.SPACEFACTOR 
+                         HTML.TOPMARGIN HTML.XPOSITION HTML.YPOSITION with-htmldata HTML.DRAWCIRCLE 
+                         HTML.DRAWCURVE HTML.DRAWELLIPSE HTML.DRAWLINE)
                   (VARS HTMLSTREAMCOMS)
-                  (VARIABLES HTML.STATES)
+                  (STRUCTURES HTML.IMAGEDATA HTML.IMAGEDATA2 IMAGEDATA)
+                  (RECORDS HTML.IMAGEDATA)
+                  (VARIABLES \HTMLSTREAM.FDEV HTML.STATE.NON-TEXT HTML.STATES 
+                         HTML.STATE.NON-TEXT-OUTPUT)
+                  (FNS HTML.OUTPUT-GRAPHICS)
 
-      :PREVIOUS-DATE " 1-Oct-2024 16:30:43" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;8
+      :PREVIOUS-DATE " 3-Oct-2024 14:59:15" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;13
 )
 
 
 (PRETTYCOMPRINT HTMLSTREAMCOMS)
 
 (RPAQQ HTMLSTREAMCOMS
-       ((RECORDS HTML.IMAGEDATA)
-        (VARIABLES HTML.FONTCREATE.DEVICENAME HTML.IMAGETYPE HTML.STATE.CLOSED HTML.STATE.NEW 
-               HTML.STATE.NON-TEXT HTML.STATE.TEXT-OUTPUT HTML.STATES)
+       ((VARIABLES HTML.FONTCREATE.DEVICENAME HTML.IMAGETYPE HTML.STATE.CLOSED HTML.STATE.NEW 
+               HTML.STATE.NON-TEXT HTML.STATE.NON-TEXT-OUTPUT HTML.STATE.TEXT-OUTPUT HTML.STATES 
+               \HTMLSTREAM.FDEV)
         (FUNCTIONS CHECK-OPEN HTML.BACKCOLOR HTML.BITBLT HTML.BLTSHADE HTML.BOTTOMMARGIN 
                HTML.CHARWIDTH HTML.CLIPPINGREGION HTML.CLOSEFN HTML.COLOR HTML.DRAWCIRCLE 
                HTML.DRAWCURVE HTML.DRAWELLIPSE HTML.DRAWLINE HTML.DRAWPOLYGON HTML.FILLCIRCLE 
                HTML.FILLPOLYGON HTML.FONT HTML.LEFTMARGIN HTML.LINEFEED HTML.MOVETO HTML.NEWPAGE 
-               HTML.OPERATION HTML.OUTCHARFN HTML.RESET HTML.RIGHTMARGIN HTML.SCALE HTML.SCALEDBITBLT
-               HTML.SPACEFACTOR HTML.STRINGWIDTH HTML.TERPRI HTML.TOPMARGIN HTML.XPOSITION 
-               HTML.YPOSITION OPENHTMLSTREAM with-htmldata)))
-(DECLARE%: EVAL@COMPILE
-
-(DATATYPE HTML.IMAGEDATA 
-          (PAGE-NUM X-POSITION Y-POSITION STATE FONT CLIPPING-REGION LEFT-MARGIN RIGHT-MARGIN 
-                 TOP-MARGIN BOTTOM-MARGIN LINEFEED SPACE-FACTOR IMAGE-OPERATION BG-COLOR FG-COLOR)
-          PAGE-NUM _ 0 X-POSITION _ 0 Y-POSITION _ 0 STATE _ :HTML.STATE.NEW)
-)
-
-(/DECLAREDATATYPE 'HTML.IMAGEDATA
-       '(POINTER POINTER POINTER POINTER POINTER POINTER POINTER POINTER POINTER POINTER POINTER 
-               POINTER POINTER POINTER POINTER)
-       '((HTML.IMAGEDATA 0 POINTER)
-         (HTML.IMAGEDATA 2 POINTER)
-         (HTML.IMAGEDATA 4 POINTER)
-         (HTML.IMAGEDATA 6 POINTER)
-         (HTML.IMAGEDATA 8 POINTER)
-         (HTML.IMAGEDATA 10 POINTER)
-         (HTML.IMAGEDATA 12 POINTER)
-         (HTML.IMAGEDATA 14 POINTER)
-         (HTML.IMAGEDATA 16 POINTER)
-         (HTML.IMAGEDATA 18 POINTER)
-         (HTML.IMAGEDATA 20 POINTER)
-         (HTML.IMAGEDATA 22 POINTER)
-         (HTML.IMAGEDATA 24 POINTER)
-         (HTML.IMAGEDATA 26 POINTER)
-         (HTML.IMAGEDATA 28 POINTER))
-       '30)
+               HTML.OPERATION HTML.OUTCHARFN HTML.OUTPUT-GRAPHICS HTML.OUTPUT-TEXT HTML.RESET 
+               HTML.RIGHTMARGIN HTML.SCALE HTML.SCALEDBITBLT HTML.SPACEFACTOR HTML.STRINGWIDTH 
+               HTML.TERPRI HTML.TOPMARGIN HTML.WRITE-PREFACE HTML.XPOSITION HTML.YPOSITION 
+               OPENHTMLSTREAM \HTML.CHARWIDTH \HTMLSTREAM.INIT with-htmldata)
+        (STRUCTURES HTML.IMAGEDATA)))
 
 (CL:DEFCONSTANT HTML.FONTCREATE.DEVICENAME 'HTML)
 
@@ -63,199 +46,391 @@
 
 (CL:DEFCONSTANT HTML.STATE.NON-TEXT :HTML.STATE.NON-TEXT)
 
+(CL:DEFCONSTANT HTML.STATE.NON-TEXT-OUTPUT :HTML.STATE.NON-TEXT-OUTPUT)
+
 (CL:DEFCONSTANT HTML.STATE.TEXT-OUTPUT :HTML.STATE.TEXT-OUTPUT)
 
-(CL:DEFCONSTANT HTML.STATES '(HTML.STATE.NEW HTML.STATE.NON-TEXT HTML.STATE.TEXT-OUTPUT 
+(CL:DEFCONSTANT HTML.STATES '(HTML.STATE.NEW HTML.STATE.NON-TEXT-OUTPUT HTML.STATE.TEXT-OUTPUT 
                                     HTML.STATE.CLOSED)
                             "All HTML imagestream states, for informational use.")
 
+(DEFGLOBALVAR \HTMLSTREAM.FDEV "The FDEV for HTML output")
+
 (DEFMACRO CHECK-OPEN (STREAM)
-   `(with-htmldata ,STREAM (if (EQ STATE HTML.STATE.CLOSED)
-                               then (ERROR "HTMLSTREAM is in state CLOSED"))))
+   `[with-htmldata (DATA ,STREAM)
+           (COND
+              ((EQ (\HTML-STATE DATA)
+                   HTML.STATE.CLOSED)
+               (ERROR "HTMLSTREAM is in state CLOSED"])
 
 (CL:DEFUN HTML.BACKCOLOR (STREAM NEW-COLOR)
-   (CL:FORMAT T "HTML.BACKCOLOR")
+   (printout T "HTML.BACKCOLOR" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE BG-COLOR))
-                              (if NEW-COLOR
-                                  then (SETQ BG-COLOR NEW-COLOR))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-BG-COLOR DATA)))
+               (COND
+                  (NEW-COLOR (CL:SETF (\HTML-BG-COLOR DATA)
+                                    NEW-COLOR)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.BITBLT (SOURCEBITMAP SOURCELEFFT SOURCEBOTTOM STREAM DESTINATIONLEFT DESTINATIONBOTTOM
                              WIDTH HEIGHT SOURCETYPE OPERATION TEXTURE CLIPPINGREGION 
                              CLIPPEDSOURCELEFT CLIPPEDSOURCEBOTTOM)
-   (CL:FORMAT T "HTML.BITBLT"))
+   (printout T "HTML.BITBLT" T))
 
 (CL:DEFUN HTML.BLTSHADE (TEXTURE STREAM DESTINATIONLEFT DESTINATIONBOTTOM WIDTH HEIGHT OPERATION 
                                CLIPPINGREGION)
-   (CL:FORMAT T "HTML.BLTSHADE"))
+   (printout T "HTML.BLTSHADE" T))
 
-(CL:DEFUN HTML.BOTTOMMARGIN (STREAM NEW-BOTTOMMARGIN)
-   (CL:FORMAT T "HTML.BOTTOMMARGIN")
+(CL:DEFUN HTML.BOTTOMMARGIN (STREAM NEW-BOTTOM-MARGIN)
+   (printout T "HTML.BOTTOMMARGIN")
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE BOTTOM-MARGIN))
-                              (if NEW-BOTTOMMARGIN
-                                  then (SETQ BOTTOM-MARGIN NEW-BOTTOMMARGIN))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-BOTTOM-MARGIN DATA)))
+               (if NEW-BOTTOM-MARGIN
+                   then (CL:SETF (\HTML-BOTTOM-MARGIN DATA)
+                               NEW-BOTTOM-MARGIN))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.CHARWIDTH (STREAM CHARCODE)
-   (CL:FORMAT T "HTML.CHARWIDTH")
-   0)
+
+   (* ;; "TODO phony value")
+
+   10)
 
 (CL:DEFUN HTML.CLIPPINGREGION (STREAM NEW-REGION)
-   (CL:FORMAT T "HTML.CLIPPINGREGION")
-   (with-htmldata STREAM (LET ((OLD-VALUE CLIPPING-REGION))
-                              (if NEW-REGION
-                                  then (SETQ CLIPPING-REGION NEW-REGION))
-                              OLD-VALUE)))
+   (printout T "HTML.CLIPPINGREGION")
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-CLIPPING-REGION DATA)))
+               (COND
+                  (NEW-REGION (CL:SETF (\HTML-CLIPPING-REGION DATA)
+                                     NEW-REGION)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.CLOSEFN (STREAM)
-   (with-htmldata STREAM (SETQ STATE HTML.STATE.CLOSED))
-   (CL:FORMAT T "HTML.CLOSEFN"))
+   (printout T "HTML.CLOSEFN" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
+
+               (* ;; " TODO close any open sections (e.g., text)")
+
+               (if (EQ (\HTML-STATE DATA)
+                       HTML.STATE.TEXT-OUTPUT)
+                   then (HTML.OUTPUT-GRAPHICS STREAM))
+               (printout BACKING T "</svg>" T "</body>" T "</html>" T)
+               (CLOSEF BACKING)
+               (CL:SETF (\HTML-STATE DATA)
+                      HTML.STATE.CLOSED))))
 
 (CL:DEFUN HTML.COLOR (STREAM NEW-COLOR)
-   (CL:FORMAT T "HTML.COLOR")
+   (printout T "HTML.COLOR")
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE FG-COLOR))
-                              (if NEW-COLOR
-                                  then (SETQ FG-COLOR NEW-COLOR))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-FG-COLOR DATA)))
+               (COND
+                  (NEW-COLOR (CL:SETF (\HTML-FG-COLOR DATA)
+                                    NEW-COLOR)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.DRAWCIRCLE (STREAM CENTERX CENTERY RADIUS BRUSH DASHING)
-   (CL:FORMAT T "HTML.DRAWCIRCLE"))
+   (printout T "HTML.DRAWCIRCLE" T))
 
 (CL:DEFUN HTML.DRAWCURVE (STREAM KNOTS CLOSED BRUSH DASHING)
-   (CL:FORMAT T "HTML.DRAWCURVE"))
+   (printout T "HTML.DRAWCURVE" T))
 
 (CL:DEFUN HTML.DRAWELLIPSE (STREAM CENTERX CENTERY SEMIMINORRADIUS SEMIMAJORRADIUS ORIENTATION BRUSH
                                   DASHING)
-   (CL:FORMAT T "HTML.DRAWELLIPSE"))
+   (printout T "HTML.DRAWELLIPSE" T))
 
 (CL:DEFUN HTML.DRAWLINE (STREAM X1 Y1 X2 Y2 WIDTH OPERATION COLOR)
-   (CL:FORMAT T "HTML.DRAWLINE"))
+   (printout T "HTML.DRAWLINE" T))
 
 (CL:DEFUN HTML.DRAWPOLYGON (POINTS CLOSED BRUSH DASHING STREAM)
-   (CL:FORMAT T "HTML.DRAWPOLYGON"))
+   (printout T "HTML.DRAWPOLYGON" T))
 
 (CL:DEFUN HTML.FILLCIRCLE (STREAM CENTERX CENTERY RADIUS TEXTURE)
-   (CL:FORMAT T "HTML.FILLCIRCLE"))
+   (printout T "HTML.FILLCIRCLE" T))
 
 (CL:DEFUN HTML.FILLPOLYGON (STREAM POINTS TEXTURE)
-   (CL:FORMAT T "HTML.FILLPOLYGON"))
+   (printout T "HTML.FILLPOLYGON" T))
 
 (CL:DEFUN HTML.FONT (STREAM NEW-FONT)
-   (CL:FORMAT T "HTML.FONT")
-   (with-htmldata STREAM (LET ((OLD-VALUE FONT))
-                              (if NEW-FONT
-                                  then (SETQ FONT NEW-FONT))
-                              OLD-VALUE)))
+   (printout T "HTML.FONT" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-FONT DATA)))
+               (COND
+                  (NEW-FONT (CL:SETF (\HTML-FONT DATA)
+                                   NEW-FONT)))
+               OLD-VALUE)))
 
-(CL:DEFUN HTML.LEFTMARGIN (STREAM NEW-LEFTMARGIN)
-   (CL:FORMAT T "HTML.LEFTMARGIN")
+(CL:DEFUN HTML.LEFTMARGIN (STREAM NEW-LEFT-MARGIN)
+   (printout T "HTML.LEFTMARGIN" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE LEFT-MARGIN))
-                              (if NEW-LEFTMARGIN
-                                  then (SETQ LEFT-MARGIN NEW-LEFTMARGIN))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-LEFT-MARGIN DATA)))
+               (COND
+                  (NEW-LEFT-MARGIN (CL:SETF (\HTML-LEFT-MARGIN DATA)
+                                          NEW-LEFT-MARGIN)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.LINEFEED (STREAM NEW-DELTA)
-   (CL:FORMAT T "HTML.LINEFEED")
-   (with-htmldata STREAM (LET ((OLD-VALUE LINEFEED))
-                              (if NEW-DELTA
-                                  then (SETQ LINEFEED NEW-DELTA))
-                              OLD-VALUE)))
+   (printout T "HTML.LINEFEED" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-LINEFEED DATA)))
+               (COND
+                  (NEW-DELTA (CL:SETF (\HTML-LINEFEED DATA)
+                                    NEW-DELTA)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.MOVETO (STREAM X Y)
-   (CL:FORMAT T "HTML.MOVETO"))
+   "Move to X, Y"
+   (printout T "HTML.MOVETO" T)
+   (HTML.OUTPUT-GRAPHICS STREAM)
+   (with-htmldata (DATA STREAM)
+          (CL:SETF (\HTML-X-POSITION DATA)
+                 X)
+          (CL:SETF (\HTML-Y-POSITION DATA)
+                 Y)))
 
 (CL:DEFUN HTML.NEWPAGE (STREAM)
-   (CL:FORMAT T "HTML.NEWPAGE"))
+   (printout T "HTML.NEWPAGE" T))
 
 (CL:DEFUN HTML.OPERATION (STREAM NEW-OPERATION)
-   (CL:FORMAT T "HTML.OPERATION")
-   (with-htmldata STREAM (LET ((OLD-VALUE IMAGE-OPERATION))
-                              (if NEW-OPERATION
-                                  then (SETQ IMAGE-OPERATION NEW-OPERATION))
-                              OLD-VALUE)))
+   (printout T "HTML.OPERATION" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-IMAGE-OPERATION DATA)))
+               (COND
+                  (NEW-OPERATION (CL:SETF (\HTML-IMAGE-OPERATION DATA)
+                                        NEW-OPERATION)))
+               OLD-VALUE)))
 
-(CL:DEFUN HTML.OUTCHARFN (STREAM CHARCODE)
-   (CL:FORMAT T "HTML.OUTCHARFN"))
+(CL:DEFUN HTML.OUTCHARFN (STREAM CHCODE)
+   "Write a character, which may cause us to write other markup first"
+   (CHECK-OPEN STREAM)
+   [with-htmldata (DATA STREAM)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
+               (if (EQ (\HTML-STATE DATA)
+                       HTML.STATE.NEW)
+                   then [CL:FORMAT BACKING "<svg viewBox=%"~d ~d ~d ~d%">~%%" (\HTML-LEFT-MARGIN
+                                                                               DATA)
+                               (\HTML-TOP-MARGIN DATA)
+                               (IABS (- (\HTML-RIGHT-MARGIN DATA)
+                                        (\HTML-LEFT-MARGIN DATA)))
+                               (IABS (- (\HTML-BOTTOM-MARGIN DATA)
+                                        (\HTML-TOP-MARGIN DATA]
+                        (HTML.OUTPUT-GRAPHICS STREAM))
+               (if (EQ (\HTML-STATE DATA)
+                       HTML.STATE.NON-TEXT-OUTPUT)
+                   then (HTML.OUTPUT-TEXT STREAM))
+               (SELECTC CHCODE
+                   ((CHARCODE ^J)                            (* ; "handle LF")
+                        (HTML.TERPRI STREAM))
+                   ((CHARCODE ^M)                            (* ; "handle CR")
+                        (HTML.TERPRI STREAM))
+                   ((CHARCODE ^L)                            (* ; "handle pagefeed")
+                        (HTML.NEWPAGE STREAM))
+                   (LET* ((CHAR-WIDTH (\HTML.CHARWIDTH STREAM CHCODE))
+                          (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                             CHAR-WIDTH)))
+                         (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
+                             then (HTML.TERPRI STREAM))
+                         (\OUTCHAR BACKING CHCODE)
+                         (CL:INCF (\HTML-X-POSITION DATA)
+                                (HTML.CHARWIDTH STREAM CHCODE])
+
+(CL:DEFUN HTML.OUTPUT-GRAPHICS (STREAM)
+   "We're going to do some graphics now"
+   (with-htmldata (DATA STREAM)
+          (SELECTC (\HTML-STATE DATA)
+              (HTML.STATE.NON-TEXT-OUTPUT                    (* ; "this is the state we need")
+                   )
+              (HTML.STATE.TEXT-OUTPUT                        (* ; "end the text section")
+                   (printout (\HTML-BACKING-STREAM DATA)
+                          "</text>" T))
+              NIL)
+
+          (* ;; "finally")
+
+          (CL:SETF (\HTML-STATE DATA)
+                 HTML.STATE.NON-TEXT-OUTPUT)))
+
+(CL:DEFUN HTML.OUTPUT-TEXT (STREAM)
+   "We're being asked to write text"
+   (with-htmldata (DATA STREAM)
+          (SELECTC (\HTML-STATE DATA)
+              (HTML.STATE.NON-TEXT-OUTPUT                    (* ; "start a new text section")
+                   (printout (\HTML-BACKING-STREAM DATA)
+                          "<text x="
+                          (\HTML-X-POSITION DATA)
+                          " y="
+                          (\HTML-Y-POSITION DATA)
+                          ">" T))
+              (HTML.STATE.TEXT-OUTPUT                        (* ; "continue this text section")
+                   )
+              NIL)
+
+          (* ;; "finally")
+
+          (CL:SETF (\HTML-STATE DATA)
+                 HTML.STATE.TEXT-OUTPUT)))
 
 (CL:DEFUN HTML.RESET (STREAM)
-   (CL:FORMAT T "HTML.RESET")
-   (with-htmldata STREAM (HTML.XPOSITION LEFT-MARGIN)
-          (HTML.YPOSITION TOP-MARGIN)
-          (SETQ STATE HTML.STATE.NON-TEXT)))
+   (printout T "HTML.RESET" T)
+   (with-htmldata (DATA STREAM)
+          (CL:SETF (\HTML-X-POSITION DATA)
+                 (\HTML-LEFT-MARGIN DATA))
+          (CL:SETF (\HTML-Y-POSITION DATA)
+                 (\HTML-TOP-MARGIN DATA))
+          (CL:SETF (\HTML-STATE DATA)
+                 HTML.STATE.NON-TEXT)))
 
-(CL:DEFUN HTML.RIGHTMARGIN (STREAM NEW-RIGHTMARGIN)
-   (CL:FORMAT T "HTML.RIGHTMARGIN")
+(CL:DEFUN HTML.RIGHTMARGIN (STREAM NEW-RIGHT-MARGIN)
+   (printout T "HTML.RIGHTMARGIN" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE RIGHT-MARGIN))
-                              (if NEW-RIGHTMARGIN
-                                  then (SETQ RIGHT-MARGIN NEW-RIGHTMARGIN))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-RIGHT-MARGIN DATA)))
+               (COND
+                  (NEW-RIGHT-MARGIN (CL:SETF (\HTML-RIGHT-MARGIN DATA)
+                                           NEW-RIGHT-MARGIN)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.SCALE (STREAM NEW-SCALE)
-   (CL:FORMAT T "HTML.SCALE")
-   (with-htmldata STREAM (LET ((OLD-VALUE SCALE))
-                              (if NEW-SCALE
-                                  then (SETQ SCALE NEW-SCALE))
-                              OLD-VALUE)))
+   (printout T "HTML.SCALE" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-SCALE DATA)))
+               (COND
+                  (NEW-SCALE (CL:SETF (\HTML-SCALE DATA)
+                                    NEW-SCALE)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.SCALEDBITBLT (SOURCEBITMAP SOURCELEFFT SOURCEBOTTOM STREAM DESTINATIONLEFT 
                                    DESTINATIONBOTTOM WIDTH HEIGHT SOURCETYPE OPERATION TEXTURE 
                                    CLIPPINGREGION CLIPPEDSOURCELEFT CLIPPEDSOURCEBOTTOM SCALE)
-   (CL:FORMAT T "HTML.SCALEDBITBLT"))
+   (printout T "HTML.SCALEDBITBLT" T))
 
 (CL:DEFUN HTML.SPACEFACTOR (STREAM NEW-FACTOR)
-   (CL:FORMAT T "HTML.SPACEFACTOR")
-   (with-htmldata STREAM (LET ((OLD-VALUE SPACE-FACTOR))
-                              (if NEW-FACTOR
-                                  then (SETQ SPACE-FACTOR NEW-FACTOR))
-                              OLD-VALUE)))
+   (printout T "HTML.SPACEFACTOR" T)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-SPACE-FACTOR DATA)))
+               (COND
+                  (NEW-FACTOR (CL:SETF (\HTML-SPACE-FACTOR DATA)
+                                     NEW-FACTOR)))
+               OLD-VALUE)))
 
 (CL:DEFUN HTML.STRINGWIDTH (STREAM STR RDTBL)
-   (CL:FORMAT T "HTML.STRINGWIDTH")
+   (printout T "HTML.STRINGWIDTH" T)
    0)
 
 (CL:DEFUN HTML.TERPRI (STREAM)
-   (CL:FORMAT T "HTML.TERPRI"))
-
-(CL:DEFUN HTML.TOPMARGIN (STREAM NEW-TOPMARGIN)
-   (CL:FORMAT T "HTML.TOPMARGIN")
+   "Do a newline"
+   (printout T "HTML.TERPRI" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE TOP-MARGIN))
-                              (if NEW-TOPMARGIN
-                                  then (SETQ TOP-MARGIN NEW-TOPMARGIN))
-                              OLD-VALUE)))
+   (HTML.OUTPUT-GRAPHICS STREAM)
+   (with-htmldata (DATA STREAM)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
+               (CL:SETF (\HTML-X-POSITION DATA)
+                      (\HTML-LEFT-MARGIN DATA))
 
-(CL:DEFUN HTML.XPOSITION (STREAM NEW-XPOSITION)
-   (CL:FORMAT T "HTML.XPOSITION")
+               (* ;; 
+         "TODO do we check to see if Y-POSITION overflowed BOTTOM-MARGIN and start a new page if so?")
+
+               (CL:INCF (\HTML-Y-POSITION DATA)
+                      (\HTML-LINEFEED DATA))
+               (HTML.OUTPUT-TEXT STREAM))))
+
+(CL:DEFUN HTML.TOPMARGIN (STREAM NEW-TOP-MARGIN)
+   (printout T "HTML.TOPMARGIN" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE X-POSITION))
-                              (if NEW-XPOSITION
-                                  then (SETQ X-POSITION NEW-XPOSITION))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-TOP-MARGIN DATA)))
+               (COND
+                  (NEW-TOP-MARGIN (CL:SETF (\HTML-TOP-MARGIN DATA)
+                                         NEW-TOP-MARGIN)))
+               OLD-VALUE)))
 
-(CL:DEFUN HTML.YPOSITION (STREAM NEW-YPOSITION)
-   (CL:FORMAT T "HTML.YPOSITION")
+(CL:DEFUN HTML.WRITE-PREFACE (STREAM)
+   "Write the preamble to the file: <html><head>... etc."
+   (with-htmldata (DATA STREAM)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA))
+                (TITLE (\HTML-TITLE DATA)))
+               (printout BACKING "<!DOCTYPE HTML>" T)
+               (printout BACKING "<html>" T)
+               (printout BACKING "<head>" T)
+               (printout BACKING "<title>" TITLE "</title>" T)
+               (printout BACKING "<link rel=%"preconnect%" href=%"https://fonts.googleapis.com%">" T)
+               (printout BACKING 
+                      "<link rel=%"preconnect%" href=%"https://fonts.gstatic.com%" crossorigin>" T)
+               (printout BACKING "<link href=%"https://fonts.googleapis.com/css2?family==Noto+Sans+Display&family=Roboto&family=Roboto+Mono&display=swap%" rel=%"stylesheet%">"
+                      T)
+               (printout BACKING "<script>" T)
+               (printout BACKING "    const fontSpecs = [" T)
+               (printout BACKING "            {family: %"Roboto Mono%", size: %"10pt%"}," T)
+               (printout BACKING "            {family: %"Noto Sans Display%", size: %"10pt%"}," T)
+               (printout BACKING "            {family: %"Roboto%", size: %"10pt%"}," T)
+               (printout BACKING "            {family: %"Roboto Mono%", size: %"20pt%"}," T)
+               (printout BACKING "            {family: %"Noto Sans Display%", size: %"20pt%"}," T)
+               (printout BACKING "            {family: %"Roboto%", size: %"20pt%"}," T)
+               (printout BACKING "    ];" T T)
+               (printout BACKING "    function fontFromSpec(font) {" T 
+                      "        return font.size + %" %" + font.family;" T "    }" T T)
+               (printout BACKING "    const fontLoadPromises = [];" T T)
+               (printout BACKING "    for (const spec of fontSpecs) {" T 
+                      "        fontLoadPromises.push(document.fonts.load(fontFromSpec(spec)));" T 
+                      "    }" T T)
+               (printout BACKING 
+                  "    Promise.all(fontLoadPromises).then(_ => { console.log('All fonts loaded');});"
+                      T)
+               (printout BACKING "</script>" T)
+               (printout BACKING "</head>" T)
+               (printout BACKING "<body>" T)
+               BACKING)))
+
+(CL:DEFUN HTML.XPOSITION (STREAM NEW-X-POSITION)
+   (printout T "HTML.XPOSITION" T)
    (CHECK-OPEN STREAM)
-   (with-htmldata STREAM (LET ((OLD-VALUE Y-POSITION))
-                              (if NEW-YPOSITION
-                                  then (SETQ Y-POSITION NEW-YPOSITION))
-                              OLD-VALUE)))
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-X-POSITION DATA)))
+               (COND
+                  (NEW-X-POSITION (CL:SETF (\HTML-X-POSITION DATA)
+                                         NEW-X-POSITION)))
+               OLD-VALUE)))
 
-(CL:DEFUN OPENHTMLSTREAM (FILENAME)
-   (LET* ((STREAM (OPENSTREAM FILENAME 'OUTPUT))
-          (IMAGEOPS (create IMAGEOPS)))
+(CL:DEFUN HTML.YPOSITION (STREAM NEW-Y-POSITION)
+   (printout T "HTML.YPOSITION" T)
+   (CHECK-OPEN STREAM)
+   (with-htmldata (DATA STREAM)
+          (LET ((OLD-VALUE (\HTML-Y-POSITION DATA)))
+               (COND
+                  (NEW-Y-POSITION (CL:SETF (\HTML-Y-POSITION DATA)
+                                         NEW-Y-POSITION)))
+               OLD-VALUE)))
 
-         (* ;; "Set the IMAGEDATA field")
+(CL:DEFUN OPENHTMLSTREAM (FILENAME &OPTIONAL TITLE)
+   (LET* ([BACKING (OPENSTREAM FILENAME 'OUTPUT NIL '((FORMAT :UTF-8]
+          (IMAGEOPS (create IMAGEOPS))
+          (IMAGEDATA (MAKE-HTML.IMAGEDATA :BACKING-STREAM BACKING :TITLE (OR TITLE FILENAME)))
+          (HTMLSTREAM (create STREAM
+                             FULLFILENAME _ (FULLNAME BACKING)
+                             DEVICE _ \HTMLSTREAM.FDEV
+                             ACCESS _ 'OUTPUT
+                             OUTCHARFN _ #'HTML.OUTCHARFN
+                             STRMBOUTFN _ #'\BUFFERED.BOUT   (* ; "is this right?")
+                             IMAGEOPS _ IMAGEOPS
+                             USERCLOSEABLE _ T
+                             USERVISIBLE _ T
+                             IMAGEDATA _ IMAGEDATA)))
 
-         (replace IMAGEDATA of STREAM with (create HTML.IMAGEDATA))
+         (* ;; "Make the backing file invisible")
+
+         (replace (STREAM USERVISIBLE) of BACKING with NIL)
+
+         (* ;; "install our OUTCHARFN. you can't do this in the create.")
+
+         (replace (STREAM OUTCHARFN) of HTMLSTREAM with #'HTML.OUTCHARFN)
 
          (* ;; "replace (do not smash!) the stream's IMAGEOPS with ours")
 
-         (replace IMAGEOPS of STREAM with IMAGEOPS)
+         (replace IMAGEOPS of HTMLSTREAM with IMAGEOPS)
 
          (* ;; "Set the informational fields")
 
@@ -309,33 +484,75 @@
          (replace IMCHARWIDTHY of IMAGEOPS with #'NILL)
          (replace IMBITMAPSIZE of IMAGEOPS with #'NILL)
 
-         (* ;; "the stream's OUTCHARFN")
+         (* ;; "write the preface")
 
-         (replace (STREAM OUTCHARFN) of STREAM with #'HTML.OUTCHARFN)
+         (HTML.WRITE-PREFACE HTMLSTREAM)
 
          (* ;; "return the stream")
 
-         STREAM))
+         HTMLSTREAM))
 
-(DEFMACRO with-htmldata (STREAM &REST BODY)
-   [LET ((STREAM-TEMP-VAR (GENSYM)))
-        `(LET ((,STREAM-TEMP-VAR ,STREAM))
-              (with HTML.IMAGEDATA (fetch IMAGEDATA of ,STREAM-TEMP-VAR)
-                    ,@BODY])
+(CL:DEFUN \HTML.CHARWIDTH (STREAM CHARCODE)
+   "Very fast character width accessor"
+
+   (* ;; "TODO hack!")
+
+   10)
+
+(CL:DEFUN \HTMLSTREAM.INIT ()
+
+   (* ;; "Initialize the HTMLSTREAM world")
+
+   (DECLARE (GLOBALVARS \HTMLSTREAM.FDEV))
+   (SETQ \HTMLSTREAM.FDEV (create FDEV
+                                 DEVICENAME _ (LIST 'HTML 'DOCUMENT)
+                                 CLOSEFILE _ #'NILL
+                                 BOUT _ #'NILL)))
+
+(DEFMACRO with-htmldata ((DATA-VAR-NAME STREAM)
+                         &BODY
+                         (BODY DECLS ENV))
+   `(LET [(,DATA-VAR-NAME (fetch (STREAM IMAGEDATA) of ,STREAM]
+         ,@DECLS
+         ,@BODY))
+
+(CL:DEFSTRUCT (HTML.IMAGEDATA (:CONC-NAME \HTML-))
+   "Private data for HTMLSTREAMs"
+   BACKING-STREAM
+   FONT
+   CLIPPING-REGION
+   SPACE-FACTOR
+   IMAGE-OPERATION
+   BG-COLOR
+   FG-COLOR
+   (SCALE 1.0)
+   (PAGE-NUM 0)
+   (X-POSITION 0)
+   (Y-POSITION 0)
+   (LEFT-MARGIN 0)
+   (TOP-MARGIN 0)
+   (RIGHT-MARGIN 1024)
+   (BOTTOM-MARGIN 1024)
+   (LINEFEED 12)
+   (STATE HTML.STATE.NEW)
+   TITLE)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (3148 3332 (CHECK-OPEN 3148 . 3332)) (3334 3660 (HTML.BACKCOLOR 3334 . 3660)) (3662 3954
- (HTML.BITBLT 3662 . 3954)) (3956 4138 (HTML.BLTSHADE 3956 . 4138)) (4140 4503 (HTML.BOTTOMMARGIN 4140
- . 4503)) (4505 4591 (HTML.CHARWIDTH 4505 . 4591)) (4593 4919 (HTML.CLIPPINGREGION 4593 . 4919)) (4921
- 5050 (HTML.CLOSEFN 4921 . 5050)) (5052 5370 (HTML.COLOR 5052 . 5370)) (5372 5483 (HTML.DRAWCIRCLE 
-5372 . 5483)) (5485 5584 (HTML.DRAWCURVE 5485 . 5584)) (5586 5770 (HTML.DRAWELLIPSE 5586 . 5770)) (
-5772 5876 (HTML.DRAWLINE 5772 . 5876)) (5878 5982 (HTML.DRAWPOLYGON 5878 . 5982)) (5984 6089 (
-HTML.FILLCIRCLE 5984 . 6089)) (6091 6182 (HTML.FILLPOLYGON 6091 . 6182)) (6184 6462 (HTML.FONT 6184 . 
-6462)) (6464 6813 (HTML.LEFTMARGIN 6464 . 6813)) (6815 7112 (HTML.LINEFEED 6815 . 7112)) (7114 7184 (
-HTML.MOVETO 7114 . 7184)) (7186 7254 (HTML.NEWPAGE 7186 . 7254)) (7256 7581 (HTML.OPERATION 7256 . 
-7581)) (7583 7664 (HTML.OUTCHARFN 7583 . 7664)) (7666 7878 (HTML.RESET 7666 . 7878)) (7880 8236 (
-HTML.RIGHTMARGIN 7880 . 8236)) (8238 8523 (HTML.SCALE 8238 . 8523)) (8525 8848 (HTML.SCALEDBITBLT 8525
- . 8848)) (8850 9164 (HTML.SPACEFACTOR 8850 . 9164)) (9166 9257 (HTML.STRINGWIDTH 9166 . 9257)) (9259 
-9325 (HTML.TERPRI 9259 . 9325)) (9327 9669 (HTML.TOPMARGIN 9327 . 9669)) (9671 10013 (HTML.XPOSITION 
-9671 . 10013)) (10015 10357 (HTML.YPOSITION 10015 . 10357)) (10359 14305 (OPENHTMLSTREAM 10359 . 14305
-)) (14307 14548 (with-htmldata 14307 . 14548)))))
+  (FILEMAP (NIL (3065 3285 (CHECK-OPEN 3065 . 3285)) (3287 3641 (HTML.BACKCOLOR 3287 . 3641)) (3643 3936
+ (HTML.BITBLT 3643 . 3936)) (3938 4121 (HTML.BLTSHADE 3938 . 4121)) (4123 4520 (HTML.BOTTOMMARGIN 4123
+ . 4520)) (4522 4610 (HTML.CHARWIDTH 4522 . 4610)) (4612 4965 (HTML.CLIPPINGREGION 4612 . 4965)) (4967
+ 5545 (HTML.CLOSEFN 4967 . 5545)) (5547 5891 (HTML.COLOR 5547 . 5891)) (5893 6005 (HTML.DRAWCIRCLE 
+5893 . 6005)) (6007 6107 (HTML.DRAWCURVE 6007 . 6107)) (6109 6294 (HTML.DRAWELLIPSE 6109 . 6294)) (
+6296 6401 (HTML.DRAWLINE 6296 . 6401)) (6403 6508 (HTML.DRAWPOLYGON 6403 . 6508)) (6510 6616 (
+HTML.FILLCIRCLE 6510 . 6616)) (6618 6710 (HTML.FILLPOLYGON 6618 . 6710)) (6712 7017 (HTML.FONT 6712 . 
+7017)) (7019 7405 (HTML.LEFTMARGIN 7019 . 7405)) (7407 7732 (HTML.LINEFEED 7407 . 7732)) (7734 8023 (
+HTML.MOVETO 7734 . 8023)) (8025 8094 (HTML.NEWPAGE 8025 . 8094)) (8096 8453 (HTML.OPERATION 8096 . 
+8453)) (8455 10452 (HTML.OUTCHARFN 8455 . 10452)) (10454 11060 (HTML.OUTPUT-GRAPHICS 10454 . 11060)) (
+11062 11824 (HTML.OUTPUT-TEXT 11062 . 11824)) (11826 12175 (HTML.RESET 11826 . 12175)) (12177 12571 (
+HTML.RIGHTMARGIN 12177 . 12571)) (12573 12886 (HTML.SCALE 12573 . 12886)) (12888 13212 (
+HTML.SCALEDBITBLT 12888 . 13212)) (13214 13557 (HTML.SPACEFACTOR 13214 . 13557)) (13559 13651 (
+HTML.STRINGWIDTH 13559 . 13651)) (13653 14264 (HTML.TERPRI 13653 . 14264)) (14266 14644 (
+HTML.TOPMARGIN 14266 . 14644)) (14646 17005 (HTML.WRITE-PREFACE 14646 . 17005)) (17007 17385 (
+HTML.XPOSITION 17007 . 17385)) (17387 17765 (HTML.YPOSITION 17387 . 17765)) (17767 22518 (
+OPENHTMLSTREAM 17767 . 22518)) (22520 22643 (\HTML.CHARWIDTH 22520 . 22643)) (22645 22989 (
+\HTMLSTREAM.INIT 22645 . 22989)) (22991 23223 (with-htmldata 22991 . 23223)))))
 STOP
