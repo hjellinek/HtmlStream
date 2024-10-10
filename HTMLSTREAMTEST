@@ -1,6 +1,6 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "10-Oct-2024 13:40:23" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;10 1994   
+(FILECREATED "10-Oct-2024 14:23:28" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;11 2368   
 
       :CHANGES-TO (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-SIMPLE)
                   (VARS HTMLSTREAMTESTCOMS)
@@ -37,8 +37,12 @@
           (DRAWCIRCLE 140 150 130 NIL NIL HTMLSTREAM)
           (FILLCIRCLE 340 150 130 NIL HTMLSTREAM)
           (for ANGLE from 0 to 359 by 15 do (DRAWELLIPSE 200 250 100 180 ANGLE NIL NIL HTMLSTREAM))
+          (for LINE-Y from 450 to 550 by 10 do (DRAWLINE 0 LINE-Y 800 LINE-Y (IQUOTIENT (- LINE-Y 449
+                                                                                           )
+                                                                                    10)
+                                                      NIL HTMLSTREAM))
           FILE-NAME))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (616 1102 (HTMLTEST.ONE-PAGE-SIMPLE 616 . 1102)) (1104 1971 (
-HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1104 . 1971)))))
+  (FILEMAP (NIL (616 1102 (HTMLTEST.ONE-PAGE-SIMPLE 616 . 1102)) (1104 2345 (
+HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1104 . 2345)))))
 STOP
