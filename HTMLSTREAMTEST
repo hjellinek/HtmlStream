@@ -1,8 +1,9 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "10-Oct-2024 14:23:28" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;11 2368   
+(FILECREATED "14-Oct-2024 13:18:05" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;12 3944   
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-SIMPLE)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.TRANSFORM-POINTS 
+                         HTMLTEST.TRANSFORM HTMLTEST.ONE-PAGE-SIMPLE)
                   (VARS HTMLSTREAMTESTCOMS)
 
       :PREVIOUS-DATE " 2-Oct-2024 16:20:28" 
@@ -12,7 +13,7 @@
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
 
 (RPAQQ HTMLSTREAMTESTCOMS ((FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS
-                                  )))
+                                  HTMLTEST.TRANSFORM HTMLTEST.TRANSFORM-POINTS)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "/tmp/one-page-simple.html"))
    "Simple text + graphics test for a single-page document"
@@ -41,8 +42,39 @@
                                                                                            )
                                                                                     10)
                                                       NIL HTMLSTREAM))
+          (LET* ([POLY-POINTS '((100 . 100)
+                                (50 . 125)
+                                (150 . 175)
+                                (200 . 100)
+                                (150 . 50]
+                 [STAR-POINTS '((50 . 0)
+                                (21 . 90)
+                                (98 . 35)
+                                (2 . 35)
+                                (79 . 90]
+                 (TRANSFORMED-POLY-POINTS (HTMLTEST.TRANSFORM-POINTS POLY-POINTS -20 -20 3 3))
+                 (TRANSFORMED-STAR-POINTS (HTMLTEST.TRANSFORM-POINTS STAR-POINTS 0 200 3 3)))
+                (DRAWPOLYGON POLY-POINTS T '(ROUND 3)
+                       '(4 2)
+                       HTMLSTREAM)
+                (DRAWPOLYGON TRANSFORMED-POLY-POINTS NIL '(ROUND 3)
+                       '(4 2)
+                       HTMLSTREAM)
+                (FILLPOLYGON TRANSFORMED-STAR-POINTS NIL HTMLSTREAM))
           FILE-NAME))
+
+(CL:DEFUN HTMLTEST.TRANSFORM (PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)
+   "Move and scale a point"
+   (CONS (+ X-TRANSLATE (ITIMES (CAR PT)
+                               X-SCALE))
+         (+ Y-TRANSLATE (ITIMES (CDR PT)
+                               Y-SCALE))))
+
+(CL:DEFUN HTMLTEST.TRANSFORM-POINTS (POINTS X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)
+   "Translate and scale a list of points"
+   (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (616 1102 (HTMLTEST.ONE-PAGE-SIMPLE 616 . 1102)) (1104 2345 (
-HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1104 . 2345)))))
+  (FILEMAP (NIL (731 1217 (HTMLTEST.ONE-PAGE-SIMPLE 731 . 1217)) (1219 3405 (
+HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1219 . 3405)) (3407 3678 (HTMLTEST.TRANSFORM 3407 . 3678)) (
+3680 3921 (HTMLTEST.TRANSFORM-POINTS 3680 . 3921)))))
 STOP
