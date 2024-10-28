@@ -1,6 +1,6 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "24-Oct-2024 16:16:37" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;15 5189   
+(FILECREATED "28-Oct-2024 15:37:42" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;16 5507   
 
       :CHANGES-TO (FNS LOAD-BROWSER-FONT-METRICS)
 
@@ -66,7 +66,11 @@
                            (LINE-HEIGHT (LISTGET FONT-MEASUREMENT 'height))
                            (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT 'xccsWidths))
                            (CHAR-ASCENTS (LISTGET FONT-MEASUREMENT 'xccsAscents))
-                           (CHAR-DESCENTS (LISTGET FONT-MEASUREMENT 'xccsDescents]
+                           (CHAR-DESCENTS (LISTGET FONT-MEASUREMENT 'xccsDescents))
+                           [FONT-LISP-NAME (MKATOM (LISTGET FONT-MEASUREMENT 'lispName]
+                           (FONT-LISP-FACE (MAPCAR (LISTGET FONT-MEASUREMENT 'lispFace)
+                                                  #'MKATOM))
+                           (FONT-LISP-SIZE (LISTGET FONT-MEASUREMENT 'lispSize]
                           (CL:FORMAT T "Font ~s, ~A ~A ~A: height ~d, ~d widths~%%" FONT-FAMILY 
                                  FONT-SIZE FONT-WEIGHT FONT-STYLE LINE-HEIGHT (LENGTH CHAR-WIDTHS))
                           (LET ((CODE-TO-WIDTH (ARRAY *NUM-XCCS-WIDTHS* 'FLOATP NIL 0)))
@@ -81,7 +85,7 @@
 
                                (* ;; "return this as a structure")
 
-                               (CONS (LIST FONT-FAMILY FONT-STYLE FONT-WEIGHT FONT-SIZE)
+                               (CONS (LIST FONT-LISP-NAME FONT-LISP-SIZE FONT-LISP-FACE)
                                      CODE-TO-WIDTH])
 )
 
@@ -92,5 +96,5 @@
                                   "Maximum number of widths in a font")
 (DECLARE%: DONTCOPY
   (FILEMAP (NIL (638 2164 (DUMP-XCCS-UNICODE-MAPPING 638 . 2164)) (2166 2352 (SKIP-32-NULL-WIDTHS 2166
- . 2352)) (2353 4933 (LOAD-BROWSER-FONT-METRICS 2363 . 4931)))))
+ . 2352)) (2353 5251 (LOAD-BROWSER-FONT-METRICS 2363 . 5249)))))
 STOP
