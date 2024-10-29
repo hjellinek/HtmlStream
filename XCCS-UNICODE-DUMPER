@@ -1,17 +1,20 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "28-Oct-2024 15:37:42" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;16 5507   
+(FILECREATED "29-Oct-2024 15:28:38" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;18 10410  
 
-      :CHANGES-TO (FNS LOAD-BROWSER-FONT-METRICS)
+      :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
+                  (FNS LOAD-BROWSER-FONT-METRICS SKIP-32-NULL-VALUES)
+                  (FUNCTIONS \HTML.READ-METRICS \HTML.ORGANIZE-FONT-METRICS)
 
-      :PREVIOUS-DATE "27-Sep-2024 09:44:56" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;13)
+      :PREVIOUS-DATE "28-Oct-2024 15:37:42" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;16)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
-(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FUNCTIONS DUMP-XCCS-UNICODE-MAPPING SKIP-32-NULL-WIDTHS)
-                                (FNS LOAD-BROWSER-FONT-METRICS)
+(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FUNCTIONS DUMP-XCCS-UNICODE-MAPPING \HTML.ORGANIZE-FONT-METRICS 
+                                       \HTML.READ-METRICS)
+                                (FNS LOAD-BROWSER-FONT-METRICS SKIP-32-NULL-VALUES)
                                 (VARIABLES *MIN-XCCS-CODE* *NUM-XCCS-WIDTHS*)))
 
 (CL:DEFUN DUMP-XCCS-UNICODE-MAPPING ()                       (* ; "Edited  2-Sep-2024 16:23 by hdj")
@@ -36,57 +39,112 @@
                (CL:FORMAT OUT "const max_xccs = ~d;~%%" MAX-XCCS)
                (CL:FORMAT OUT "const num_mappings = ~D;~%%" NUM-MAPPINGS))))
 
-(CL:DEFUN SKIP-32-NULL-WIDTHS (LIST)                         (* ; "Edited  3-Sep-2024 12:49 by hdj")
-   [CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR LIST])
+(CL:DEFUN \HTML.ORGANIZE-FONT-METRICS (RAW-METRICS)
+   "Accept a list of raw metrics and return them organized by font family, etc."
+
+   (* ;; "input is a list of items ((FAMILY SIZE FACE) . metrics)")
+
+   (* ;; "output should be an a-list organized by FAMILY, FACE, SIZE")
+
+   [LET [(FAMILIES (HASHARRAY (LENGTH RAW-METRICS]
+        (for DESCR in RAW-METRICS do (LET* ((FAMILY (CAAR DESCR))
+                                            (SIZE (CADAR DESCR))
+                                            (FACE (CADDAR DESCR))
+                                            (METRICS (CDR DESCR))
+                                            (FAMILY-DATA (GETHASH FAMILY FAMILIES)))
+                                           (if FAMILY-DATA
+                                               then (PUTHASH FACE FAMILY-DATA)
+                                             else (PUTHASH FAMILY])
+
+(CL:DEFUN \HTML.READ-METRICS (MEASUREMENTS LENGTH)
+   "Copy a list of 16-bit measurements into a new ARRAYBLOCK"
+   (LET ((RESULT (\ALLOCBLOCK LENGTH UNBOXEDBLOCK.GCT)))
+        (for MEASUREMENT in (SKIP-32-NULL-VALUES MEASUREMENTS) as XCCS-CODE from *MIN-XCCS-CODE*
+           do (if MEASUREMENT
+                  then (\FSETWIDTH RESULT (- XCCS-CODE *MIN-XCCS-CODE*)
+                              MEASUREMENT)))
+        [if NIL
+            then (CL:FORMAT T "  Testing: Char measurement ' ' = ~d~%%" (\FGETWIDTH
+                                                                         RESULT
+                                                                         (- (CHARCODE " ")
+                                                                            *MIN-XCCS-CODE*]
+
+        (* ;; "return the block")
+
+        RESULT))
 (DEFINEQ
 
 (LOAD-BROWSER-FONT-METRICS
   [LAMBDA (FILE-NAME)                                        (* ; "Edited  3-Sep-2024 12:56 by hdj")
 
-    (* ;; "Read a series of font metrics from the files")
+    (* ;; "Read a series of font metrics from the metrics file as ARRAYBLOCKs")
 
-    (CL:WITH-OPEN-STREAM
-     [IN (OPENSTREAM FILE-NAME 'INPUT NIL '((FORMAT :THROUGH]
-     (while (SKIPSEPRS IN)
-        collect (LET ((FONT-MEASUREMENT (READ IN)))
+    (CL:WITH-OPEN-STREAM [IN (OPENSTREAM FILE-NAME 'INPUT NIL '((FORMAT :THROUGH]
+           (while (SKIPSEPRS IN) collect (LET ((FONT-MEASUREMENT (READ IN)))
 
-                     (* ;; 
+                                              (* ;; 
                    "FONT-MEASUREMENT = plist of 'name 'height 'xccsWidths 'xccsAscents 'xccsDescents")
 
-                     (* ;; "xccsWidths is a list of character widths indexed by XCCS code")
+                                              (* ;; 
+                                      "xccsWidths is a list of character widths indexed by XCCS code")
 
-                     (* ;; 
+                                              (* ;; 
                   "xccsAscents and xccsDescents are the ascender and descender heights from baseline")
 
-                     (LET [(FONT-NAME (LISTGET FONT-MEASUREMENT 'name))
-                           (FONT-FAMILY (LISTGET FONT-MEASUREMENT 'family))
-                           (FONT-SIZE (LISTGET FONT-MEASUREMENT 'size))
-                           (FONT-WEIGHT (LISTGET FONT-MEASUREMENT 'weight))
-                           (FONT-STYLE (LISTGET FONT-MEASUREMENT 'style))
-                           (LINE-HEIGHT (LISTGET FONT-MEASUREMENT 'height))
-                           (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT 'xccsWidths))
-                           (CHAR-ASCENTS (LISTGET FONT-MEASUREMENT 'xccsAscents))
-                           (CHAR-DESCENTS (LISTGET FONT-MEASUREMENT 'xccsDescents))
-                           [FONT-LISP-NAME (MKATOM (LISTGET FONT-MEASUREMENT 'lispName]
-                           (FONT-LISP-FACE (MAPCAR (LISTGET FONT-MEASUREMENT 'lispFace)
-                                                  #'MKATOM))
-                           (FONT-LISP-SIZE (LISTGET FONT-MEASUREMENT 'lispSize]
-                          (CL:FORMAT T "Font ~s, ~A ~A ~A: height ~d, ~d widths~%%" FONT-FAMILY 
-                                 FONT-SIZE FONT-WEIGHT FONT-STYLE LINE-HEIGHT (LENGTH CHAR-WIDTHS))
-                          (LET ((CODE-TO-WIDTH (ARRAY *NUM-XCCS-WIDTHS* 'FLOATP NIL 0)))
-                               (for WIDTH in (SKIP-32-NULL-WIDTHS CHAR-WIDTHS) as XCCS-CODE
-                                  from *MIN-XCCS-CODE*
-                                  do (if WIDTH
-                                         then (SETA CODE-TO-WIDTH (- XCCS-CODE *MIN-XCCS-CODE*)
-                                                    WIDTH)))
-                               (CL:FORMAT T "  Testing: Char width ' ' = ~d~%%"
-                                      (ELT CODE-TO-WIDTH (- (CHARCODE " ")
-                                                            *MIN-XCCS-CODE*)))
+                                              (LET [(FONT-NAME (LISTGET FONT-MEASUREMENT 'name))
+                                                    (FONT-FAMILY (LISTGET FONT-MEASUREMENT
+                                                                        'family))
+                                                    (FONT-SIZE (LISTGET FONT-MEASUREMENT 'size))
+                                                    (FONT-WEIGHT (LISTGET FONT-MEASUREMENT
+                                                                        'weight))
+                                                    (FONT-STYLE (LISTGET FONT-MEASUREMENT
+                                                                       'style))
+                                                    (LINE-HEIGHT (LISTGET FONT-MEASUREMENT
+                                                                        'height))
+                                                    (CHAR-WIDTHS (LISTGET FONT-MEASUREMENT
+                                                                        'xccsWidths))
+                                                    (CHAR-ASCENTS (LISTGET FONT-MEASUREMENT
+                                                                         'xccsAscents))
+                                                    (CHAR-DESCENTS (LISTGET FONT-MEASUREMENT
+                                                                          'xccsDescents))
+                                                    [FONT-LISP-NAME (MKATOM (LISTGET FONT-MEASUREMENT
+                                                                                   'lispName]
+                                                    (FONT-LISP-FACE (MAPCAR (LISTGET FONT-MEASUREMENT
+                                                                                   'lispFace)
+                                                                           #'MKATOM))
+                                                    (FONT-LISP-SIZE (LISTGET FONT-MEASUREMENT
+                                                                           'lispSize]
+                                                   (CL:FORMAT T 
+                                                         "Font ~s, ~A ~A ~A: height ~d, ~d widths~%%"
+                                                          FONT-FAMILY FONT-SIZE FONT-WEIGHT 
+                                                          FONT-STYLE LINE-HEIGHT (LENGTH CHAR-WIDTHS)
+                                                          )
 
-                               (* ;; "return this as a structure")
+                                                   (* ;; 
+                                       "store the widths as 16-bit %"centipoints%" in the ARRAYBLOCK")
 
-                               (CONS (LIST FONT-LISP-NAME FONT-LISP-SIZE FONT-LISP-FACE)
-                                     CODE-TO-WIDTH])
+                                                   (LET* ((CODE-TO-WIDTH (\HTML.READ-METRICS 
+                                                                                CHAR-WIDTHS 
+                                                                                *NUM-XCCS-WIDTHS*))
+                                                          (CODE-TO-ASCENT (\HTML.READ-METRICS 
+                                                                                 CHAR-ASCENTS 
+                                                                                 *NUM-XCCS-WIDTHS*))
+                                                          (CODE-TO-DESCENT (\HTML.READ-METRICS 
+                                                                                  CHAR-DESCENTS 
+                                                                                  *NUM-XCCS-WIDTHS*))
+                                                          )
+
+                                                         (* ;; "return this as a structure")
+
+                                                         (CONS (LIST FONT-LISP-NAME FONT-LISP-SIZE 
+                                                                     FONT-LISP-FACE)
+                                                               (LIST CODE-TO-WIDTH CODE-TO-ASCENT 
+                                                                     CODE-TO-DESCENT])
+
+(SKIP-32-NULL-VALUES
+  [CL:LAMBDA (LIST)
+         (CL:BLOCK SKIP-32-NULL-VALUES
+             [CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR (CDDDDR LIST])])
 )
 
 (CL:DEFCONSTANT *MIN-XCCS-CODE* 32
@@ -94,7 +152,26 @@
 
 (CL:DEFCONSTANT *NUM-XCCS-WIDTHS* (- 65536 *MIN-XCCS-CODE*)
                                   "Maximum number of widths in a font")
+(PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
+
+(RPAQQ XCCS-UNICODE-DUMPERCOMS [(FUNCTIONS DUMP-XCCS-UNICODE-MAPPING \HTML.ORGANIZE-FONT-METRICS 
+                                       \HTML.READ-METRICS)
+                                (FNS LOAD-BROWSER-FONT-METRICS SKIP-32-NULL-VALUES)
+                                (VARIABLES *MIN-XCCS-CODE* *NUM-XCCS-WIDTHS*)
+                                (DECLARE%: DONTEVAL@LOAD DOEVAL@COMPILE DONTCOPY COMPILERVARS
+                                       (ADDVARS (NLAMA)
+                                              (NLAML)
+                                              (LAMA SKIP-32-NULL-VALUES])
+(DECLARE%: DONTEVAL@LOAD DOEVAL@COMPILE DONTCOPY COMPILERVARS 
+
+(ADDTOVAR NLAMA )
+
+(ADDTOVAR NLAML )
+
+(ADDTOVAR LAMA SKIP-32-NULL-VALUES)
+)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (638 2164 (DUMP-XCCS-UNICODE-MAPPING 638 . 2164)) (2166 2352 (SKIP-32-NULL-WIDTHS 2166
- . 2352)) (2353 5251 (LOAD-BROWSER-FONT-METRICS 2363 . 5249)))))
+  (FILEMAP (NIL (871 2397 (DUMP-XCCS-UNICODE-MAPPING 871 . 2397)) (2399 3314 (
+\HTML.ORGANIZE-FONT-METRICS 2399 . 3314)) (3316 4194 (\HTML.READ-METRICS 3316 . 4194)) (4195 9359 (
+LOAD-BROWSER-FONT-METRICS 4205 . 9186) (SKIP-32-NULL-VALUES 9188 . 9357)))))
 STOP
