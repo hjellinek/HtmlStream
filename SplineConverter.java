@@ -30,14 +30,17 @@ import java.util.List;
  * <blockquote>
  * Explanation:
  *
- * Tangent Approximation: We approximate the tangent vectors at the control points of the spline. This approximation can be refined using more sophisticated techniques, but for many practical applications, this simple approach works well.
+ * Tangent Approximation: We approximate the tangent vectors at the control points of the spline. This approximation can be refined using more sophisticated techniques,
+ * but for many practical applications, this simple approach works well.
  * Bézier Control Point Calculation: Using the tangent vectors, we calculate the intermediate control points for each Bézier curve segment.
  * Bezier Curve Segment: Each pair of consecutive control points on the spline generates a Bézier curve segment with the calculated control points.
  *
  * Key Points and Considerations:
  *
- * Accuracy: The accuracy of the approximation depends on the curvature of the spline and the number of control points. More control points generally lead to a better approximation.
- * Tangent Vector Approximation: While the simple approach used here is effective, more advanced techniques like Catmull-Rom splines or Kochanek-Bartels splines can provide more precise tangent vector calculations.
+ * Accuracy: The accuracy of the approximation depends on the curvature of the spline and the number of control points. More control points generally lead
+ * to a better approximation.
+ * Tangent Vector Approximation: While the simple approach used here is effective, more advanced techniques like Catmull-Rom splines or Kochanek-Bartels
+ * splines can provide more precise tangent vector calculations.
  * Endpoint Continuity: Ensure that the endpoint of one Bézier curve segment coincides with the start point of the next to maintain continuity.
  * Curve Smoothing: For smoother curves, consider techniques like tension, bias, and continuity parameters in the tangent vector calculation.
  *
