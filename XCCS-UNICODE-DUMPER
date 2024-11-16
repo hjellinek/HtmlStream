@@ -1,6 +1,6 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "13-Nov-2024 15:27:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;7 10478  
+(FILECREATED "16-Nov-2024 09:30:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;8 9663   
 
       :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
 
@@ -10,27 +10,14 @@
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
-(RPAQQ XCCS-UNICODE-DUMPERCOMS ((VARIABLES *WEB-CHARSET-METRICS-EXT* *WEB-CHARSET-METRICS-DOT-EXT* 
-                                       *WEB-FONT-METRICS-EXT* *WEB-FONT-METRICS-DOT-EXT*)
+(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FILES HTMLSTREAM)
                                 (FUNCTIONS CREATE-ALL-FONT-METRICS)
                                 (FNS PROCESS-BROWSER-FONT-METRICS)
                                 (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING WRITE-FONT-METRICS-FILE 
                                        WRITE-CHARSET-METRICS-FILE)
                                 (RECORDS WEB-FONT-DESCR WEB-FONT-FACE)))
 
-(CL:DEFCONSTANT *WEB-CHARSET-METRICS-EXT* "wcm"
-   "The filename extension for files that describe a charset's metrics")
-
-(CL:DEFCONSTANT *WEB-CHARSET-METRICS-DOT-EXT* (CONCAT "." *WEB-CHARSET-METRICS-EXT*)
-                                              
-       "The filename extension for files that describe a charset's metrics, prepended with a dot (.)")
-
-(CL:DEFCONSTANT *WEB-FONT-METRICS-EXT* "wfm"
-   "The file extension for a web font metrics file")
-
-(CL:DEFCONSTANT *WEB-FONT-METRICS-DOT-EXT* (CONCAT "." *WEB-FONT-METRICS-EXT*)
-                                           
-                           "The file extension for a web font metrics file, prepended with a dot (.)")
+(FILESLOAD HTMLSTREAM)
 
 (CL:DEFUN CREATE-ALL-FONT-METRICS (&KEY (DATA-DIR *WEB-FONT-DIRECTORY*)
                                         (DATA-FILE-NAME *DEFAULT-WEB-FONT-METRICS-FILE-NAME*)
@@ -178,7 +165,7 @@
 (RECORD WEB-FONT-FACE (weight slope expansion))
 )
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1660 2213 (CREATE-ALL-FONT-METRICS 1660 . 2213)) (2214 5885 (
-PROCESS-BROWSER-FONT-METRICS 2224 . 5883)) (5887 7413 (DUMP-XCCS-UNICODE-MAPPING 5887 . 7413)) (7415 
-8895 (WRITE-FONT-METRICS-FILE 7415 . 8895)) (8897 10289 (WRITE-CHARSET-METRICS-FILE 8897 . 10289)))))
+  (FILEMAP (NIL (845 1398 (CREATE-ALL-FONT-METRICS 845 . 1398)) (1399 5070 (PROCESS-BROWSER-FONT-METRICS
+ 1409 . 5068)) (5072 6598 (DUMP-XCCS-UNICODE-MAPPING 5072 . 6598)) (6600 8080 (WRITE-FONT-METRICS-FILE
+ 6600 . 8080)) (8082 9474 (WRITE-CHARSET-METRICS-FILE 8082 . 9474)))))
 STOP

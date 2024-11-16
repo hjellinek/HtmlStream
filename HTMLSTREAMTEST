@@ -1,8 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "14-Nov-2024 15:44:02" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;6 8249   
+(FILECREATED "16-Nov-2024 15:48:12" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;11 13084  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.TEXT-HORIZONTAL-OVERFLOW HTMLTEST.TEXT-TWO-FONTS)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS WINDOWTEST.SHOW-TEXT-BOUNDS 
+                         HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
+                         HTMLTEST.TEXT-TWO-FONTS)
+                  (VARS HTMLSTREAMTESTCOMS)
 
       :PREVIOUS-DATE "13-Nov-2024 14:13:05" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;2)
@@ -11,8 +14,10 @@
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
 
 (RPAQQ HTMLSTREAMTESTCOMS ((FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS
-                                  HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS 
-                                  HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW)
+                                  HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE 
+                                  HTMLTEST.TEXT-TWO-FONTS HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+                                  HTMLTEST.TEXT-HORIZONTAL-OVERFLOW)
+                           (FUNCTIONS WINDOWTEST.SHOW-TEXT-BOUNDS)
                            (FUNCTIONS HTMLTEST.TRANSFORM HTMLTEST.TRANSFORM-POINTS)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "/tmp/one-page-simple.html"))
@@ -31,11 +36,14 @@
                                                                    ))
    "Simple text + graphics test for a single-page document"
    (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
-          (CL:FORMAT HTMLSTREAM "First line!")
+          (CL:FORMAT HTMLSTREAM "First line, x = ~d, y = ~d!" (DSPXPOSITION NIL HTMLSTREAM)
+                 (DSPYPOSITION NIL HTMLSTREAM))
           (TERPRI HTMLSTREAM)
-          (CL:FORMAT HTMLSTREAM "Second line.")
+          (CL:FORMAT HTMLSTREAM "Second line, x = ~d, y = ~d" (DSPXPOSITION NIL HTMLSTREAM)
+                 (DSPYPOSITION NIL HTMLSTREAM))
           (MOVETO 40 50 HTMLSTREAM)
-          (CL:FORMAT HTMLSTREAM "Third line: Moved to 40, 50.")
+          (CL:FORMAT HTMLSTREAM "Third line: Moved to ~d, ~d." (DSPXPOSITION NIL HTMLSTREAM)
+                 (DSPYPOSITION NIL HTMLSTREAM))
           (DRAWCIRCLE 140 150 130 NIL NIL HTMLSTREAM)
           (FILLCIRCLE 340 150 130 NIL HTMLSTREAM)
           (for ANGLE from 0 to 359 by 15 do (DRAWELLIPSE 200 250 100 180 ANGLE NIL NIL HTMLSTREAM))
@@ -68,6 +76,50 @@
                                      (150 . 50]
                      (DRAWCURVE CURVE-KNOTS NIL NIL NIL HTMLSTREAM)))
           FILE-NAME))
+
+(CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
+   "Output text, draw bounds, dump widths"
+
+   (* ;; "Remember: Y = 0 is at the bottom left; Y decreases as you go down the page.")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   (* ;; "The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+
+   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
+          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890")
+                (FONT10 (FONTCREATE 'NOTO-SANS-DISPLAY 10 'REGULAR NIL STREAM))
+                (FONT20 (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL STREAM))
+                STARTING-X STARTING-Y BASELINE-Y FONT-HEIGHT SAMPLE-WIDTH)
+
+               (* ;; "display a string with a corner of a box at its origin, the width of the text")
+
+               (DSPFONT FONT10 STREAM)
+               (TERPRI STREAM)
+               (SETQ FONT-HEIGHT (FONTPROP (DSPFONT NIL STREAM)
+                                        'HEIGHT))
+               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE (DSPFONT NIL STREAM)))
+
+               (* ;; "draws at (0, 26)")
+
+               (CL:FORMAT STREAM SAMPLE)
+
+               (* ;; "draws at (0, 13)")
+
+               (DRAWPOLYGON (LIST (CONS (+ STARTING-X SAMPLE-WIDTH)
+                                        STARTING-Y)
+                                  (CONS STARTING-X STARTING-Y)
+                                  (CONS STARTING-X (+ STARTING-Y FONT-HEIGHT)))
+                      NIL NIL NIL STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               [for CHCODE from 65 to 90 do (CL:FORMAT STREAM "Character ~2,d ('~a') width = ~d~%%" 
+                                                   CHCODE (CHARACTER CHCODE)
+                                                   (CHARWIDTH CHCODE (DSPFONT NIL STREAM]
+               FILE-NAME)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "/tmp/one-page-with-curve.html"))
    (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
@@ -133,6 +185,48 @@
           (CL:FORMAT HTMLSTREAM "The end!~%%")
           FILE-NAME))
 
+(CL:DEFUN WINDOWTEST.SHOW-TEXT-BOUNDS (&OPTIONAL REUSE-WINDOW)
+   "Output text, draw bounds, dump widths"
+
+   (* ;; "Remember: Y = 0 is at the bottom left; Y decreases as you go down the page.")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   [LET* ((WINDOW (OR REUSE-WINDOW (CREATEW (create REGION
+                                                   LEFT _ 610
+                                                   BOTTOM _ 10
+                                                   WIDTH _ (HTML.INCHES-TO-POINTS 8.5)
+                                                   HEIGHT _ (HTML.INCHES-TO-POINTS 11))
+                                          "Text Bounds")))
+          (STREAM (WINDOWPROP WINDOW 'DSP))
+          (SAMPLE "All work and no play makes Jack a dull boy. 1234567890")
+          (FONT10 (FONTCREATE 'HELVETICA 10 'REGULAR NIL STREAM))
+          (FONT20 (FONTCREATE 'HELVETICA 18 'REGULAR NIL STREAM))
+          STARTING-X STARTING-Y BASELINE-Y FONT-HEIGHT SAMPLE-WIDTH)
+         (CLEARW WINDOW)
+
+         (* ;; "display a string with a corner of a box at its origin, the width of the text")
+
+         (DSPFONT FONT10 STREAM)
+         (TERPRI STREAM)
+         (SETQ FONT-HEIGHT (FONTPROP (DSPFONT NIL STREAM)
+                                  'HEIGHT))
+         (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+         (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+         (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE (DSPFONT NIL STREAM)))
+         (CL:FORMAT STREAM SAMPLE)
+         (DRAWPOLYGON (LIST (CONS (+ STARTING-X SAMPLE-WIDTH)
+                                  STARTING-Y)
+                            (CONS STARTING-X STARTING-Y)
+                            (CONS STARTING-X (+ STARTING-Y FONT-HEIGHT)))
+                NIL NIL NIL STREAM)
+         (TERPRI STREAM)
+         (TERPRI STREAM)
+         (TERPRI STREAM)
+         (for CHCODE from 65 to 90 do (CL:FORMAT STREAM "Character ~2,d ('~a') width = ~d~%%" CHCODE
+                                             (CHARACTER CHCODE)
+                                             (CHARWIDTH CHCODE (DSPFONT NIL STREAM])
+
 (CL:DEFUN HTMLTEST.TRANSFORM (PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)
    "Move and scale a point"
    (CONS (+ X-TRANSLATE (ITIMES (CAR PT)
@@ -144,9 +238,11 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (802 1455 (HTMLTEST.ONE-PAGE-SIMPLE 802 . 1455)) (1457 3902 (
-HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1457 . 3902)) (3904 4354 (HTMLTEST.ONE-PAGE-WITH-CURVE 3904 . 
-4354)) (4356 6084 (HTMLTEST.TEXT-TWO-FONTS 4356 . 6084)) (6086 6810 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
-6086 . 6810)) (6812 7710 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 6812 . 7710)) (7712 7983 (
-HTMLTEST.TRANSFORM 7712 . 7983)) (7985 8226 (HTMLTEST.TRANSFORM-POINTS 7985 . 8226)))))
+  (FILEMAP (NIL (1120 1773 (HTMLTEST.ONE-PAGE-SIMPLE 1120 . 1773)) (1775 4482 (
+HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1775 . 4482)) (4484 6608 (HTMLTEST.SHOW-TEXT-BOUNDS 4484 . 6608
+)) (6610 7060 (HTMLTEST.ONE-PAGE-WITH-CURVE 6610 . 7060)) (7062 8790 (HTMLTEST.TEXT-TWO-FONTS 7062 . 
+8790)) (8792 9516 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 8792 . 9516)) (9518 10416 (
+HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 9518 . 10416)) (10418 12545 (WINDOWTEST.SHOW-TEXT-BOUNDS 10418 . 
+12545)) (12547 12818 (HTMLTEST.TRANSFORM 12547 . 12818)) (12820 13061 (HTMLTEST.TRANSFORM-POINTS 12820
+ . 13061)))))
 STOP
