@@ -1,17 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "16-Nov-2024 15:48:12" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;29 54445  
+(FILECREATED "20-Nov-2024 14:54:00" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;37 54872  
 
-      :CHANGES-TO (FUNCTIONS HTML.OUTPUT-TEXT CENTIPOINTS-TO-POINTS HTML.COLOR HTML.FONT 
-                         HTML.OUTCHARFN OPENHTMLSTREAM HTML.TOPMARGIN HTML.WRITE-PREFACE 
-                         HTML.DRAWLINE HTML.FILLPOLYGON HTML.CHARWIDTH \HTML.FONTCREATE 
-                         CSS-CLASS-FROM \CLEAN-FONT-CACHE HTML.LINEFEED HTML.TERPRI 
-                         \HTML.INIT-IMAGEDATA)
+      :CHANGES-TO (FUNCTIONS PIXEL-TO-PT HTML.OUTPUT-TEXT HTML.CHARWIDTH HTML.DRAWPOLYGON PT-TO-PIXEL
+                         \HTML.READ-CHARSET-METRICS \HTML.READ-FONT-METRICS)
                   (VARS HTMLSTREAMCOMS)
-                  (STRUCTURES HTML.FONTINFO)
-                  (VARIABLES *WEB-FONT-FAMILIES*)
 
-      :PREVIOUS-DATE "13-Nov-2024 14:13:06" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;16
+      :PREVIOUS-DATE "19-Nov-2024 17:11:30" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;35
 )
 
 
@@ -20,7 +15,8 @@
 (RPAQQ HTMLSTREAMCOMS
        ((RECORDS \BEZIER-POINT)
         (FUNCTIONS BEZIER-CONTROL-POINTS-TO-SVG CLOSE-KNOTS COMPUTE-LINE-HEIGHT COMPUTE-MAX-ASCENT 
-               COMPUTE-MAX-DESCENT CONVERT-TO-BEZIER HTML.INCHES-TO-POINTS CENTIPOINTS-TO-POINTS)
+               COMPUTE-MAX-DESCENT CONVERT-TO-BEZIER HTML.INCHES-TO-POINTS CP-TO-P ICP-TO-P 
+               PIXEL-TO-PT PT-TO-PIXEL \HTML.SVG-Y)
         (RECORDS WEB-FONT-METRICS WEB-CHARSET-METRICS)
         (FUNCTIONS MAKE-FONT-METRICS-FILE-NAME MAKE-CHARSET-METRICS-FILE-NAME)
         (VARIABLES *WEB-FONT-DIRECTORY* *DEFAULT-WEB-FONT-METRICS-FILE-NAME* *WEB-FONT-EXPANSIONS* 
@@ -42,14 +38,13 @@
                HTML.FILLPOLYGON HTML.FONT HTML.LEFTMARGIN HTML.LINEFEED HTML.MOVETO HTML.NEWPAGE 
                HTML.OPERATION HTML.OUTCHARFN HTML.RESET HTML.RIGHTMARGIN HTML.SCALE HTML.SCALEDBITBLT
                HTML.SPACEFACTOR HTML.TERPRI HTML.TOPMARGIN HTML.XPOSITION HTML.YPOSITION 
-               MAKE-HTML-IMAGETYPE \HTML.FILLCIRCLE \HTML.INIT-IMAGEDATA \HTML.SVG-Y \HTMLSTREAM.INIT
-               )
+               MAKE-HTML-IMAGETYPE \HTML.FILLCIRCLE \HTML.INIT-IMAGEDATA \HTMLSTREAM.INIT)
         (FUNCTIONS \HTML.FONTCREATE \HTML.FONTSAVAILABLE \HTML.CREATECHARSET \HTML.CHANGECHARSET)
         (P (\HTMLSTREAM.INIT))
         
         (* ;; "debugging support")
 
-        (FUNCTIONS \CLEAN-FONT-CACHE)))
+        (FUNCTIONS \CLEAN-FONT-CACHE DO-NOT)))
 (DECLARE%: EVAL@COMPILE
 
 (PROPRECORD \BEZIER-POINT (p0 p1 b0 b1))
@@ -59,8 +54,8 @@
    "Convert the Bezier control points to SVG path format. Return NIL if the list is NIL"
    (if BEZIER-CONTROL-POINTS
        then (LET* [(START-POINT (fetch (\BEZIER-POINT p0) of (CAR BEZIER-CONTROL-POINTS)))
-                   (RESULT (CL:FORMAT NIL "M ~d,~d " (CAR START-POINT)
-                                  (CDR START-POINT]
+                   (RESULT (CL:FORMAT NIL "M ~d,~d " (PIXEL-TO-PT (CAR START-POINT))
+                                  (PIXEL-TO-PT (CDR START-POINT]
                   [for CTRL-PT in (CDR BEZIER-CONTROL-POINTS) first (SETQ RESULT (CONCAT RESULT "C ")
                                                                      )
                      do (LET ((P0 (fetch (\BEZIER-POINT p0) of CTRL-PT))
@@ -68,12 +63,12 @@
                               (B1 (fetch (\BEZIER-POINT b1) of CTRL-PT))
                               (P1 (fetch (\BEZIER-POINT p1) of CTRL-PT)))
                              (SETQ RESULT (CONCAT RESULT (CL:FORMAT NIL "~d,~d ~d,~d ~d,~d "
-                                                                (CAR B0)
-                                                                (CDR B0)
-                                                                (CAR B1)
-                                                                (CDR B1)
-                                                                (CAR P1)
-                                                                (CDR P1]
+                                                                (PIXEL-TO-PT (CAR B0))
+                                                                (PIXEL-TO-PT (CDR B0))
+                                                                (PIXEL-TO-PT (CAR B1))
+                                                                (PIXEL-TO-PT (CDR B1))
+                                                                (PIXEL-TO-PT (CAR P1))
+                                                                (PIXEL-TO-PT (CDR P1]
                   RESULT)))
 
 (CL:DEFUN CLOSE-KNOTS (KNOTS)
@@ -136,8 +131,33 @@
 
    (FIXR (TIMES 72 INCHES)))
 
-(DEFMACRO CENTIPOINTS-TO-POINTS (CENTIPOINTS)
+(DEFMACRO CP-TO-P (CENTIPOINTS)
+   `(FQUOTIENT ,CENTIPOINTS 100))
+
+(DEFMACRO ICP-TO-P (CENTIPOINTS)
+
+   (* ;; "convert centipoints to an integer number of points")
+
    `(FIXR (FQUOTIENT ,CENTIPOINTS 100)))
+
+(CL:DEFUN PIXEL-TO-PT (PIXELS)
+   "Convert some number of pixels to that number of points"
+
+   (* ;; "96 pixels = 72 points")
+
+   (FTIMES 0.75 PIXELS))
+
+(CL:DEFUN PT-TO-PIXEL (POINTS)
+   "Convert some number of points to that number of pixels"
+
+   (* ;; "96 pixels = 72 points")
+
+   (FTIMES 1.333 POINTS))
+
+(CL:DEFUN \HTML.SVG-Y (DATA MEDLEY-Y)
+   "Return the SVG Y-coordinate for a Medley Y coordinate"
+   (- (\HTML-TOP-MARGIN DATA)
+      MEDLEY-Y))
 (DECLARE%: EVAL@COMPILE
 
 (PROPRECORD WEB-FONT-METRICS (family size weight style height charsets maxAscent maxDescent lispName
@@ -276,12 +296,13 @@
 
 (CL:DEFUN \HTML.READ-CHARSET-METRICS (FAMILY SIZE FACE CHARSET-NUM)
    "Read a file containing a charset's metrics and return the WEB-CHARSET-METRICS"
-   (LET* [(WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
+   (LET* ((WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
           (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
           (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
                             (MAKE-CHARSET-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION 
-                                   CHARSET-NUM]
+                                   CHARSET-NUM)))
+          (*PACKAGE* (CL:FIND-PACKAGE "IL")))
          (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
                 (CHECK-BROWSER-METRICS-FORMAT (READ IN))
                 (LET* ((CHARSET (READ IN))
@@ -295,11 +316,12 @@
 
 (CL:DEFUN \HTML.READ-FONT-METRICS (FAMILY FACE SIZE)
    "Read the font metrics file and return the WEB-FONT-DESCR"
-   (LET* [(WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
+   (LET* ((WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
           (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
           (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
-                            (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION]
+                            (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION)))
+          (*PACKAGE* (CL:FIND-PACKAGE "IL")))
          (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
                 (CHECK-BROWSER-METRICS-FORMAT (READ IN))
                 (LET* ((DESCR (READ IN))
@@ -311,7 +333,7 @@
                        (MAX-DESCENT (fetch (WEB-FONT-DESCR maxDescent) of DESCR))
                        (CHARSETS (fetch (WEB-FONT-DESCR charsets) of DESCR)))
                       (CL:FORMAT T "font: ~A face: ~A size: ~A height: ~A #charsets: ~d~%%" FAMILY 
-                             FACE SIZE HEIGHT MAX-ASCENT MAX-DESCENT CHARSETS)
+                             FACE SIZE HEIGHT CHARSETS)
                       DESCR))))
 
 (CL:DEFSTRUCT (HTML.IMAGEDATA (:CONC-NAME \HTML-))
@@ -381,11 +403,11 @@
                          (printout (\HTML-BACKING-STREAM DATA)
                                 "<text class='"
                                 (\HTMLFONT-CSS-CLASS FONT-DATA)
-                                "' x="
+                                "' x=%""
                                 (\HTML-X-POSITION DATA)
-                                " y="
+                                "pt%" y=%""
                                 (\HTML.SVG-Y DATA (\HTML-Y-POSITION DATA))
-                                ">" T))
+                                "pt%">"))
                     (HTML.STATE.TEXT-OUTPUT                  (* ; "continue this text section")
                          )
                     NIL)
@@ -408,7 +430,7 @@
                          (PAGE-HEIGHT (IABS (- (\HTML-BOTTOM-MARGIN DATA)
                                                (\HTML-TOP-MARGIN DATA]
                         (CL:FORMAT BACKING 
-                               "<svg width=%"~d%" height=%"~d%" viewBox=%"~d ~d ~d ~d%">~%%" 
+                               "<svg width=%"~dpt%" height=%"~dpt%" viewBox=%"~d ~d ~d ~d%">~%%" 
                                PAGE-WIDTH PAGE-HEIGHT (\HTML-LEFT-MARGIN DATA)
                                (\HTML-BOTTOM-MARGIN DATA)
                                PAGE-WIDTH PAGE-HEIGHT)
@@ -702,7 +724,7 @@
    [with-htmldata (DATA STREAM)
           (HTML.OUTPUT-GRAPHICS STREAM)
           (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
-               (CL:FORMAT BACKING "<ellipse cx=%"~d%" cy=%"~d%" rx=%"~d%" ry=%"~d%" transform=%"rotate(~d,~d,~d)%" fill=%"transparent%" stroke=%"black%" stroke-width=%"1%"/>~%%"
+               (CL:FORMAT BACKING "<ellipse cx=%"~dpt%" cy=%"~dpt%" rx=%"~dpt%" ry=%"~dpt%" transform=%"rotate(~d,~d,~d)%" fill=%"transparent%" stroke=%"black%" stroke-width=%"1pt%"/>~%%"
                       CENTERX (\HTML.SVG-Y DATA CENTERY)
                       SEMIMAJORRADIUS SEMIMINORRADIUS (- ORIENTATION)
                       CENTERX
@@ -717,7 +739,7 @@
           (HTML.OUTPUT-GRAPHICS STREAM)
           (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
                (CL:FORMAT BACKING 
-            "<line x1=%"~d%" y1=%"~d%" x2=%"~d%" y2=%"~d%" stroke=%"black%" stroke-width=%"~d%"/>~%%"
+  "<line x1=%"~dpt%" y1=%"~dpt%" x2=%"~dpt%" y2=%"~dpt%" stroke=%"black%" stroke-width=%"~dpt%"/>~%%"
                       X1 (\HTML.SVG-Y DATA Y1)
                       X2
                       (\HTML.SVG-Y DATA Y2)
@@ -729,6 +751,8 @@
 
    (* ;; "TODO implement BRUSH and DASHING")
 
+   (* ;; "Because the polygon tags only accept coordinates in pixel units, we must scale values by 1.33  to get points.")
+
    (CHECK-OPEN STREAM)
    (HTML.OUTPUT-GRAPHICS STREAM)
    (with-htmldata (DATA STREAM)
@@ -736,11 +760,11 @@
                 (DRAWING-TYPE (if CLOSED
                                   then "polygon"
                                 else "polyline")))
-               (CL:FORMAT BACKING "<~a fill=%"none%" stroke=%"black%" stroke-width=%"1%" points=%"" 
+               (CL:FORMAT BACKING "<~a fill=%"none%" stroke=%"black%" stroke-width=%"1pt%" points=%""
                       DRAWING-TYPE)
-               [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (CAR POINT)
-                                              (\HTML.SVG-Y DATA (CDR POINT]
-               (CL:FORMAT BACKING "%"/>~%%"))))
+               [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (PT-TO-PIXEL (CAR POINT))
+                                              (PT-TO-PIXEL (\HTML.SVG-Y DATA (CDR POINT]
+               (CL:FORMAT BACKING "%" />~%%"))))
 
 (CL:DEFUN HTML.FILLCIRCLE (STREAM CENTERX CENTERY RADIUS TEXTURE)
 
@@ -762,10 +786,10 @@
                                "nonzero")
                               (T "evenodd"]
                (CL:FORMAT BACKING 
-             "<polygon fill=%"black%" fill-rule=%"~A%" stroke=%"black%" stroke-width=%"1%" points=%""
+           "<polygon fill=%"black%" fill-rule=%"~A%" stroke=%"black%" stroke-width=%"1pt%" points=%""
                       FILL-RULE)
-               [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (CAR POINT)
-                                              (\HTML.SVG-Y DATA (CDR POINT]
+               [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (PIXEL-TO-PT (CAR POINT))
+                                              (\HTML.SVG-Y DATA (PIXEL-TO-PT (CDR POINT]
                (CL:FORMAT BACKING "%"/>~%%"))))
 
 (CL:DEFUN HTML.FONT (STREAM NEW-FONT)
@@ -804,7 +828,6 @@
 
 (CL:DEFUN HTML.MOVETO (STREAM X Y)
    "Move to X, Y"
-   (printout T "HTML.MOVETO" T)
    (HTML.OUTPUT-GRAPHICS STREAM)
    (with-htmldata (DATA STREAM)
           (CL:SETF (\HTML-X-POSITION DATA)
@@ -966,7 +989,7 @@
           (HTML.OUTPUT-GRAPHICS STREAM)
           (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
                (CL:FORMAT BACKING 
-          "<circle cx=%"~d%" cy=%"~d%" r=%"~d%" fill=%"~a%" stroke=%"black%" stroke-width=%"1%"/>~%%"
+  "<circle cx=%"~dpt%" cy=%"~dpt%" r=%"~dpt%" fill=%"~a%" stroke=%"black%" stroke-width=%"1pt%"/>~%%"
                       CENTERX (\HTML.SVG-Y DATA CENTERY)
                       RADIUS COLOR-NAME))
           (HTML.MOVETO STREAM CENTERX CENTERY)))
@@ -994,11 +1017,6 @@
                  0)
           (CL:SETF (\HTML-Y-POSITION DATA)
                  (\HTML-TOP-MARGIN DATA))))
-
-(CL:DEFUN \HTML.SVG-Y (DATA MEDLEY-Y)
-   "Return the SVG Y-coordinate for a Medley Y coordinate"
-   (- (\HTML-TOP-MARGIN DATA)
-      MEDLEY-Y))
 
 (CL:DEFUN \HTMLSTREAM.INIT ()
 
@@ -1056,22 +1074,20 @@
                                 FONTFAMILY _ FAMILY
                                 FONTSIZE _ SIZE
                                 FONTFACE _ FACE
-                                \SFAscent _ (CENTIPOINTS-TO-POINTS (fetch (WEB-FONT-METRICS maxAscent
-                                                                                 ) of FONT-DESCR))
-                                \SFDescent _ (CENTIPOINTS-TO-POINTS (fetch (WEB-FONT-METRICS 
-                                                                                  maxDescent)
-                                                                       of FONT-DESCR))
-                                \SFHeight _ (CENTIPOINTS-TO-POINTS (fetch (WEB-FONT-METRICS height)
-                                                                      of FONT-DESCR))
+                                \SFAscent _ (ICP-TO-P (fetch (WEB-FONT-METRICS maxAscent)
+                                                         of FONT-DESCR))
+                                \SFDescent _ (ICP-TO-P (fetch (WEB-FONT-METRICS maxDescent)
+                                                          of FONT-DESCR))
+                                \SFHeight _ (ICP-TO-P (fetch (WEB-FONT-METRICS height) of FONT-DESCR)
+                                                   )
                                 ROTATION _ 0
                                 FONTDEVICESPEC _ (LIST FAMILY SIZE FACE ROTATION DEVICE)
                                 \SFFACECODE _ (\FACECODE FACE)
                                 OTHERDEVICEFONTPROPS _ PRIVATE-FONT-INFO))
-                     (CSINFO (\CREATECHARSET CHARSET FD T)))
+                     (CSINFO (\CREATECHARSET CHARSET FD T))
+                     (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
                     (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
-                       do (\FSETWIDTH (fetch (CHARSETINFO WIDTHS) of CSINFO)
-                                 CH
-                                 (CENTIPOINTS-TO-POINTS WIDTH)))
+                       do (\FSETWIDTH CS-WIDTHS CH (ICP-TO-P WIDTH)))
                     FD))))
 
 (CL:DEFUN \HTML.FONTSAVAILABLE (FAMILY SIZE FACE ROTATION DEVICE)
@@ -1148,35 +1164,41 @@
                                          else (CONS ELEMENT (CLEAN (CDR LIST]
                (SETQ \FONTSINCORE (CLEAN \FONTSINCORE))
                NIL)))
+
+(DEFMACRO DO-NOT (&BODY BODY)
+   "Ignore the body, return NIL"
+   NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (3202 4689 (BEZIER-CONTROL-POINTS-TO-SVG 3202 . 4689)) (4691 4880 (CLOSE-KNOTS 4691 . 
-4880)) (4882 5137 (COMPUTE-LINE-HEIGHT 4882 . 5137)) (5139 5395 (COMPUTE-MAX-ASCENT 5139 . 5395)) (
-5397 5656 (COMPUTE-MAX-DESCENT 5397 . 5656)) (5658 7317 (CONVERT-TO-BEZIER 5658 . 7317)) (7319 7475 (
-HTML.INCHES-TO-POINTS 7319 . 7475)) (7477 7567 (CENTIPOINTS-TO-POINTS 7477 . 7567)) (7844 8187 (
-MAKE-FONT-METRICS-FILE-NAME 7844 . 8187)) (8189 8589 (MAKE-CHARSET-METRICS-FILE-NAME 8189 . 8589)) (
-11421 11810 (CHECK-BROWSER-METRICS-FORMAT 11421 . 11810)) (11812 13504 (CSS-CLASS-FROM 11812 . 13504))
- (13506 14837 (\HTML.READ-CHARSET-METRICS 13506 . 14837)) (14839 16296 (\HTML.READ-FONT-METRICS 14839
- . 16296)) (16897 17129 (with-htmldata 16897 . 17129)) (17131 17351 (CHECK-OPEN 17131 . 17351)) (17353
- 18010 (HTML.OUTPUT-GRAPHICS 17353 . 18010)) (18012 19244 (HTML.OUTPUT-TEXT 18012 . 19244)) (19246 
-20422 (\HTML.MAYBE-START-PAGE 19246 . 20422)) (20424 20831 (\HTML.END-PAGE 20424 . 20831)) (20833 
-24669 (HTML.WRITE-PREFACE 20833 . 24669)) (24671 30182 (OPENHTMLSTREAM 24671 . 30182)) (30184 30538 (
-HTML.BACKCOLOR 30184 . 30538)) (30540 30833 (HTML.BITBLT 30540 . 30833)) (30835 31018 (HTML.BLTSHADE 
-30835 . 31018)) (31020 31417 (HTML.BOTTOMMARGIN 31020 . 31417)) (31419 31928 (HTML.CHARWIDTH 31419 . 
-31928)) (31930 32283 (HTML.CLIPPINGREGION 31930 . 32283)) (32285 32863 (HTML.CLOSEFN 32285 . 32863)) (
-32865 33211 (HTML.COLOR 32865 . 33211)) (33213 33429 (HTML.DRAWCIRCLE 33213 . 33429)) (33431 34669 (
-HTML.DRAWCURVE 33431 . 34669)) (34671 35418 (HTML.DRAWELLIPSE 34671 . 35418)) (35420 36054 (
-HTML.DRAWLINE 35420 . 36054)) (36056 36873 (HTML.DRAWPOLYGON 36056 . 36873)) (36875 37050 (
-HTML.FILLCIRCLE 36875 . 37050)) (37052 37926 (HTML.FILLPOLYGON 37052 . 37926)) (37928 38811 (HTML.FONT
- 37928 . 38811)) (38813 39199 (HTML.LEFTMARGIN 38813 . 39199)) (39201 39492 (HTML.LINEFEED 39201 . 
-39492)) (39494 39783 (HTML.MOVETO 39494 . 39783)) (39785 39854 (HTML.NEWPAGE 39785 . 39854)) (39856 
-40213 (HTML.OPERATION 39856 . 40213)) (40215 42262 (HTML.OUTCHARFN 40215 . 42262)) (42264 42620 (
-HTML.RESET 42264 . 42620)) (42622 43016 (HTML.RIGHTMARGIN 42622 . 43016)) (43018 43331 (HTML.SCALE 
-43018 . 43331)) (43333 43657 (HTML.SCALEDBITBLT 43333 . 43657)) (43659 44002 (HTML.SPACEFACTOR 43659
- . 44002)) (44004 44672 (HTML.TERPRI 44004 . 44672)) (44674 45017 (HTML.TOPMARGIN 44674 . 45017)) (
-45019 45362 (HTML.XPOSITION 45019 . 45362)) (45364 45707 (HTML.YPOSITION 45364 . 45707)) (45709 45954 
-(MAKE-HTML-IMAGETYPE 45709 . 45954)) (45956 46534 (\HTML.FILLCIRCLE 45956 . 46534)) (46536 47307 (
-\HTML.INIT-IMAGEDATA 46536 . 47307)) (47309 47456 (\HTML.SVG-Y 47309 . 47456)) (47458 47980 (
-\HTMLSTREAM.INIT 47458 . 47980)) (47982 51105 (\HTML.FONTCREATE 47982 . 51105)) (51107 51988 (
-\HTML.FONTSAVAILABLE 51107 . 51988)) (51990 53288 (\HTML.CREATECHARSET 51990 . 53288)) (53290 53561 (
-\HTML.CHANGECHARSET 53290 . 53561)) (53622 54422 (\CLEAN-FONT-CACHE 53622 . 54422)))))
+  (FILEMAP (NIL (2911 4540 (BEZIER-CONTROL-POINTS-TO-SVG 2911 . 4540)) (4542 4731 (CLOSE-KNOTS 4542 . 
+4731)) (4733 4988 (COMPUTE-LINE-HEIGHT 4733 . 4988)) (4990 5246 (COMPUTE-MAX-ASCENT 4990 . 5246)) (
+5248 5507 (COMPUTE-MAX-DESCENT 5248 . 5507)) (5509 7168 (CONVERT-TO-BEZIER 5509 . 7168)) (7170 7326 (
+HTML.INCHES-TO-POINTS 7170 . 7326)) (7328 7397 (CP-TO-P 7328 . 7397)) (7399 7545 (ICP-TO-P 7399 . 7545
+)) (7547 7706 (PIXEL-TO-PT 7547 . 7706)) (7708 7868 (PT-TO-PIXEL 7708 . 7868)) (7870 8017 (\HTML.SVG-Y
+ 7870 . 8017)) (8294 8637 (MAKE-FONT-METRICS-FILE-NAME 8294 . 8637)) (8639 9039 (
+MAKE-CHARSET-METRICS-FILE-NAME 8639 . 9039)) (11871 12260 (CHECK-BROWSER-METRICS-FORMAT 11871 . 12260)
+) (12262 13954 (CSS-CLASS-FROM 12262 . 13954)) (13956 15335 (\HTML.READ-CHARSET-METRICS 13956 . 15335)
+) (15337 16819 (\HTML.READ-FONT-METRICS 15337 . 16819)) (17420 17652 (with-htmldata 17420 . 17652)) (
+17654 17874 (CHECK-OPEN 17654 . 17874)) (17876 18533 (HTML.OUTPUT-GRAPHICS 17876 . 18533)) (18535 
+19777 (HTML.OUTPUT-TEXT 18535 . 19777)) (19779 20959 (\HTML.MAYBE-START-PAGE 19779 . 20959)) (20961 
+21368 (\HTML.END-PAGE 20961 . 21368)) (21370 25206 (HTML.WRITE-PREFACE 21370 . 25206)) (25208 30719 (
+OPENHTMLSTREAM 25208 . 30719)) (30721 31075 (HTML.BACKCOLOR 30721 . 31075)) (31077 31370 (HTML.BITBLT 
+31077 . 31370)) (31372 31555 (HTML.BLTSHADE 31372 . 31555)) (31557 31954 (HTML.BOTTOMMARGIN 31557 . 
+31954)) (31956 32465 (HTML.CHARWIDTH 31956 . 32465)) (32467 32820 (HTML.CLIPPINGREGION 32467 . 32820))
+ (32822 33400 (HTML.CLOSEFN 32822 . 33400)) (33402 33748 (HTML.COLOR 33402 . 33748)) (33750 33966 (
+HTML.DRAWCIRCLE 33750 . 33966)) (33968 35206 (HTML.DRAWCURVE 33968 . 35206)) (35208 35965 (
+HTML.DRAWELLIPSE 35208 . 35965)) (35967 36601 (HTML.DRAWLINE 35967 . 36601)) (36603 37584 (
+HTML.DRAWPOLYGON 36603 . 37584)) (37586 37761 (HTML.FILLCIRCLE 37586 . 37761)) (37763 38672 (
+HTML.FILLPOLYGON 37763 . 38672)) (38674 39557 (HTML.FONT 38674 . 39557)) (39559 39945 (HTML.LEFTMARGIN
+ 39559 . 39945)) (39947 40238 (HTML.LINEFEED 39947 . 40238)) (40240 40497 (HTML.MOVETO 40240 . 40497))
+ (40499 40568 (HTML.NEWPAGE 40499 . 40568)) (40570 40927 (HTML.OPERATION 40570 . 40927)) (40929 42976 
+(HTML.OUTCHARFN 40929 . 42976)) (42978 43334 (HTML.RESET 42978 . 43334)) (43336 43730 (
+HTML.RIGHTMARGIN 43336 . 43730)) (43732 44045 (HTML.SCALE 43732 . 44045)) (44047 44371 (
+HTML.SCALEDBITBLT 44047 . 44371)) (44373 44716 (HTML.SPACEFACTOR 44373 . 44716)) (44718 45386 (
+HTML.TERPRI 44718 . 45386)) (45388 45731 (HTML.TOPMARGIN 45388 . 45731)) (45733 46076 (HTML.XPOSITION 
+45733 . 46076)) (46078 46421 (HTML.YPOSITION 46078 . 46421)) (46423 46668 (MAKE-HTML-IMAGETYPE 46423
+ . 46668)) (46670 47248 (\HTML.FILLCIRCLE 46670 . 47248)) (47250 48021 (\HTML.INIT-IMAGEDATA 47250 . 
+48021)) (48023 48545 (\HTMLSTREAM.INIT 48023 . 48545)) (48547 51456 (\HTML.FONTCREATE 48547 . 51456)) 
+(51458 52339 (\HTML.FONTSAVAILABLE 51458 . 52339)) (52341 53639 (\HTML.CREATECHARSET 52341 . 53639)) (
+53641 53912 (\HTML.CHANGECHARSET 53641 . 53912)) (53973 54773 (\CLEAN-FONT-CACHE 53973 . 54773)) (
+54775 54849 (DO-NOT 54775 . 54849)))))
 STOP

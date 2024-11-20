@@ -1,8 +1,9 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "16-Nov-2024 09:30:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;8 9663   
+(FILECREATED "19-Nov-2024 11:56:13" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;9 9496   
 
-      :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
+      :CHANGES-TO (FNS PROCESS-BROWSER-FONT-METRICS)
+                  (VARS XCCS-UNICODE-DUMPERCOMS)
 
       :PREVIOUS-DATE "12-Nov-2024 16:49:40" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;6)
@@ -65,11 +66,9 @@
                              )
                             (CL:FORMAT T 
                                 "Font ~s, ~A ~A ~A: height ~d, ascent ~d, descent ~d, ~d charsets~%%"
-                                   FONT-FAMILY FONT-SIZE FONT-WEIGHT FONT-STYLE (
-                                                                                CENTIPOINTS-TO-POINTS
-                                                                                 LINE-HEIGHT)
-                                   (CENTIPOINTS-TO-POINTS MAX-ASCENT)
-                                   (CENTIPOINTS-TO-POINTS MAX-DESCENT)
+                                   FONT-FAMILY FONT-SIZE FONT-WEIGHT FONT-STYLE (CP-TO-P LINE-HEIGHT)
+                                   (CP-TO-P MAX-ASCENT)
+                                   (CP-TO-P MAX-DESCENT)
                                    (LENGTH CHARSETS))
 
                             (* ;; "write a wfm file to describe the font itself")
@@ -165,7 +164,7 @@
 (RECORD WEB-FONT-FACE (weight slope expansion))
 )
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (845 1398 (CREATE-ALL-FONT-METRICS 845 . 1398)) (1399 5070 (PROCESS-BROWSER-FONT-METRICS
- 1409 . 5068)) (5072 6598 (DUMP-XCCS-UNICODE-MAPPING 5072 . 6598)) (6600 8080 (WRITE-FONT-METRICS-FILE
- 6600 . 8080)) (8082 9474 (WRITE-CHARSET-METRICS-FILE 8082 . 9474)))))
+  (FILEMAP (NIL (898 1451 (CREATE-ALL-FONT-METRICS 898 . 1451)) (1452 4903 (PROCESS-BROWSER-FONT-METRICS
+ 1462 . 4901)) (4905 6431 (DUMP-XCCS-UNICODE-MAPPING 4905 . 6431)) (6433 7913 (WRITE-FONT-METRICS-FILE
+ 6433 . 7913)) (7915 9307 (WRITE-CHARSET-METRICS-FILE 7915 . 9307)))))
 STOP

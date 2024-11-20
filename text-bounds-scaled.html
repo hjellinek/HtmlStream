@@ -19,7 +19,7 @@
 
     // load the fonts and then gather their measurements
     Promise.all(fontLoadPromises).then(_ => {
-        showMetrics();
+        showAndDrawMetrics();
     });
 </script>
 <style>
@@ -43,13 +43,13 @@ text { white-space: pre }
 <body>
 <canvas id="canvas" width="8.5in" height="11in" hidden="hidden"></canvas>
 
-<svg id="svg" width="612" height="792" viewBox="0 0 612 792">
-<text id="text-here" class='nsd10' x=0 y=18></text>
+<svg id="svg" width="612pt" height="792pt" viewBox="0 0 612 792">
+<text id="text-here" class='nsd10' x="0" y="18pt"></text>
 </svg>
 <script>
     const SVG_NS = "http://www.w3.org/2000/svg";
-    // const SAMPLE_TEXT = SAMPLE_TEXT"The quick brown fox jumped over the lazy dog 1234567890 times.";
-    const SAMPLE_TEXT = " !\"#$%&'()*+,-./";
+    const SAMPLE_TEXT = "The quick brown fox jumped over the lazy dog 1234567890 times.";
+    // const SAMPLE_TEXT = " !\"#$%&'()*+,-./";
     const canvas = document.getElementById("canvas");
 
     function getFontMeasurer(font) {
@@ -58,30 +58,33 @@ text { white-space: pre }
         return context;
     }
 
-    function showMetrics() {
+    function drawLine(x1, y1, x2, y2, afterElt) {
+        let lineElt = document.createElementNS(SVG_NS, "line");
+        lineElt.setAttribute("x1", x1.toString()+"pt");
+        lineElt.setAttribute("y1", y1.toString()+"pt");
+        lineElt.setAttribute("x2", x2.toString()+"pt");
+        lineElt.setAttribute("y2", y2.toString()+"pt");
+        lineElt.setAttribute("stroke-width", "1");
+        lineElt.setAttribute("stroke", "black");
+        afterElt.after(lineElt);
+    }
+
+    function showAndDrawMetrics() {
         const textHere = document.getElementById("text-here");
         textHere.textContent = SAMPLE_TEXT;
 
         const measurer = getFontMeasurer(fontSpec);
 
-        let totalWidth = 0;
+        let perCharTotalWidth = 0;
         for (const ch of SAMPLE_TEXT) {
             const measuredText = measurer.measureText(ch);
             const width = measuredText.width;
-            totalWidth += width;
+            perCharTotalWidth += width;
             console.log("ascii[", ch.charCodeAt(0), "] =", width, ";");
         }
+        console.log("per char total width: ", perCharTotalWidth);
 
-        console.log("total width: ", totalWidth);
-
-        let lineElt = document.createElementNS(SVG_NS, "line");
-        lineElt.setAttribute("x1", "0");
-        lineElt.setAttribute("y1", "18");
-        lineElt.setAttribute("x2", ""+totalWidth);
-        lineElt.setAttribute("y2", "18");
-        lineElt.setAttribute("stroke-width", "1");
-        lineElt.setAttribute("stroke", "black");
-        textHere.after(lineElt);
+        drawLine(0, 18, perCharTotalWidth * 0.75, 18, textHere);
     }
 
 </script>

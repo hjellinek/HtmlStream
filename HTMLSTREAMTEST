@@ -1,14 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "16-Nov-2024 15:48:12" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;11 13084  
+(FILECREATED "20-Nov-2024 14:54:00" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;17 12961  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS WINDOWTEST.SHOW-TEXT-BOUNDS 
-                         HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
-                         HTMLTEST.TEXT-TWO-FONTS)
-                  (VARS HTMLSTREAMTESTCOMS)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS WINDOWTEST.SHOW-TEXT-BOUNDS)
 
-      :PREVIOUS-DATE "13-Nov-2024 14:13:05" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;2)
+      :PREVIOUS-DATE "19-Nov-2024 17:11:30" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;16)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -80,14 +77,18 @@
 (CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
    "Output text, draw bounds, dump widths"
 
-   (* ;; "Remember: Y = 0 is at the bottom left; Y decreases as you go down the page.")
+   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
+
+   (* ;; "We invert the Y coordinate to match Medley:")
+
+   (* ;; "    In Medley, Y = 0 is the bottom left")
 
    (* ;; "Text is drawn with baseline at current Y position")
 
    (* ;; "The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
 
    (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
-          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890")
+          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
                 (FONT10 (FONTCREATE 'NOTO-SANS-DISPLAY 10 'REGULAR NIL STREAM))
                 (FONT20 (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL STREAM))
                 STARTING-X STARTING-Y BASELINE-Y FONT-HEIGHT SAMPLE-WIDTH)
@@ -100,25 +101,25 @@
                                         'HEIGHT))
                (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
                (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+               (PRINTOUT T "SVG y pos before text = " (- (DSPTOPMARGIN NIL STREAM)
+                                                         (DSPYPOSITION NIL STREAM))
+                      T)
+               (PRINTOUT STREAM SAMPLE T)
                (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE (DSPFONT NIL STREAM)))
-
-               (* ;; "draws at (0, 26)")
-
-               (CL:FORMAT STREAM SAMPLE)
-
-               (* ;; "draws at (0, 13)")
-
+               (PRINTOUT T "SVG y pos before polygon = " (- (DSPTOPMARGIN NIL STREAM)
+                                                            (DSPYPOSITION NIL STREAM))
+                      T)
                (DRAWPOLYGON (LIST (CONS (+ STARTING-X SAMPLE-WIDTH)
                                         STARTING-Y)
                                   (CONS STARTING-X STARTING-Y)
                                   (CONS STARTING-X (+ STARTING-Y FONT-HEIGHT)))
                       NIL NIL NIL STREAM)
+               (PRINTOUT T "SVG y pos after polygon = " (- (DSPTOPMARGIN NIL STREAM)
+                                                           (DSPYPOSITION NIL STREAM))
+                      T)
                (TERPRI STREAM)
                (TERPRI STREAM)
                (TERPRI STREAM)
-               [for CHCODE from 65 to 90 do (CL:FORMAT STREAM "Character ~2,d ('~a') width = ~d~%%" 
-                                                   CHCODE (CHARACTER CHCODE)
-                                                   (CHARWIDTH CHCODE (DSPFONT NIL STREAM]
                FILE-NAME)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "/tmp/one-page-with-curve.html"))
@@ -192,7 +193,7 @@
 
    (* ;; "Text is drawn with baseline at current Y position")
 
-   [LET* ((WINDOW (OR REUSE-WINDOW (CREATEW (create REGION
+   (LET* ((WINDOW (OR REUSE-WINDOW (CREATEW (create REGION
                                                    LEFT _ 610
                                                    BOTTOM _ 10
                                                    WIDTH _ (HTML.INCHES-TO-POINTS 8.5)
@@ -222,10 +223,7 @@
                 NIL NIL NIL STREAM)
          (TERPRI STREAM)
          (TERPRI STREAM)
-         (TERPRI STREAM)
-         (for CHCODE from 65 to 90 do (CL:FORMAT STREAM "Character ~2,d ('~a') width = ~d~%%" CHCODE
-                                             (CHARACTER CHCODE)
-                                             (CHARWIDTH CHCODE (DSPFONT NIL STREAM])
+         (TERPRI STREAM)))
 
 (CL:DEFUN HTMLTEST.TRANSFORM (PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)
    "Move and scale a point"
@@ -238,11 +236,11 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1120 1773 (HTMLTEST.ONE-PAGE-SIMPLE 1120 . 1773)) (1775 4482 (
-HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1775 . 4482)) (4484 6608 (HTMLTEST.SHOW-TEXT-BOUNDS 4484 . 6608
-)) (6610 7060 (HTMLTEST.ONE-PAGE-WITH-CURVE 6610 . 7060)) (7062 8790 (HTMLTEST.TEXT-TWO-FONTS 7062 . 
-8790)) (8792 9516 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 8792 . 9516)) (9518 10416 (
-HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 9518 . 10416)) (10418 12545 (WINDOWTEST.SHOW-TEXT-BOUNDS 10418 . 
-12545)) (12547 12818 (HTMLTEST.TRANSFORM 12547 . 12818)) (12820 13061 (HTMLTEST.TRANSFORM-POINTS 12820
- . 13061)))))
+  (FILEMAP (NIL (928 1581 (HTMLTEST.ONE-PAGE-SIMPLE 928 . 1581)) (1583 4290 (
+HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 1583 . 4290)) (4292 6749 (HTMLTEST.SHOW-TEXT-BOUNDS 4292 . 6749
+)) (6751 7201 (HTMLTEST.ONE-PAGE-WITH-CURVE 6751 . 7201)) (7203 8931 (HTMLTEST.TEXT-TWO-FONTS 7203 . 
+8931)) (8933 9657 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 8933 . 9657)) (9659 10557 (
+HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 9659 . 10557)) (10559 12422 (WINDOWTEST.SHOW-TEXT-BOUNDS 10559 . 
+12422)) (12424 12695 (HTMLTEST.TRANSFORM 12424 . 12695)) (12697 12938 (HTMLTEST.TRANSFORM-POINTS 12697
+ . 12938)))))
 STOP
