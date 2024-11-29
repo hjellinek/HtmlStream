@@ -1,0 +1,315 @@
+(DEFINE-FILE-INFO PACKAGE (DEFPACKAGE "UNCOMPRESSED-PNG" (USE "COMMON-LISP") (NICKNAMES "U-PNG") (
+EXPORT "WRITE-BITMAP")) READTABLE "XCL" BASE 10)
+
+(IL:FILECREATED "29-Nov-2024 14:40:11" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>U-PNG.;26| 12917  
+
+      :CHANGES-TO (IL:VARS IL:U-PNGCOMS)
+                  (IL:VARIABLES *WORD-MASK*)
+                  (IL:FUNCTIONS SVPNG-BEGIN SVPNG-U8ADLER SVPNG-U8C PIXEL-TO-MONOCHROME-RGBA 
+                         WRITE-BITMAP TEST-IT SVPNG-END SVPNG-U32 LOGICAL-RIGHT-SHIFT 
+                         LOGICAL-LEFT-SHIFT SVPNG-U16LC SVPNG-U32C SVPNG-U8AC)
+
+      :PREVIOUS-DATE "26-Nov-2024 16:06:49" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>U-PNG.;15|
+)
+
+
+(IL:PRETTYCOMPRINT IL:U-PNGCOMS)
+
+(IL:RPAQQ IL:U-PNGCOMS
+          (
+
+(IL:* IL:|;;;;| "This is a Xerox Common Lisp implementation of a BITMAP to uncompressed PNG writer,")
+
+           
+
+(IL:* IL:|;;;;| 
+"based on insights garnered from the C code at https://github.com/miloyip/svpng 0.1.1.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           
+
+(IL:* IL:|;;;;| "This XCL implementation by Herb Jellinek, hjellinek@interlisp.org.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           (XCL:FILE-ENVIRONMENTS IL:U-PNG)
+           (IL:P (XCL:DEFPACKAGE "UNCOMPRESSED-PNG" (:USE "COMMON-LISP")
+                        (:NICKNAMES "U-PNG")
+                        (:EXPORT "WRITE-BITMAP")))
+           (IL:VARIABLES *WORD-MASK* CRC32-ADLER)
+           (IL:FUNCTIONS SVPNG-BEGIN SVPNG-END SVPNG-U16LC SVPNG-U32 SVPNG-U32C SVPNG-U8A SVPNG-U8AC
+                  SVPNG-U8ADLER SVPNG-U8C)
+           (IL:FUNCTIONS PIXEL-TO-MONOCHROME-RGBA)
+           (IL:FUNCTIONS LOGICAL-RIGHT-SHIFT LOGICAL-LEFT-SHIFT)
+           
+           (IL:* IL:|;;| "Primary function")
+
+           (IL:FUNCTIONS WRITE-BITMAP)
+           
+           (IL:* IL:|;;| "Debugging")
+
+           (IL:FUNCTIONS DEBUG-OUTPUT-FN TEST-IT)))
+
+
+
+(IL:* IL:|;;;;| "This is a Xerox Common Lisp implementation of a BITMAP to uncompressed PNG writer,")
+
+
+
+
+(IL:* IL:|;;;;| 
+"based on insights garnered from the C code at https://github.com/miloyip/svpng 0.1.1.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+
+
+(IL:* IL:|;;;;| "This XCL implementation by Herb Jellinek, hjellinek@interlisp.org.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+(XCL:DEFINE-FILE-ENVIRONMENT IL:U-PNG :PACKAGE (XCL:DEFPACKAGE "UNCOMPRESSED-PNG" (:USE "COMMON-LISP"
+                                                                                        )
+                                                      (:NICKNAMES "U-PNG")
+                                                      (:EXPORT "WRITE-BITMAP"))
+   :READTABLE "xcl")
+
+(XCL:DEFPACKAGE "UNCOMPRESSED-PNG" (:USE "COMMON-LISP")
+       (:NICKNAMES "U-PNG")
+       (:EXPORT "WRITE-BITMAP"))
+
+(DEFCONSTANT *WORD-MASK* 4294967295
+   "Four bytes of 1 bits")
+
+(DEFCONSTANT CRC32-ADLER
+
+   (IL:* IL:|;;| "0, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c, 0xEDB88320, 0xF00F9344 0xD6D6A3E8, 0xCB61B38C, 0x9B64C2B0, 0x86D3D2D4, 0xA00AE278, 0xBDBDF21C")
+
+   (MAKE-ARRAY 16 :INITIAL-CONTENTS
+          '(0 498536548 997073096 651767980 1994146192 1802195444 1303535960 1342533948 3988292384 
+              4027552580 3604390888 3412177804 2607071920 2262029012 2685067896 3183342108))
+   "CRC32 table")
+
+(DEFMACRO SVPNG-BEGIN (UA L OUTPUT-FN)
+   `(PROGN (SVPNG-U32 ,L ,OUTPUT-FN)
+           (SETF CRC *WORD-MASK*)                            (IL:* IL:\; "= (LOGNOT 0)")
+           (SVPNG-U8AC ,UA 4 ,OUTPUT-FN)))
+
+(DEFMACRO SVPNG-END (OUTPUT-FN)
+   `(SVPNG-U32 (LOGNOT CRC)
+           ,OUTPUT-FN))
+
+(DEFMACRO SVPNG-U16LC (U OUTPUT-FN)
+   `(PROGN (SVPNG-U8C (LOGAND ,U 255)
+                  ,OUTPUT-FN)
+           (SVPNG-U8C (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 8)
+                             255)
+                  ,OUTPUT-FN)))
+
+(DEFMACRO SVPNG-U32 (U OUTPUT-FN)
+   `(PROGN (FUNCALL ,OUTPUT-FN (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 24)
+                                      255))
+           (FUNCALL ,OUTPUT-FN (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 16)
+                                      255))
+           (FUNCALL ,OUTPUT-FN (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 8)
+                                      255))
+           (FUNCALL ,OUTPUT-FN (LOGAND ,U 255))))
+
+(DEFMACRO SVPNG-U32C (U OUTPUT-FN)
+   `(PROGN (SVPNG-U8C (LOGICAL-RIGHT-SHIFT ,U 32 24)
+                  ,OUTPUT-FN)
+           (SVPNG-U8C (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 16)
+                             255)
+                  ,OUTPUT-FN)
+           (SVPNG-U8C (LOGAND (LOGICAL-RIGHT-SHIFT ,U 32 8)
+                             255)
+                  ,OUTPUT-FN)
+           (SVPNG-U8C (LOGAND ,U 255)
+                  ,OUTPUT-FN)))
+
+(DEFMACRO SVPNG-U8A (ARRAY-OR-LIST L OUTPUT-FN)
+   `(IF (LISTP ,ARRAY-OR-LIST)
+        (DOTIMES (I ,L)
+            (FUNCALL ,OUTPUT-FN (ELT ,ARRAY-OR-LIST I)))
+        (DOTIMES (I ,L)
+            (FUNCALL ,OUTPUT-FN (AREF ,ARRAY-OR-LIST I)))))
+
+(DEFMACRO SVPNG-U8AC (ARRAY-STRING-OR-LIST L OUTPUT-FN)
+
+   (IL:* IL:|;;| "TODO bitmap-value needs to call PIXEL-MAPPER on (x, y), not I")
+
+   `(COND
+       ((LISTP ,ARRAY-STRING-OR-LIST)
+        (DOTIMES (I ,L)
+            (SVPNG-U8C (ELT ,ARRAY-STRING-OR-LIST I)
+                   ,OUTPUT-FN)))
+       ((STRINGP ,ARRAY-STRING-OR-LIST)
+        (DOTIMES (I ,L)
+            (SVPNG-U8C (CHAR-CODE (CHAR ,ARRAY-STRING-OR-LIST I))
+                   ,OUTPUT-FN)))
+       (T (XCL:HELP "Not a list or string")                  (IL:* (DOTIMES (I (IL:\\\, L))
+                                                             (SVPNG-U8C (BITMAP-VALUE I)
+                                                             (IL:\\\, OUTPUT-FN))))
+          )))
+
+(DEFMACRO SVPNG-U8ADLER (U OUTPUT-FN)
+   `(PROGN (SVPNG-U8C ,U ,OUTPUT-FN)
+           (SETF A (MOD (+ A ,U)
+                        65521))
+           (SETF B (MOD (+ B A)
+                        65521))))
+
+(DEFMACRO SVPNG-U8C (U OUTPUT-FN)
+   `(PROGN (FUNCALL ,OUTPUT-FN ,U)
+           (SETF CRC (LOGXOR CRC ,U))
+           (SETF CRC (LOGXOR (LOGICAL-RIGHT-SHIFT CRC 32 4)
+                            (AREF CRC32-ADLER (LOGAND CRC 15))))
+           (SETF CRC (LOGXOR (LOGICAL-RIGHT-SHIFT CRC 32 4)
+                            (AREF CRC32-ADLER (LOGAND CRC 15))))))
+
+(DEFUN PIXEL-TO-MONOCHROME-RGBA (BITMAP X Y)
+   "Convert a BITMAP pixel to a monochrome (R,G,B,A) by thresholding"
+   (LET ((PIXEL-VALUE (IL:BITMAPBIT BITMAP X Y))
+         (THRESHOLD (/ (IL:BITSPERPIXEL BITMAP)
+                       2))
+         (ON '(0 0 0 255))                                   (IL:* IL:\; 
+                                                             "\"off\" pixels are (255,255,255,255)")
+         (OFF '(255 255 255 255)))                           (IL:* IL:\; 
+                                                             "\"on\" pixels are (0,0,0,255)")
+        (COND
+           ((< PIXEL-VALUE THRESHOLD)
+            OFF)
+           (T ON))))
+
+(DEFUN LOGICAL-RIGHT-SHIFT (X WIDTH BITS)
+   "Compute bitwide right shift of X by 'bits' bits, represented on 'width' bits"
+
+   (IL:* IL:|;;| 
+ "from \"Bitwise operations in Common Lisp,\" https://tomscii.sig7.se/2016/01/CL-bitwise-Rosettacode")
+
+   (LOGAND (ASH X (- BITS))
+          (1- (ASH 1 WIDTH))))
+
+(DEFUN LOGICAL-LEFT-SHIFT (X WIDTH BITS)
+   "Compute bitwide left shift of X by 'bits' bits, represented on 'width' bits"
+
+   (IL:* IL:|;;| 
+ "from \"Bitwise operations in Common Lisp,\" https://tomscii.sig7.se/2016/01/CL-bitwise-Rosettacode")
+
+   (LOGAND (ASH X BITS)
+          (1- (ASH 1 WIDTH))))
+
+
+
+(IL:* IL:|;;| "Primary function")
+
+
+(DEFUN WRITE-BITMAP (BITMAP USE-ALPHA OUTPUT-FN PIXEL-MAPPER)
+   "Write a Medley BITMAP in uncompressed PNG format using OUTPUT-FN to write and PIXEL-MAPPER to convert to RGB"
+
+   (IL:* IL:|;;| "OUTPUT-FN takes a single argument, a byte to write")
+
+   (IL:* IL:|;;| "PIXEL-MAPPER takes three arguments: the source BITMAP, X and Y coordinates, returning 4 integers: red, green, blue,alpha")
+
+   (LET* ((WIDTH (IL:BITMAPWIDTH BITMAP))
+          (HEIGHT (IL:BITMAPHEIGHT BITMAP))
+          (BIT-DEPTH 8)
+          (A 1)                                              (IL:* IL:\; "ADLER-a")
+          (B 0)                                              (IL:* IL:\; "ADLER-b")
+          (CRC 0)                                            (IL:* IL:\; "CRC")
+          (CRC-COUNT 0)
+          (PITCH (1+ (* WIDTH (IF USE-ALPHA
+                                  4
+                                  3)))))                     (IL:* IL:\; "image array pitch")
+         (SVPNG-U8A '(137 80 78 71 13 10 26 10)
+                8 OUTPUT-FN)                                 (IL:* IL:\; "PNG magic number")
+         (SVPNG-BEGIN "IHDR" 13 OUTPUT-FN)                   (IL:* IL:\; "(IHDR chunk:")
+         (SVPNG-U32C WIDTH OUTPUT-FN)                        (IL:* IL:\; "8 bytes for W & H")
+         (SVPNG-U32C HEIGHT OUTPUT-FN)
+         (SVPNG-U8C BIT-DEPTH OUTPUT-FN)
+         (SVPNG-U8C (IF USE-ALPHA
+                        6
+                        2)
+                OUTPUT-FN)                                   (IL:* IL:\; 
+                                                             "True color with/without alpha")
+         (SVPNG-U8AC '(0 0 0)
+                3 OUTPUT-FN)                                 (IL:* IL:\; 
+                                                     "compression = deflate, no filter, no interlace")
+         (SVPNG-END OUTPUT-FN)                               (IL:* IL:\; "end IHDR chunk)")
+         (SVPNG-BEGIN "IDAT" (+ 2 (* HEIGHT (+ 5 PITCH))
+                                4)
+                OUTPUT-FN)                                   (IL:* IL:\; "(IDAT chunk:")
+         (SVPNG-U8AC '(120 1)
+                2 OUTPUT-FN)                                 (IL:* IL:\; 
+                                                             "deflate block begin (2 bytes)")
+         (DOTIMES (Y HEIGHT)                                 (IL:* IL:\; 
+                                                  "each horizontal line makes a block for simplicity")
+             (SVPNG-U8C (IF (= Y (1- HEIGHT))
+                            1
+                            0)
+                    OUTPUT-FN)                               (IL:* IL:\; 
+                                                        "1 for the last block, 0 for others (1 byte)")
+             (SVPNG-U16LC PITCH OUTPUT-FN)                   (IL:* IL:\; 
+                                                           "size of block in little-endian (2 bytes)")
+             (SVPNG-U16LC (LOGNOT PITCH)
+                    OUTPUT-FN)                               (IL:* IL:\; 
+                                                             "1's complement of block size (2 bytes)")
+             (SVPNG-U8ADLER 0 OUTPUT-FN)
+             (DOTIMES (X WIDTH)
+                 (XCL:DESTRUCTURING-BIND (RED GREEN BLUE ALPHA)
+                        (FUNCALL PIXEL-MAPPER BITMAP X Y)    (IL:* IL:\; "output RGB and alpha")
+                        (SVPNG-U8ADLER RED OUTPUT-FN)
+                        (SVPNG-U8ADLER GREEN OUTPUT-FN)
+                        (SVPNG-U8ADLER BLUE OUTPUT-FN)
+                        (IF USE-ALPHA (SVPNG-U8ADLER ALPHA OUTPUT-FN))))
+                                                             (IL:* IL:\; "No filter prefix (1 byte)")
+             )
+         (SVPNG-U32C (LOGIOR (LOGICAL-LEFT-SHIFT B 32 16)
+                            A)
+                OUTPUT-FN)                                   (IL:* IL:\; 
+                                                             "deflate block end with adler (4 bytes)")
+         (SVPNG-END OUTPUT-FN)                               (IL:* IL:\; "end IDAT chunk)")
+         (SVPNG-BEGIN "IEND" 0 OUTPUT-FN)                    (IL:* IL:\; "(begin and end IEND chunk)")
+         (SVPNG-END OUTPUT-FN)))
+
+
+
+(IL:* IL:|;;| "Debugging")
+
+
+(DEFUN DEBUG-OUTPUT-FN (BYTE)
+   (FORMAT T "Byte: ~2,'0X " BYTE))
+
+(DEFUN TEST-IT ()
+   "Write a small bitmap as a PNG file"
+   (LET ((FILE-NAME "/tmp/lisp-test.png")
+         (TEST-BITMAP (IL:BITMAPCREATE 16 16 1)))
+        (DOTIMES (D 16)
+            (IL:BITMAPBIT TEST-BITMAP D D 1))
+        (WITH-OPEN-STREAM (OUT (IL:OPENSTREAM FILE-NAME 'IL:OUTPUT NIL '((IL:FORMAT :THROUGH))))
+               (WRITE-BITMAP TEST-BITMAP NIL #'(LAMBDA (BYTE)
+                                                      (IL:BOUT OUT BYTE))
+                      #'PIXEL-TO-MONOCHROME-RGBA))
+        FILE-NAME))
+(IL:DECLARE\: IL:DONTCOPY
+  (IL:FILEMAP (NIL (3358 3581 (SVPNG-BEGIN 3358 . 3581)) (3583 3674 (SVPNG-END 3583 . 3674)) (3676 3921 
+(SVPNG-U16LC 3676 . 3921)) (3923 4363 (SVPNG-U32 3923 . 4363)) (4365 4833 (SVPNG-U32C 4365 . 4833)) (
+4835 5082 (SVPNG-U8A 4835 . 5082)) (5084 5851 (SVPNG-U8AC 5084 . 5851)) (5853 6066 (SVPNG-U8ADLER 5853
+ . 6066)) (6068 6438 (SVPNG-U8C 6068 . 6438)) (6440 7131 (PIXEL-TO-MONOCHROME-RGBA 6440 . 7131)) (7133
+ 7450 (LOGICAL-RIGHT-SHIFT 7133 . 7450)) (7452 7763 (LOGICAL-LEFT-SHIFT 7452 . 7763)) (7807 12249 (
+WRITE-BITMAP 7807 . 12249)) (12286 12355 (DEBUG-OUTPUT-FN 12286 . 12355)) (12357 12888 (TEST-IT 12357
+ . 12888)))))
+IL:STOP
