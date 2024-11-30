@@ -1,0 +1,346 @@
+(DEFINE-FILE-INFO PACKAGE (DEFPACKAGE "S-BASE64" (USE "LISP") (EXPORT "DECODE-BASE64" 
+"ENCODE-BASE64" "DECODE-BASE64-BYTES" "ENCODE-BASE64-BYTES" "ENCODE-BASE64-GEN")) READTABLE "XCL" 
+BASE 10)
+
+(IL:FILECREATED "29-Nov-2024 17:01:33" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>BASE64.;14| 13080  
+
+      :CHANGES-TO (IL:VARS IL:BASE64COMS)
+                  (XCL:FILE-ENVIRONMENTS IL:BASE64)
+                  (IL:FUNCTIONS ENCODE-BASE64-GEN)
+
+      :PREVIOUS-DATE "26-Nov-2024 15:55:40" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>BASE64.;13|
+)
+
+
+(IL:PRETTYCOMPRINT IL:BASE64COMS)
+
+(IL:RPAQQ IL:BASE64COMS
+          (
+
+(IL:* IL:|;;;;| "This is a Common Lisp implementation of Base64 encoding and decoding.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           
+
+(IL:* IL:|;;;;| " Copyright (C) 2002-2005 Sven Van Caekenberghe, Beta Nine BVBA.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           
+
+(IL:* IL:|;;;;| " You are granted the rights to distribute and use this software")
+
+           
+
+(IL:* IL:|;;;;| " as governed by the terms of the Lisp Lesser General Public License")
+
+           
+
+(IL:* IL:|;;;;| " (http://opensource.franz.com/preamble.html), also known as the LLGPL.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           
+
+(IL:* IL:|;;;;| "See https://github.com/svenvc/s-base64.")
+
+           
+
+(IL:* IL:|;;;;| "Medley packaging by Herb Jellinek, jellinek@interlisp.org.")
+
+           
+
+(IL:* IL:|;;;;| "")
+
+           (XCL:FILE-ENVIRONMENTS IL:BASE64)
+           (IL:P (XCL:DEFPACKAGE "S-BASE64" (:USE "LISP")
+                        (:EXPORT "DECODE-BASE64" "ENCODE-BASE64" "DECODE-BASE64-BYTES" 
+                               "ENCODE-BASE64-BYTES" "ENCODE-BASE64-GEN")))
+           (IL:VARIABLES +BASE64-ALPHABET+ +INVERSE-BASE64-ALPHABET+)
+           (IL:FUNCTIONS CORE-DECODE-BASE64 CORE-ENCODE-BASE64 SKIP-BASE64-WHITESPACE)
+           (IL:FUNCTIONS DECODE-BASE64 DECODE-BASE64-BYTES)
+           (IL:FUNCTIONS ENCODE-BASE64 ENCODE-BASE64-BYTES ENCODE-BASE64-GEN)))
+
+
+
+(IL:* IL:|;;;;| "This is a Common Lisp implementation of Base64 encoding and decoding.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+
+
+(IL:* IL:|;;;;| " Copyright (C) 2002-2005 Sven Van Caekenberghe, Beta Nine BVBA.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+
+
+(IL:* IL:|;;;;| " You are granted the rights to distribute and use this software")
+
+
+
+
+(IL:* IL:|;;;;| " as governed by the terms of the Lisp Lesser General Public License")
+
+
+
+
+(IL:* IL:|;;;;| " (http://opensource.franz.com/preamble.html), also known as the LLGPL.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+
+
+(IL:* IL:|;;;;| "See https://github.com/svenvc/s-base64.")
+
+
+
+
+(IL:* IL:|;;;;| "Medley packaging by Herb Jellinek, jellinek@interlisp.org.")
+
+
+
+
+(IL:* IL:|;;;;| "")
+
+
+(XCL:DEFINE-FILE-ENVIRONMENT IL:BASE64 :PACKAGE (XCL:DEFPACKAGE "S-BASE64" (:USE "LISP")
+                                                       (:EXPORT "DECODE-BASE64" "ENCODE-BASE64" 
+                                                              "DECODE-BASE64-BYTES" 
+                                                              "ENCODE-BASE64-BYTES" 
+                                                              "ENCODE-BASE64-GEN"))
+   :READTABLE "XCL")
+
+(XCL:DEFPACKAGE "S-BASE64" (:USE "LISP")
+       (:EXPORT "DECODE-BASE64" "ENCODE-BASE64" "DECODE-BASE64-BYTES" "ENCODE-BASE64-BYTES" 
+              "ENCODE-BASE64-GEN"))
+
+(DEFPARAMETER +BASE64-ALPHABET+ "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+
+(DEFPARAMETER +INVERSE-BASE64-ALPHABET+
+   (LET ((INVERSE-BASE64-ALPHABET (MAKE-ARRAY 127)))
+        (DOTIMES (I 127 INVERSE-BASE64-ALPHABET)
+            (SETF (AREF INVERSE-BASE64-ALPHABET I)
+                  (POSITION (CODE-CHAR I)
+                         +BASE64-ALPHABET+)))))
+
+(DEFUN CORE-DECODE-BASE64 (CHAR1 CHAR2 CHAR3 CHAR4)
+   (LET ((V1 (AREF +INVERSE-BASE64-ALPHABET+ (CHAR-CODE CHAR1)))
+         (V2 (AREF +INVERSE-BASE64-ALPHABET+ (CHAR-CODE CHAR2)))
+         (V3 (AREF +INVERSE-BASE64-ALPHABET+ (CHAR-CODE CHAR3)))
+         (V4 (AREF +INVERSE-BASE64-ALPHABET+ (CHAR-CODE CHAR4))))
+        (VALUES (LOGIOR (ASH V1 2)
+                       (ASH V2 -4))
+               (LOGIOR (ASH (LOGAND V2 15)
+                            4)
+                      (ASH V3 -2))
+               (LOGIOR (ASH (LOGAND V3 3)
+                            6)
+                      V4))))
+
+(DEFUN CORE-ENCODE-BASE64 (BYTE1 BYTE2 BYTE3)
+   (VALUES (CHAR +BASE64-ALPHABET+ (ASH BYTE1 -2))
+          (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE1 3)
+                                               4)
+                                         (ASH (LOGAND BYTE2 240)
+                                              -4)))
+          (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE2 15)
+                                               2)
+                                         (ASH (LOGAND BYTE3 192)
+                                              -6)))
+          (CHAR +BASE64-ALPHABET+ (LOGAND BYTE3 63))))
+
+(DEFUN SKIP-BASE64-WHITESPACE (STREAM)
+   (LOOP (LET ((CHAR (PEEK-CHAR NIL STREAM NIL NIL)))
+              (COND
+                 ((NULL CHAR)
+                  (RETURN NIL))
+                 ((NULL (AREF +INVERSE-BASE64-ALPHABET+ (CHAR-CODE CHAR)))
+                  (READ-CHAR STREAM))
+                 (T (RETURN CHAR))))))
+
+(DEFUN DECODE-BASE64 (IN OUT)
+   "Decode a base64 encoded character input stream into a binary output stream"
+   (LOOP (SKIP-BASE64-WHITESPACE IN)
+         (LET ((IN1 (READ-CHAR IN NIL NIL))
+               (IN2 (READ-CHAR IN NIL NIL))
+               (IN3 (READ-CHAR IN NIL NIL))
+               (IN4 (READ-CHAR IN NIL NIL)))
+              (IF (NULL IN1)
+                  (RETURN))
+              (IF (OR (NULL IN2)
+                      (NULL IN3)
+                      (NULL IN4))
+                  (ERROR "input not aligned/padded for base64 encoding"))
+              (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3)
+                  (CORE-DECODE-BASE64 IN1 IN2 (IF (CHAR= IN3 #\=)
+                                                  #\A
+                                                  IN3)
+                         (IF (CHAR= IN4 #\=)
+                             #\A
+                             IN4))
+                (WRITE-BYTE OUT1 OUT)
+                (WHEN (CHAR/= IN3 #\=)
+                    (WRITE-BYTE OUT2 OUT)
+                    (WHEN (CHAR/= IN4 #\=)
+                          (WRITE-BYTE OUT3 OUT)))))))
+
+(DEFUN DECODE-BASE64-BYTES (STREAM)
+   "Decode a base64 encoded character stream, returns a byte array"
+   (LET ((OUT (MAKE-ARRAY 256 :ELEMENT-TYPE '(UNSIGNED-BYTE 8)
+                     :ADJUSTABLE T :FILL-POINTER 0)))
+        (LOOP (SKIP-BASE64-WHITESPACE STREAM)
+              (LET ((IN1 (READ-CHAR STREAM NIL NIL))
+                    (IN2 (READ-CHAR STREAM NIL NIL))
+                    (IN3 (READ-CHAR STREAM NIL NIL))
+                    (IN4 (READ-CHAR STREAM NIL NIL)))
+                   (IF (NULL IN1)
+                       (RETURN))
+                   (IF (OR (NULL IN2)
+                           (NULL IN3)
+                           (NULL IN4))
+                       (ERROR "input not aligned/padded for base64 encoding"))
+                   (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3)
+                       (CORE-DECODE-BASE64 IN1 IN2 (IF (CHAR= IN3 #\=)
+                                                       #\A
+                                                       IN3)
+                              (IF (CHAR= IN4 #\=)
+                                  #\A
+                                  IN4))
+                     (VECTOR-PUSH-EXTEND OUT1 OUT)
+                     (WHEN (CHAR/= IN3 #\=)
+                         (VECTOR-PUSH-EXTEND OUT2 OUT)
+                         (WHEN (CHAR/= IN4 #\=)
+                               (VECTOR-PUSH-EXTEND OUT3 OUT))))))
+        OUT))
+
+(DEFUN ENCODE-BASE64 (IN OUT &OPTIONAL (BREAK-LINES T))
+   "Encode a binary input stream into a base64 encoded character output stream"
+   (LET ((COUNTER 0))
+        (LOOP (LET ((IN1 (READ-BYTE IN NIL NIL))
+                    (IN2 (READ-BYTE IN NIL NIL))
+                    (IN3 (READ-BYTE IN NIL NIL)))
+                   (IF (NULL IN1)
+                       (RETURN))
+                   (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
+                       (CORE-ENCODE-BASE64 IN1 (IF (NULL IN2)
+                                                   0
+                                                   IN2)
+                              (IF (NULL IN3)
+                                  0
+                                  IN3))
+                     (WRITE-CHAR OUT1 OUT)
+                     (WRITE-CHAR OUT2 OUT)
+                     (IF (NULL IN2)
+                         (PROGN (WRITE-CHAR #\= OUT)
+                                (WRITE-CHAR #\= OUT))
+                         (PROGN (WRITE-CHAR OUT3 OUT)
+                                (IF (NULL IN3)
+                                    (WRITE-CHAR #\= OUT)
+                                    (WRITE-CHAR OUT4 OUT))))
+                     (INCF COUNTER 4)
+                     (WHEN (AND BREAK-LINES (= COUNTER 76))
+                         (TERPRI OUT)
+                         (SETF COUNTER 0)))))))
+
+(DEFUN ENCODE-BASE64-BYTES (ARRAY STREAM &OPTIONAL (BREAK-LINES T))
+   "Encode a byte array into a base64 encoded character stream"
+   (LET ((INDEX 0)
+         (COUNTER 0)
+         (LEN (LENGTH ARRAY)))
+        (LOOP (WHEN (>= INDEX LEN)
+                    (RETURN))
+              (LET ((IN1 (AREF ARRAY INDEX))
+                    (IN2 (IF (< (+ INDEX 1)
+                                LEN)
+                             (AREF ARRAY (+ INDEX 1))
+                             NIL))
+                    (IN3 (IF (< (+ INDEX 2)
+                                LEN)
+                             (AREF ARRAY (+ INDEX 2))
+                             NIL)))
+                   (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
+                       (CORE-ENCODE-BASE64 IN1 (IF (NULL IN2)
+                                                   0
+                                                   IN2)
+                              (IF (NULL IN3)
+                                  0
+                                  IN3))
+                     (WRITE-CHAR OUT1 STREAM)
+                     (WRITE-CHAR OUT2 STREAM)
+                     (IF (NULL IN2)
+                         (PROGN (WRITE-CHAR #\= STREAM)
+                                (WRITE-CHAR #\= STREAM))
+                         (PROGN (WRITE-CHAR OUT3 STREAM)
+                                (IF (NULL IN3)
+                                    (WRITE-CHAR #\= STREAM)
+                                    (WRITE-CHAR OUT4 STREAM))))
+                     (INCF INDEX 3)
+                     (INCF COUNTER 4)
+                     (WHEN (AND BREAK-LINES (= COUNTER 76))
+                         (TERPRI STREAM)
+                         (SETF COUNTER 0)))))))
+
+(DEFUN ENCODE-BASE64-GEN (IN OUT &OPTIONAL (BREAK-LINES T))
+   "Encode a binary input GENNERATOR into a BASE64 encoded character output stream"
+   (LET ((DONE! (LIST))
+         (EXPIRED NIL))
+        (FLET ((GET-NEXT NIL (IF (NOT EXPIRED)
+                                 (LET ((NEXT-VALUE (IL:GENERATE IN)))
+                                      (IF (EQ NEXT-VALUE IN)
+                                          (PROG1 DONE! (SETF EXPIRED T))
+                                          NEXT-VALUE))
+                                 DONE!))
+               (EOS? (V)
+                     (EQ V DONE!)))
+              (LET ((COUNTER 0))
+                   (LOOP (LET ((IN1 (GET-NEXT))
+                               (IN2 (GET-NEXT))
+                               (IN3 (GET-NEXT)))
+                              (IF (EOS? IN1)
+                                  (RETURN))
+                              (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
+                                  (CORE-ENCODE-BASE64 IN1 (IF (EOS? IN2)
+                                                              0
+                                                              IN2)
+                                         (IF (EOS? IN3)
+                                             0
+                                             IN3))
+                                (WRITE-CHAR OUT1 OUT)
+                                (WRITE-CHAR OUT2 OUT)
+                                (IF (EOS? IN2)
+                                    (PROGN (WRITE-CHAR #\= OUT)
+                                           (WRITE-CHAR #\= OUT))
+                                    (PROGN (WRITE-CHAR OUT3 OUT)
+                                           (IF (EOS? IN3)
+                                               (WRITE-CHAR #\= OUT)
+                                               (WRITE-CHAR OUT4 OUT))))
+                                (INCF COUNTER 4)
+                                (WHEN (AND BREAK-LINES (= COUNTER 76))
+                                    (TERPRI OUT)
+                                    (SETF COUNTER 0)))))))))
+(IL:DECLARE\: IL:DONTCOPY
+  (IL:FILEMAP (NIL (3809 4407 (CORE-DECODE-BASE64 3809 . 4407)) (4409 5027 (CORE-ENCODE-BASE64 4409 . 
+5027)) (5029 5359 (SKIP-BASE64-WHITESPACE 5029 . 5359)) (5361 6483 (DECODE-BASE64 5361 . 6483)) (6485 
+7890 (DECODE-BASE64-BYTES 6485 . 7890)) (7892 9258 (ENCODE-BASE64 7892 . 9258)) (9260 10967 (
+ENCODE-BASE64-BYTES 9260 . 10967)) (10969 13051 (ENCODE-BASE64-GEN 10969 . 13051)))))
+IL:STOP
