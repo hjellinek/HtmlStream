@@ -1,14 +1,15 @@
 (DEFINE-FILE-INFO PACKAGE (DEFPACKAGE "UNCOMPRESSED-PNG" (USE "COMMON-LISP") (NICKNAMES "U-PNG") (
 EXPORT "WRITE-BITMAP" "PIXEL-TO-MONOCHROME-RGBA")) READTABLE "XCL" BASE 10)
 
-(IL:FILECREATED "29-Nov-2024 17:01:22" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>U-PNG.;27| 13635  
+(IL:FILECREATED " 2-Dec-2024 15:15:41" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>U-PNG.;31| 14681  
 
-      :CHANGES-TO (XCL:FILE-ENVIRONMENTS IL:U-PNG)
+      :CHANGES-TO (IL:FUNCTIONS LOGICAL-RIGHT-SHIFT LOGICAL-LEFT-SHIFT CREATE-MASKS 
+                         WRITE-BITMAP-AS-PNG PIXEL-TO-MONOCHROME-RGBA WRITE-BITMAP 
+                         CONVERT-TO-PNG-BASE64 TEST-PNG-BASE64 SVPNG-BEGIN SVPNG-U8ADLER SVPNG-U8C 
+                         TEST-IT SVPNG-END SVPNG-U32 SVPNG-U16LC SVPNG-U32C SVPNG-U8AC)
                   (IL:VARS IL:U-PNGCOMS)
-                  (IL:FUNCTIONS CONVERT-TO-PNG-BASE64 TEST-PNG-BASE64 SVPNG-BEGIN SVPNG-U8ADLER 
-                         SVPNG-U8C PIXEL-TO-MONOCHROME-RGBA WRITE-BITMAP TEST-IT SVPNG-END SVPNG-U32
-                         LOGICAL-RIGHT-SHIFT LOGICAL-LEFT-SHIFT SVPNG-U16LC SVPNG-U32C SVPNG-U8AC)
-                  (IL:VARIABLES *WORD-MASK*)
+                  (IL:VARIABLES BIT-MASKS *WORD-MASK*)
+                  (XCL:FILE-ENVIRONMENTS IL:U-PNG)
 
       :PREVIOUS-DATE "26-Nov-2024 16:06:49" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>U-PNG.;15|
 )
@@ -42,7 +43,8 @@
            (IL:P (XCL:DEFPACKAGE "UNCOMPRESSED-PNG" (:USE "COMMON-LISP")
                         (:NICKNAMES "U-PNG")
                         (:EXPORT "WRITE-BITMAP" "PIXEL-TO-MONOCHROME-RGBA")))
-           (IL:VARIABLES *WORD-MASK* CRC32-ADLER)
+           (IL:FUNCTIONS CREATE-MASKS)
+           (IL:VARIABLES *WORD-MASK* BIT-MASKS CRC32-ADLER)
            (IL:FUNCTIONS SVPNG-BEGIN SVPNG-END SVPNG-U16LC SVPNG-U32 SVPNG-U32C SVPNG-U8A SVPNG-U8AC
                   SVPNG-U8ADLER SVPNG-U8C TEST-PNG-BASE64)
            (IL:FUNCTIONS PIXEL-TO-MONOCHROME-RGBA)
@@ -54,7 +56,7 @@
            
            (IL:* IL:|;;| "Debugging")
 
-           (IL:FUNCTIONS DEBUG-OUTPUT-FN TEST-IT)))
+           (IL:FUNCTIONS DEBUG-OUTPUT-FN TEST-IT WRITE-BITMAP-AS-PNG)))
 
 
 
@@ -93,8 +95,19 @@
        (:NICKNAMES "U-PNG")
        (:EXPORT "WRITE-BITMAP" "PIXEL-TO-MONOCHROME-RGBA"))
 
+(DEFUN CREATE-MASKS ()
+   "Create and return an array of masks of widths 1 to 32 bits"
+   (LET ((MASKS (MAKE-ARRAY 32 :ELEMENT-TYPE T)))
+        (DOTIMES (WIDTH 32)
+            (SETF (AREF MASKS WIDTH)
+                  (1- (ASH 1 (1+ WIDTH)))))
+        MASKS))
+
 (DEFCONSTANT *WORD-MASK* 4294967295
    "Four bytes of 1 bits")
+
+(DEFCONSTANT BIT-MASKS (CREATE-MASKS)
+                       "Masks of widths 1-32 bits, indexed by (width - 1)")
 
 (DEFCONSTANT CRC32-ADLER
 
@@ -193,11 +206,9 @@
                (IL:CONVERT-TO-PNG-BASE64 TEST-BITMAP OUT))
         FILE-NAME))
 
-(DEFUN PIXEL-TO-MONOCHROME-RGBA (BITMAP X Y)
+(DEFUN PIXEL-TO-MONOCHROME-RGBA (BITMAP THRESHOLD X Y)
    "Convert a BITMAP pixel to a monochrome (R,G,B,A) by thresholding"
    (LET ((PIXEL-VALUE (IL:BITMAPBIT BITMAP X Y))
-         (THRESHOLD (/ (IL:BITSPERPIXEL BITMAP)
-                       2))
          (ON '(0 0 0 255))                                   (IL:* IL:\; 
                                                              "\"off\" pixels are (255,255,255,255)")
          (OFF '(255 255 255 255)))                           (IL:* IL:\; 
@@ -210,11 +221,10 @@
 (DEFUN LOGICAL-RIGHT-SHIFT (X WIDTH BITS)
    "Compute bitwide right shift of X by 'bits' bits, represented on 'width' bits"
 
-   (IL:* IL:|;;| 
- "from \"Bitwise operations in Common Lisp,\" https://tomscii.sig7.se/2016/01/CL-bitwise-Rosettacode")
+   (IL:* IL:|;;| "Adapted from \"Bitwise operations in Common Lisp,\" https://tomscii.sig7.se/2016/01/CL-bitwise-Rosettacode")
 
    (LOGAND (ASH X (- BITS))
-          (1- (ASH 1 WIDTH))))
+          (AREF BIT-MASKS (1- WIDTH))))
 
 (DEFUN LOGICAL-LEFT-SHIFT (X WIDTH BITS)
    "Compute bitwide left shift of X by 'bits' bits, represented on 'width' bits"
@@ -223,14 +233,14 @@
  "from \"Bitwise operations in Common Lisp,\" https://tomscii.sig7.se/2016/01/CL-bitwise-Rosettacode")
 
    (LOGAND (ASH X BITS)
-          (1- (ASH 1 WIDTH))))
+          (AREF BIT-MASKS (1- WIDTH))))
 
 
 
 (IL:* IL:|;;| "Primary function")
 
 
-(DEFUN WRITE-BITMAP (BITMAP USE-ALPHA OUTPUT-FN PIXEL-MAPPER)
+(DEFUN WRITE-BITMAP (BITMAP THRESHOLD USE-ALPHA OUTPUT-FN PIXEL-MAPPER)
    "Write a Medley BITMAP in uncompressed PNG format using OUTPUT-FN to write and PIXEL-MAPPER to convert to RGB"
 
    (IL:* IL:|;;| "OUTPUT-FN takes a single argument, a byte to write")
@@ -283,7 +293,8 @@
              (SVPNG-U8ADLER 0 OUTPUT-FN)
              (DOTIMES (X WIDTH)
                  (XCL:DESTRUCTURING-BIND (RED GREEN BLUE ALPHA)
-                        (FUNCALL PIXEL-MAPPER BITMAP X Y)    (IL:* IL:\; "output RGB and alpha")
+                        (FUNCALL PIXEL-MAPPER BITMAP THRESHOLD X Y)
+                                                             (IL:* IL:\; "output RGB and alpha")
                         (SVPNG-U8ADLER RED OUTPUT-FN)
                         (SVPNG-U8ADLER GREEN OUTPUT-FN)
                         (SVPNG-U8ADLER BLUE OUTPUT-FN)
@@ -317,12 +328,22 @@
                                                       (IL:BOUT OUT BYTE))
                       #'PIXEL-TO-MONOCHROME-RGBA))
         FILE-NAME))
+
+(DEFUN WRITE-BITMAP-AS-PNG (BITMAP)
+   (LET ((THRESHOLD (/ (IL:BITSPERPIXEL BITMAP)
+                       2)))
+        (WITH-OPEN-STREAM (PNG-STREAM (IL:OPENSTREAM "/tmp/bitmap.png" 'IL:OUTPUT NIL
+                                             '((IL:FORMAT :THROUGH))))
+               (WRITE-BITMAP BITMAP THRESHOLD NIL #'(LAMBDA (BYTE)
+                                                           (IL:BOUT PNG-STREAM BYTE))
+                      #'PIXEL-TO-MONOCHROME-RGBA))))
 (IL:DECLARE\: IL:DONTCOPY
-  (IL:FILEMAP (NIL (3632 3855 (SVPNG-BEGIN 3632 . 3855)) (3857 3948 (SVPNG-END 3857 . 3948)) (3950 4195 
-(SVPNG-U16LC 3950 . 4195)) (4197 4637 (SVPNG-U32 4197 . 4637)) (4639 5107 (SVPNG-U32C 4639 . 5107)) (
-5109 5356 (SVPNG-U8A 5109 . 5356)) (5358 6125 (SVPNG-U8AC 5358 . 6125)) (6127 6340 (SVPNG-U8ADLER 6127
- . 6340)) (6342 6712 (SVPNG-U8C 6342 . 6712)) (6714 7156 (TEST-PNG-BASE64 6714 . 7156)) (7158 7849 (
-PIXEL-TO-MONOCHROME-RGBA 7158 . 7849)) (7851 8168 (LOGICAL-RIGHT-SHIFT 7851 . 8168)) (8170 8481 (
-LOGICAL-LEFT-SHIFT 8170 . 8481)) (8525 12967 (WRITE-BITMAP 8525 . 12967)) (13004 13073 (
-DEBUG-OUTPUT-FN 13004 . 13073)) (13075 13606 (TEST-IT 13075 . 13606)))))
+  (IL:FILEMAP (NIL (3219 3484 (CREATE-MASKS 3219 . 3484)) (4161 4384 (SVPNG-BEGIN 4161 . 4384)) (4386 
+4477 (SVPNG-END 4386 . 4477)) (4479 4724 (SVPNG-U16LC 4479 . 4724)) (4726 5166 (SVPNG-U32 4726 . 5166)
+) (5168 5636 (SVPNG-U32C 5168 . 5636)) (5638 5885 (SVPNG-U8A 5638 . 5885)) (5887 6654 (SVPNG-U8AC 5887
+ . 6654)) (6656 6869 (SVPNG-U8ADLER 6656 . 6869)) (6871 7241 (SVPNG-U8C 6871 . 7241)) (7243 7685 (
+TEST-PNG-BASE64 7243 . 7685)) (7687 8313 (PIXEL-TO-MONOCHROME-RGBA 7687 . 8313)) (8315 8643 (
+LOGICAL-RIGHT-SHIFT 8315 . 8643)) (8645 8965 (LOGICAL-LEFT-SHIFT 8645 . 8965)) (9009 13529 (
+WRITE-BITMAP 9009 . 13529)) (13566 13635 (DEBUG-OUTPUT-FN 13566 . 13635)) (13637 14168 (TEST-IT 13637
+ . 14168)) (14170 14652 (WRITE-BITMAP-AS-PNG 14170 . 14652)))))
 IL:STOP
