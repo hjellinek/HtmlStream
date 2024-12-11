@@ -1,17 +1,21 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "19-Nov-2024 11:56:13" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;9 9496   
+(FILECREATED " 6-Dec-2024 16:24:57" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;11 10556  
 
-      :CHANGES-TO (FNS PROCESS-BROWSER-FONT-METRICS)
-                  (VARS XCCS-UNICODE-DUMPERCOMS)
+      :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
+                  (FUNCTIONS CREATE-ALL-FONT-METRICS WRITE-FONT-METRICS-FILE 
+                         WRITE-CHARSET-METRICS-FILE)
 
-      :PREVIOUS-DATE "12-Nov-2024 16:49:40" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;6)
+      :PREVIOUS-DATE "19-Nov-2024 11:56:13" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;9)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
 (RPAQQ XCCS-UNICODE-DUMPERCOMS ((FILES HTMLSTREAM)
+                                
+                                (* ;; "Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files")
+
                                 (FUNCTIONS CREATE-ALL-FONT-METRICS)
                                 (FNS PROCESS-BROWSER-FONT-METRICS)
                                 (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING WRITE-FONT-METRICS-FILE 
@@ -20,13 +24,21 @@
 
 (FILESLOAD HTMLSTREAM)
 
+
+
+(* ;; 
+"Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files"
+)
+
+
 (CL:DEFUN CREATE-ALL-FONT-METRICS (&KEY (DATA-DIR *WEB-FONT-DIRECTORY*)
                                         (DATA-FILE-NAME *DEFAULT-WEB-FONT-METRICS-FILE-NAME*)
                                         (OUTPUT-DIR *WEB-FONT-DIRECTORY*))
    "Process all Web fonts and create metrics files"
-   (LET ((METRICS-DATA-FILE (PACKFILENAME.STRING 'DIRECTORY DATA-DIR 'NAME DATA-FILE-NAME)))
-        (CL:FORMAT T "Will read from ~A and write to ~A~%%" METRICS-DATA-FILE OUTPUT-DIR)
-        (PROCESS-BROWSER-FONT-METRICS METRICS-DATA-FILE OUTPUT-DIR)))
+   (LET* [(METRICS-DATA-FILE (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING DATA-DIR)
+                                                                 (LIST 'NAME DATA-FILE-NAME]
+         (CL:FORMAT T "Will read from ~A and write to ~A~%%" METRICS-DATA-FILE OUTPUT-DIR)
+         (PROCESS-BROWSER-FONT-METRICS METRICS-DATA-FILE OUTPUT-DIR)))
 (DEFINEQ
 
 (PROCESS-BROWSER-FONT-METRICS
@@ -117,9 +129,10 @@
    [LET* [(WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
           (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
-          (FILE-NAME (CL:MAKE-PATHNAME :DIRECTORY OUTPUT-DIR :NAME (MAKE-FONT-METRICS-FILE-NAME
-                                                                    FAMILY SIZE WEIGHT SLOPE 
-                                                                    EXPANSION]
+          (FILE-NAME (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
+                                                         (LIST 'NAME (MAKE-FONT-METRICS-FILE-NAME
+                                                                      FAMILY SIZE WEIGHT SLOPE 
+                                                                      EXPANSION]
          (CL:WITH-OPEN-STREAM (OUT (OPENSTREAM FILE-NAME 'OUTPUT 'NEW))
                 (PRINT (LIST 'format *BROWSER-FONT-FILE-VERSION*)
                        OUT)
@@ -130,7 +143,9 @@
                               height _ HEIGHT
                               maxAscent _ MAX-ASCENT
                               maxDescent _ MAX-DESCENT
-                              charsets _ (LENGTH CHARSETS))
+                              charsets _ (for CHARSET in CHARSETS collect (fetch (WEB-CHARSET-METRICS
+                                                                                  charset)
+                                                                             of CHARSET)))
                        OUT)
                 (AND NIL (CL:FORMAT T "Wrote font file ~A~%%" FILE-NAME])
 
@@ -149,9 +164,11 @@
           (MAX-ASCENT (fetch (WEB-CHARSET-METRICS maxAscent) of CHARSET))
           (MAX-DESCENT (fetch (WEB-CHARSET-METRICS maxDescent) of CHARSET))
           (WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET))
-          (FILE-NAME (CL:MAKE-PATHNAME :DIRECTORY OUTPUT-DIR :NAME
-                            (MAKE-CHARSET-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION 
-                                   CHARSET-NUM]
+          (FILE-NAME (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
+                                                         (LIST 'NAME
+                                                               (MAKE-CHARSET-METRICS-FILE-NAME FAMILY
+                                                                      SIZE WEIGHT SLOPE EXPANSION 
+                                                                      CHARSET-NUM]
          (CL:WITH-OPEN-STREAM (OUT (OPENSTREAM FILE-NAME 'OUTPUT 'NEW))
                 (PRINT (LIST 'format *BROWSER-FONT-FILE-VERSION*)
                        OUT)
@@ -164,7 +181,7 @@
 (RECORD WEB-FONT-FACE (weight slope expansion))
 )
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (898 1451 (CREATE-ALL-FONT-METRICS 898 . 1451)) (1452 4903 (PROCESS-BROWSER-FONT-METRICS
- 1462 . 4901)) (4905 6431 (DUMP-XCCS-UNICODE-MAPPING 4905 . 6431)) (6433 7913 (WRITE-FONT-METRICS-FILE
- 6433 . 7913)) (7915 9307 (WRITE-CHARSET-METRICS-FILE 7915 . 9307)))))
+  (FILEMAP (NIL (1279 1933 (CREATE-ALL-FONT-METRICS 1279 . 1933)) (1934 5385 (
+PROCESS-BROWSER-FONT-METRICS 1944 . 5383)) (5387 6913 (DUMP-XCCS-UNICODE-MAPPING 5387 . 6913)) (6915 
+8738 (WRITE-FONT-METRICS-FILE 6915 . 8738)) (8740 10367 (WRITE-CHARSET-METRICS-FILE 8740 . 10367)))))
 STOP
