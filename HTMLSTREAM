@@ -1,18 +1,21 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "29-Nov-2024 17:01:37" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;42 56723  
+(FILECREATED "10-Dec-2024 15:11:10" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;49 60348  
 
       :CHANGES-TO (VARS HTMLSTREAMCOMS)
-                  (FUNCTIONS CONVERT-TO-PNG-BASE64 WRITE-BASE64-PNG TEST-PNG-BASE64)
+                  (VARIABLES *CENTIPOINTS-PER-POINT*)
+                  (FUNCTIONS \HTML.FONTCREATE \HTML.CREATECHARSET HTML.OUTCHARFN \HTML.CHANGECHARSET
+                         HTML.BLTSHADE MAKE-CHARSET-BIT-ARRAY KNOWN-CHARSET?)
 
-      :PREVIOUS-DATE "26-Nov-2024 16:12:11" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;41
+      :PREVIOUS-DATE " 6-Dec-2024 15:38:09" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;47
 )
 
 
 (PRETTYCOMPRINT HTMLSTREAMCOMS)
 
 (RPAQQ HTMLSTREAMCOMS
-       ((FILES BASE64 U-PNG)
+       ((FILES XCCS-UNICODE-DUMPER BASE64 U-PNG)
+        (VARIABLES *CENTIPOINTS-PER-POINT*)
         (RECORDS \BEZIER-POINT WEB-FONT-METRICS WEB-CHARSET-METRICS)
         (FUNCTIONS BEZIER-CONTROL-POINTS-TO-SVG CLOSE-KNOTS COMPUTE-LINE-HEIGHT COMPUTE-MAX-ASCENT 
                COMPUTE-MAX-DESCENT CONVERT-TO-BEZIER HTML.INCHES-TO-POINTS CP-TO-P ICP-TO-P 
@@ -25,8 +28,8 @@
         (VARIABLES *BROWSER-FONT-FILE-VERSION* *HTML.DEFAULT-PAGE-SIZE* HTML.FONTCREATE.DEVICENAME 
                HTML.IMAGETYPE HTML.STATE.BETWEEN-PAGES HTML.STATE.CLOSED HTML.STATE.NON-TEXT 
                HTML.STATE.NON-TEXT-OUTPUT HTML.STATE.TEXT-OUTPUT HTML.STATES \HTMLSTREAM.FDEV)
-        (FUNCTIONS CHECK-BROWSER-METRICS-FORMAT CSS-CLASS-FROM \HTML.READ-CHARSET-METRICS 
-               \HTML.READ-FONT-METRICS)
+        (FUNCTIONS CHECK-BROWSER-METRICS-FORMAT CSS-CLASS-FROM \HTML.READ-FONT-METRICS 
+               \HTML.READ-CHARSET-METRICS)
         (STRUCTURES HTML.IMAGEDATA HTML.FONTINFO)
         (FUNCTIONS with-htmldata CHECK-OPEN)
         (FUNCTIONS HTML.OUTPUT-GRAPHICS HTML.OUTPUT-TEXT \HTML.MAYBE-START-PAGE \HTML.END-PAGE 
@@ -39,14 +42,18 @@
                HTML.SPACEFACTOR HTML.TERPRI HTML.TOPMARGIN HTML.XPOSITION HTML.YPOSITION 
                MAKE-HTML-IMAGETYPE \HTML.FILLCIRCLE \HTML.INIT-IMAGEDATA \HTMLSTREAM.INIT)
         (FUNCTIONS WRITE-BASE64-PNG CONVERT-TO-PNG-BASE64)
-        (FUNCTIONS \HTML.FONTCREATE \HTML.FONTSAVAILABLE \HTML.CREATECHARSET \HTML.CHANGECHARSET)
+        (FUNCTIONS \HTML.FONTCREATE \HTML.FONTSAVAILABLE \HTML.CREATECHARSET \HTML.CHANGECHARSET 
+               MAKE-CHARSET-BIT-ARRAY KNOWN-CHARSET?)
         (P (\HTMLSTREAM.INIT))
         
         (* ;; "debugging support")
 
         (FUNCTIONS \CLEAN-FONT-CACHE DO-NOT)))
 
-(FILESLOAD BASE64 U-PNG)
+(FILESLOAD XCCS-UNICODE-DUMPER BASE64 U-PNG)
+
+(CL:DEFCONSTANT *CENTIPOINTS-PER-POINT* 100
+   "There are 100 centipoints per point, by definition and by golly!")
 (DECLARE%: EVAL@COMPILE
 
 (PROPRECORD \BEZIER-POINT (p0 p1 b0 b1))
@@ -294,26 +301,6 @@
                                               "")
                                              (T (CONCAT " " SLOPE-AND-WEIGHT-CLASSES])
 
-(CL:DEFUN \HTML.READ-CHARSET-METRICS (FAMILY SIZE FACE CHARSET-NUM)
-   "Read a file containing a charset's metrics and return the WEB-CHARSET-METRICS"
-   (LET* ((WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
-          (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
-          (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
-          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
-                            (MAKE-CHARSET-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION 
-                                   CHARSET-NUM)))
-          (*PACKAGE* (CL:FIND-PACKAGE "IL")))
-         (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
-                (CHECK-BROWSER-METRICS-FORMAT (READ IN))
-                (LET* ((CHARSET (READ IN))
-                       (HEIGHT (fetch (WEB-CHARSET-METRICS height) of CHARSET))
-                       (MAX-ASCENT (fetch (WEB-CHARSET-METRICS maxAscent) of CHARSET))
-                       (MAX-DESCENT (fetch (WEB-CHARSET-METRICS maxDescent) of CHARSET))
-                       (WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET)))
-                      (CL:FORMAT T "charset family: ~A face: ~A size: ~A height: ~A charset: ~d~%%" 
-                             FAMILY FACE SIZE HEIGHT CHARSET-NUM)
-                      CHARSET))))
-
 (CL:DEFUN \HTML.READ-FONT-METRICS (FAMILY FACE SIZE)
    "Read the font metrics file and return the WEB-FONT-DESCR"
    (LET* ((WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
@@ -333,8 +320,28 @@
                        (MAX-DESCENT (fetch (WEB-FONT-DESCR maxDescent) of DESCR))
                        (CHARSETS (fetch (WEB-FONT-DESCR charsets) of DESCR)))
                       (CL:FORMAT T "font: ~A face: ~A size: ~A height: ~A #charsets: ~d~%%" FAMILY 
-                             FACE SIZE HEIGHT CHARSETS)
+                             FACE SIZE HEIGHT (LENGTH CHARSETS))
                       DESCR))))
+
+(CL:DEFUN \HTML.READ-CHARSET-METRICS (FAMILY SIZE FACE CHARSET-NUM)
+   "Read a file containing a charset's metrics and return the WEB-CHARSET-METRICS"
+   (LET* ((WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
+          (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
+          (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
+          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
+                            (MAKE-CHARSET-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION 
+                                   CHARSET-NUM)))
+          (*PACKAGE* (CL:FIND-PACKAGE "IL")))
+         (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
+                (CHECK-BROWSER-METRICS-FORMAT (READ IN))
+                (LET* ((CHARSET (READ IN))
+                       (HEIGHT (fetch (WEB-CHARSET-METRICS height) of CHARSET))
+                       (MAX-ASCENT (fetch (WEB-CHARSET-METRICS maxAscent) of CHARSET))
+                       (MAX-DESCENT (fetch (WEB-CHARSET-METRICS maxDescent) of CHARSET))
+                       (WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET)))
+                      (CL:FORMAT T "charset family: ~A face: ~A size: ~A height: ~A charset: ~d~%%" 
+                             FAMILY FACE SIZE HEIGHT CHARSET-NUM)
+                      CHARSET))))
 
 (CL:DEFSTRUCT (HTML.IMAGEDATA (:CONC-NAME \HTML-))
    "Private data for HTMLSTREAMs"
@@ -626,21 +633,46 @@
 (CL:DEFUN HTML.BITBLT (SOURCEBITMAP SOURCELEFT SOURCEBOTTOM STREAM DESTINATIONLEFT DESTINATIONBOTTOM
                              WIDTH HEIGHT SOURCETYPE OPERATION TEXTURE CLIPPINGREGION 
                              CLIPPEDSOURCELEFT CLIPPEDSOURCEBOTTOM)
-   (printout T "HTML.BITBLT" T)
-   (with-htmldata (DATA STREAM)
-          (HTML.OUTPUT-GRAPHICS STREAM)
-          (LET ((BACKING (\HTML-BACKING-STREAM DATA))
-                (NEW-WIDTH (- WIDTH SOURCELEFT))
-                (NEW-HEIGHT (- HEIGHT SOURCEBOTTOM)))
-               (CL:FORMAT BACKING 
-                  "<image width=%"~d%" height=%"~d%" x=%"~d%" y=%"~d%" href=%"data:image/png;base64,"
-                      DESTINATIONLEFT DESTINATIONBOTTOM NEW-WIDTH NEW-HEIGHT)
-               (WRITE-BASE64-PNG BACKING SOURCEBITMAP SOURCELEFT SOURCEBOTTOM WIDTH HEIGHT)
-               (CL:FORMAT BACKING "%"~%%"))))
+
+   (* ;; "blt the image expanded by a scale factor of 1")
+
+   (HTML.SCALEDBITBLT SOURCEBITMAP SOURCELEFT SOURCEBOTTOM STREAM DESTINATIONLEFT DESTINATIONBOTTOM 
+          WIDTH HEIGHT SOURCETYPE OPERATION TEXTURE CLIPPINGREGION CLIPPEDSOURCELEFT 
+          CLIPPEDSOURCEBOTTOM 1))
 
 (CL:DEFUN HTML.BLTSHADE (TEXTURE STREAM DESTINATIONLEFT DESTINATIONBOTTOM WIDTH HEIGHT OPERATION 
                                CLIPPINGREGION)
-   (printout T "HTML.BLTSHADE" T))
+
+   (* ;; "NOTE we ignore OPERATION")
+
+   (* ;; "in our monochrome graphics world, SHADEs are 4x4 TEXTUREs.  Let's interpret the texture as a shade, meaning a gray value")
+
+   (* ;; "because we're dealing with 24-bit color, we can only represent 256 gray shades")
+
+   [LET* [(BLACK-BITS (CL:LOGCOUNT TEXTURE))
+          (BLACK-PROPORTION (/ BLACK-BITS 16))
+          (GRAY-VALUE (FIXR (TIMES BLACK-PROPORTION 255]
+         (with-htmldata (DATA STREAM)
+
+                (* ;; "clip region against CLIPPINGREGION")
+
+                (LET* [(BACKING (\HTML-BACKING-STREAM DATA))
+                       (ORIGINAL-REGION (CREATE REGION
+                                               LEFT _ DESTINATIONLEFT
+                                               BOTTOM _ DESTINATIONBOTTOM
+                                               WIDTH _ WIDTH
+                                               HEIGHT _ HEIGHT))
+                       (EFFECTIVE-REGION (INTERSECTREGIONS ORIGINAL-REGION (CL:IF CLIPPINGREGION
+                                                                               CLIPPINGREGION
+                                                                               ORIGINAL-REGION)]
+                      (HTML.OUTPUT-GRAPHICS STREAM)
+                      (CL:FORMAT BACKING 
+   "<rect x='~dpt' y='~dpt' width='~dpt' height='~dpt' stroke='none' fill='#~2,'0x~2,'0x~2,'0x'/>~%%"
+                             (FETCH (REGION LEFT) OF EFFECTIVE-REGION)
+                             (\HTML.SVG-Y DATA (FETCH (REGION BOTTOM) OF EFFECTIVE-REGION))
+                             (FETCH (REGION WIDTH) OF EFFECTIVE-REGION)
+                             (FETCH (REGION HEIGHT) OF EFFECTIVE-REGION)
+                             GRAY-VALUE GRAY-VALUE GRAY-VALUE])
 
 (CL:DEFUN HTML.BOTTOMMARGIN (STREAM NEW-BOTTOM-MARGIN)
    (printout T "HTML.BOTTOMMARGIN")
@@ -673,12 +705,8 @@
                OLD-VALUE)))
 
 (CL:DEFUN HTML.CLOSEFN (STREAM)
-   (printout T "HTML.CLOSEFN" T)
    (with-htmldata (DATA STREAM)
           (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
-
-               (* ;; " TODO close any open sections (e.g., text)")
-
                (if (EQ (\HTML-STATE DATA)
                        HTML.STATE.TEXT-OUTPUT)
                    then (HTML.OUTPUT-GRAPHICS STREAM))
@@ -925,10 +953,22 @@
                                         NEW-SCALE]
                OLD-VALUE)))
 
-(CL:DEFUN HTML.SCALEDBITBLT (SOURCEBITMAP SOURCELEFFT SOURCEBOTTOM STREAM DESTINATIONLEFT 
+(CL:DEFUN HTML.SCALEDBITBLT (SOURCEBITMAP SOURCELEFT SOURCEBOTTOM STREAM DESTINATIONLEFT 
                                    DESTINATIONBOTTOM WIDTH HEIGHT SOURCETYPE OPERATION TEXTURE 
                                    CLIPPINGREGION CLIPPEDSOURCELEFT CLIPPEDSOURCEBOTTOM SCALE)
-   (printout T "HTML.SCALEDBITBLT" T))
+
+   (* ;; "just like bitblt, but scale the image by SCALE")
+
+   (with-htmldata (DATA STREAM)
+          (HTML.OUTPUT-GRAPHICS STREAM)
+          (LET [(BACKING (\HTML-BACKING-STREAM DATA))
+                (NEW-WIDTH (ITIMES SCALE (- WIDTH SOURCELEFT)))
+                (NEW-HEIGHT (ITIMES SCALE (- HEIGHT SOURCEBOTTOM]
+               (CL:FORMAT BACKING 
+                  "<image width=%"~d%" height=%"~d%" x=%"~d%" y=%"~d%" href=%"data:image/png;base64,"
+                      NEW-WIDTH NEW-HEIGHT DESTINATIONLEFT DESTINATIONBOTTOM)
+               (WRITE-BASE64-PNG BACKING SOURCEBITMAP SOURCELEFT SOURCEBOTTOM WIDTH HEIGHT)
+               (CL:FORMAT BACKING "%"~%%"))))
 
 (CL:DEFUN HTML.SPACEFACTOR (STREAM NEW-FACTOR)
    (printout T "HTML.SPACEFACTOR" T)
@@ -1049,23 +1089,27 @@
           (CLIPPED-REGION (CREATEREGION SOURCELEFT SOURCEBOTTOM WIDTH HEIGHT))
           (INTERSECTION (INTERSECTREGIONS BITMAP-REGION CLIPPED-REGION)))
          [if INTERSECTION
-             then (BASE64 STREAM (CLIPPED-PNG BITMAP (fetch (REGION WIDTH) of INTERSECTION)
-                                        (fetch (REGION HEIGHT) of INTERSECTION]
+             then (DO-NOT (BASE64 STREAM (CLIPPED-PNG BITMAP (fetch (REGION WIDTH) of INTERSECTION)
+                                                (fetch (REGION HEIGHT) of INTERSECTION]
 
-         (* ;; "TODO finish this")
+         (* ;; "TODO finish the intersection logic")
 
-         ))
+         (PRINTOUT T "converting...")
+         (CONVERT-TO-PNG-BASE64 BITMAP STREAM)
+         (PRINTOUT T "converted" T)))
 
-(CL:DEFUN CONVERT-TO-PNG-BASE64 (BITMAP OUT)
+(CL:DEFUN CONVERT-TO-PNG-BASE64 (BITMAP STREAM)
    "Write a bitmap as a BASE64-encoded PNG stream"
 
    (* ;; "We encode the PNG as BASE64 using a GENERATOR to produce and ENCODE-BASE64-GEN to consume")
 
-   (S-BASE64:ENCODE-BASE64-GEN (GENERATOR (UNCOMPRESSED-PNG:WRITE-BITMAP BITMAP NIL
-                                                 #'(CL:LAMBDA (BYTE)
-                                                          (PRODUCE BYTE))
-                                                 #'UNCOMPRESSED-PNG:PIXEL-TO-MONOCHROME-RGBA))
-          OUT))
+   (LET ((THRESHOLD (/ (BITSPERPIXEL BITMAP)
+                       2)))
+        (S-BASE64:ENCODE-BASE64-GEN (GENERATOR (UNCOMPRESSED-PNG:WRITE-BITMAP
+                                                BITMAP THRESHOLD NIL #'(CL:LAMBDA (BYTE)
+                                                                              (PRODUCE BYTE))
+                                                #'UNCOMPRESSED-PNG:PIXEL-TO-MONOCHROME-RGBA))
+               STREAM)))
 
 (CL:DEFUN \HTML.FONTCREATE (FAMILY SIZE FACE ROTATION DEVICE CHARSET)
    "Create a font for the HTML device"
@@ -1093,8 +1137,9 @@
    (if (NEQ ROTATION 0)
        then (ERROR "We only support ROTATION = 0"))
    (LET* [(FONT-DESCR (\HTML.READ-FONT-METRICS FAMILY FACE SIZE))
-          (PRIVATE-FONT-INFO (MAKE-HTML.FONTINFO :CHARSETS (fetch (WEB-FONT-DESCR charsets)
-                                                              of FONT-DESCR)
+          (PRIVATE-FONT-INFO (MAKE-HTML.FONTINFO :CHARSETS (MAKE-CHARSET-BIT-ARRAY
+                                                            (fetch (WEB-FONT-DESCR charsets)
+                                                               of FONT-DESCR))
                                     :CSS-CLASS
                                     (CSS-CLASS-FROM FAMILY SIZE FACE]
 
@@ -1105,15 +1150,13 @@
                      (CHARSET0-WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET-DESCR))
                      (FD (create FONTDESCRIPTOR
                                 FONTDEVICE _ DEVICE
+                                FONTSCALE _ *CENTIPOINTS-PER-POINT*
                                 FONTFAMILY _ FAMILY
                                 FONTSIZE _ SIZE
                                 FONTFACE _ FACE
-                                \SFAscent _ (ICP-TO-P (fetch (WEB-FONT-METRICS maxAscent)
-                                                         of FONT-DESCR))
-                                \SFDescent _ (ICP-TO-P (fetch (WEB-FONT-METRICS maxDescent)
-                                                          of FONT-DESCR))
-                                \SFHeight _ (ICP-TO-P (fetch (WEB-FONT-METRICS height) of FONT-DESCR)
-                                                   )
+                                \SFAscent _ (fetch (WEB-FONT-METRICS maxAscent) of FONT-DESCR)
+                                \SFDescent _ (fetch (WEB-FONT-METRICS maxDescent) of FONT-DESCR)
+                                \SFHeight _ (fetch (WEB-FONT-METRICS height) of FONT-DESCR)
                                 ROTATION _ 0
                                 FONTDEVICESPEC _ (LIST FAMILY SIZE FACE ROTATION DEVICE)
                                 \SFFACECODE _ (\FACECODE FACE)
@@ -1121,7 +1164,7 @@
                      (CSINFO (\CREATECHARSET CHARSET FD T))
                      (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
                     (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
-                       do (\FSETWIDTH CS-WIDTHS CH (ICP-TO-P WIDTH)))
+                       do (\FSETWIDTH CS-WIDTHS CH WIDTH))
                     FD))))
 
 (CL:DEFUN \HTML.FONTSAVAILABLE (FAMILY SIZE FACE ROTATION DEVICE)
@@ -1147,34 +1190,49 @@
    (CL:FORMAT T 
           "\HTML.CREATECHARSET fam ~a size ~a face ~a rot ~a dev ~a charset ~a desc ~a NOSLUG? ~a~%%"
           FAMILY SIZE FACE ROTATION DEVICE CHARSET FONTDESC NOSLUG?)
-   (LET* ((CSINFO (create CHARSETINFO
-                         OFFSETS _ NIL))
-          (WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
-
-         (* ;; "Make imagewidths point to widths.  Shouldn't matter to anyone, since imagewidths really has to do with bitmaps etc.  But...")
-
-         (replace (CHARSETINFO IMAGEWIDTHS) of CSINFO with WIDTHS)
-
-         (* ;; "TODO look up the appropriate .wcm file and load it into CSINFO")
-
-         (CL:UNLESS (EQ CHARSET 0)
-             (for I (AVGCHARWIDTH _ (CHARWIDTH (CHARCODE A)
-                                           FONTDESC)) from 0 to 255
-                first (CL:WHEN (EQ 0 AVGCHARWIDTH)
-
-                          (* ;; 
-    "This is what \AVGCHARWIDTH in FONT does, but we don't have it here.  Just to be extremely safe.")
-
-                          [SETQ AVGCHARWIDTH (MAX 1 (FIXR (FTIMES 0.6 (FONTPROP FONTDESC 'HEIGHT])
-                do (\FSETWIDTH WIDTHS I AVGCHARWIDTH)))
-         CSINFO))
+   (LET ((PRIVATE-FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of FONTDESC)))
+        (CL:IF (KNOWN-CHARSET? (\HTMLFONT-CHARSETS PRIVATE-FONT-INFO)
+                      CHARSET)
+            (LET* ((CHARSET-DESCR (\HTML.READ-CHARSET-METRICS FAMILY SIZE FACE CHARSET))
+                   (CHARSET-WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET-DESCR))
+                   (CSINFO (create CHARSETINFO
+                                  OFFSETS _ NIL))
+                   (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
+                  (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
+                     do (\FSETWIDTH CS-WIDTHS CH WIDTH))
+                  (replace (CHARSETINFO IMAGEWIDTHS) of CSINFO with WIDTHS)
+                  CSINFO)
+            (PROGN (CL:FORMAT T "Font does not support charset ~d~%%" CHARSET)
+                   NIL))))
 
 (CL:DEFUN \HTML.CHANGECHARSET (DATA CHARSET)
    "Set the new character set, creating the charset info if necessary"
-   (LET* ((FONT (\HTML-FONT DATA))
-          (CSINFO (\GETCHARSETINFO CHARSET FONT)))
-         (CL:SETF (\HTML-CHARSET DATA)
-                CHARSET)))
+
+   (* ;; "But don't change the charset if CHARSET is not a member of the font's charsets list")
+
+   (LET* ((FONT (\HTML-FONT DATA)))
+         (CL:IF (KNOWN-CHARSET? FONT CHARSET)
+             (LET ((CSINFO (\HTML.CREATECHARSET (FONTPROP FONT 'FAMILY)
+                                  (FONTPROP FONT 'SIZE)
+                                  (FONTPROP FONT 'FACE)
+                                  0 HTML.FONTCREATE.DEVICENAME CHARSET FONT T)))
+                  (\INSTALLCHARSETINFO FONT CSINFO CHARSET)
+                  (CL:SETF (\HTML-CHARSET DATA)
+                         CHARSET))
+             (CL:FORMAT T "Font does not contain charset ~d~%%" CHARSET))))
+
+(CL:DEFUN MAKE-CHARSET-BIT-ARRAY (CHARSETS-LIST)
+   "Read a list of charset numbers and return an equivalent set in the form of a bit-vector"
+   (LET ((BIT-SET (BITMAPCREATE (IPLUS 1 \MAXCHARSET)
+                         1 1)))
+        (CL:DOLIST (CHARSET CHARSETS-LIST)
+            (BITMAPBIT BIT-SET CHARSET 0 1))
+        BIT-SET))
+
+(CL:DEFUN KNOWN-CHARSET? (HTMLFONT CHARSET)
+   "Return T if the HTMLFONT says it has metrics for CHARSET"
+   [LET (KNOWN-CHARSETS (\HTMLFONT-CHARSETS FONT))
+        (NOT (ZEROP (BITMAPBIT KNOWN-CHARSETS CHARSET 0])
 
 (\HTMLSTREAM.INIT)
 
@@ -1203,37 +1261,38 @@
    "Ignore the body, return NIL"
    NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (3162 4791 (BEZIER-CONTROL-POINTS-TO-SVG 3162 . 4791)) (4793 4982 (CLOSE-KNOTS 4793 . 
-4982)) (4984 5239 (COMPUTE-LINE-HEIGHT 4984 . 5239)) (5241 5497 (COMPUTE-MAX-ASCENT 5241 . 5497)) (
-5499 5758 (COMPUTE-MAX-DESCENT 5499 . 5758)) (5760 7419 (CONVERT-TO-BEZIER 5760 . 7419)) (7421 7577 (
-HTML.INCHES-TO-POINTS 7421 . 7577)) (7579 7648 (CP-TO-P 7579 . 7648)) (7650 7796 (ICP-TO-P 7650 . 7796
-)) (7798 7957 (PIXEL-TO-PT 7798 . 7957)) (7959 8119 (PT-TO-PIXEL 7959 . 8119)) (8121 8268 (\HTML.SVG-Y
- 8121 . 8268)) (8270 8613 (MAKE-FONT-METRICS-FILE-NAME 8270 . 8613)) (8615 9015 (
-MAKE-CHARSET-METRICS-FILE-NAME 8615 . 9015)) (11847 12236 (CHECK-BROWSER-METRICS-FORMAT 11847 . 12236)
-) (12238 13930 (CSS-CLASS-FROM 12238 . 13930)) (13932 15311 (\HTML.READ-CHARSET-METRICS 13932 . 15311)
-) (15313 16795 (\HTML.READ-FONT-METRICS 15313 . 16795)) (17396 17628 (with-htmldata 17396 . 17628)) (
-17630 17850 (CHECK-OPEN 17630 . 17850)) (17852 18509 (HTML.OUTPUT-GRAPHICS 17852 . 18509)) (18511 
-19753 (HTML.OUTPUT-TEXT 18511 . 19753)) (19755 20935 (\HTML.MAYBE-START-PAGE 19755 . 20935)) (20937 
-21344 (\HTML.END-PAGE 20937 . 21344)) (21346 25182 (HTML.WRITE-PREFACE 21346 . 25182)) (25184 30695 (
-OPENHTMLSTREAM 25184 . 30695)) (30697 31051 (HTML.BACKCOLOR 30697 . 31051)) (31053 31938 (HTML.BITBLT 
-31053 . 31938)) (31940 32123 (HTML.BLTSHADE 31940 . 32123)) (32125 32522 (HTML.BOTTOMMARGIN 32125 . 
-32522)) (32524 33033 (HTML.CHARWIDTH 32524 . 33033)) (33035 33388 (HTML.CLIPPINGREGION 33035 . 33388))
- (33390 33968 (HTML.CLOSEFN 33390 . 33968)) (33970 34316 (HTML.COLOR 33970 . 34316)) (34318 34534 (
-HTML.DRAWCIRCLE 34318 . 34534)) (34536 35774 (HTML.DRAWCURVE 34536 . 35774)) (35776 36533 (
-HTML.DRAWELLIPSE 35776 . 36533)) (36535 37169 (HTML.DRAWLINE 36535 . 37169)) (37171 38152 (
-HTML.DRAWPOLYGON 37171 . 38152)) (38154 38329 (HTML.FILLCIRCLE 38154 . 38329)) (38331 39240 (
-HTML.FILLPOLYGON 38331 . 39240)) (39242 40125 (HTML.FONT 39242 . 40125)) (40127 40513 (HTML.LEFTMARGIN
- 40127 . 40513)) (40515 40806 (HTML.LINEFEED 40515 . 40806)) (40808 41065 (HTML.MOVETO 40808 . 41065))
- (41067 41136 (HTML.NEWPAGE 41067 . 41136)) (41138 41460 (HTML.OPERATION 41138 . 41460)) (41462 43509 
-(HTML.OUTCHARFN 41462 . 43509)) (43511 43867 (HTML.RESET 43511 . 43867)) (43869 44263 (
-HTML.RIGHTMARGIN 43869 . 44263)) (44265 44639 (HTML.SCALE 44265 . 44639)) (44641 44965 (
-HTML.SCALEDBITBLT 44641 . 44965)) (44967 45310 (HTML.SPACEFACTOR 44967 . 45310)) (45312 45980 (
-HTML.TERPRI 45312 . 45980)) (45982 46325 (HTML.TOPMARGIN 45982 . 46325)) (46327 46670 (HTML.XPOSITION 
-46327 . 46670)) (46672 47015 (HTML.YPOSITION 46672 . 47015)) (47017 47262 (MAKE-HTML-IMAGETYPE 47017
- . 47262)) (47264 47842 (\HTML.FILLCIRCLE 47264 . 47842)) (47844 48615 (\HTML.INIT-IMAGEDATA 47844 . 
-48615)) (48617 49139 (\HTMLSTREAM.INIT 48617 . 49139)) (49141 49849 (WRITE-BASE64-PNG 49141 . 49849)) 
-(49851 50396 (CONVERT-TO-PNG-BASE64 49851 . 50396)) (50398 53307 (\HTML.FONTCREATE 50398 . 53307)) (
-53309 54190 (\HTML.FONTSAVAILABLE 53309 . 54190)) (54192 55490 (\HTML.CREATECHARSET 54192 . 55490)) (
-55492 55763 (\HTML.CHANGECHARSET 55492 . 55763)) (55824 56624 (\CLEAN-FONT-CACHE 55824 . 56624)) (
-56626 56700 (DO-NOT 56626 . 56700)))))
+  (FILEMAP (NIL (3568 5197 (BEZIER-CONTROL-POINTS-TO-SVG 3568 . 5197)) (5199 5388 (CLOSE-KNOTS 5199 . 
+5388)) (5390 5645 (COMPUTE-LINE-HEIGHT 5390 . 5645)) (5647 5903 (COMPUTE-MAX-ASCENT 5647 . 5903)) (
+5905 6164 (COMPUTE-MAX-DESCENT 5905 . 6164)) (6166 7825 (CONVERT-TO-BEZIER 6166 . 7825)) (7827 7983 (
+HTML.INCHES-TO-POINTS 7827 . 7983)) (7985 8054 (CP-TO-P 7985 . 8054)) (8056 8202 (ICP-TO-P 8056 . 8202
+)) (8204 8363 (PIXEL-TO-PT 8204 . 8363)) (8365 8525 (PT-TO-PIXEL 8365 . 8525)) (8527 8674 (\HTML.SVG-Y
+ 8527 . 8674)) (8676 9019 (MAKE-FONT-METRICS-FILE-NAME 8676 . 9019)) (9021 9421 (
+MAKE-CHARSET-METRICS-FILE-NAME 9021 . 9421)) (12253 12642 (CHECK-BROWSER-METRICS-FORMAT 12253 . 12642)
+) (12644 14336 (CSS-CLASS-FROM 12644 . 14336)) (14338 15829 (\HTML.READ-FONT-METRICS 14338 . 15829)) (
+15831 17210 (\HTML.READ-CHARSET-METRICS 15831 . 17210)) (17811 18043 (with-htmldata 17811 . 18043)) (
+18045 18265 (CHECK-OPEN 18045 . 18265)) (18267 18924 (HTML.OUTPUT-GRAPHICS 18267 . 18924)) (18926 
+20168 (HTML.OUTPUT-TEXT 18926 . 20168)) (20170 21350 (\HTML.MAYBE-START-PAGE 20170 . 21350)) (21352 
+21759 (\HTML.END-PAGE 21352 . 21759)) (21761 25597 (HTML.WRITE-PREFACE 21761 . 25597)) (25599 31110 (
+OPENHTMLSTREAM 25599 . 31110)) (31112 31466 (HTML.BACKCOLOR 31112 . 31466)) (31468 32016 (HTML.BITBLT 
+31468 . 32016)) (32018 33986 (HTML.BLTSHADE 32018 . 33986)) (33988 34385 (HTML.BOTTOMMARGIN 33988 . 
+34385)) (34387 34896 (HTML.CHARWIDTH 34387 . 34896)) (34898 35251 (HTML.CLIPPINGREGION 34898 . 35251))
+ (35253 35725 (HTML.CLOSEFN 35253 . 35725)) (35727 36073 (HTML.COLOR 35727 . 36073)) (36075 36291 (
+HTML.DRAWCIRCLE 36075 . 36291)) (36293 37531 (HTML.DRAWCURVE 36293 . 37531)) (37533 38290 (
+HTML.DRAWELLIPSE 37533 . 38290)) (38292 38926 (HTML.DRAWLINE 38292 . 38926)) (38928 39909 (
+HTML.DRAWPOLYGON 38928 . 39909)) (39911 40086 (HTML.FILLCIRCLE 39911 . 40086)) (40088 40997 (
+HTML.FILLPOLYGON 40088 . 40997)) (40999 41882 (HTML.FONT 40999 . 41882)) (41884 42270 (HTML.LEFTMARGIN
+ 41884 . 42270)) (42272 42563 (HTML.LINEFEED 42272 . 42563)) (42565 42822 (HTML.MOVETO 42565 . 42822))
+ (42824 42893 (HTML.NEWPAGE 42824 . 42893)) (42895 43217 (HTML.OPERATION 42895 . 43217)) (43219 45266 
+(HTML.OUTCHARFN 43219 . 45266)) (45268 45624 (HTML.RESET 45268 . 45624)) (45626 46020 (
+HTML.RIGHTMARGIN 45626 . 46020)) (46022 46396 (HTML.SCALE 46022 . 46396)) (46398 47368 (
+HTML.SCALEDBITBLT 46398 . 47368)) (47370 47713 (HTML.SPACEFACTOR 47370 . 47713)) (47715 48383 (
+HTML.TERPRI 47715 . 48383)) (48385 48728 (HTML.TOPMARGIN 48385 . 48728)) (48730 49073 (HTML.XPOSITION 
+48730 . 49073)) (49075 49418 (HTML.YPOSITION 49075 . 49418)) (49420 49665 (MAKE-HTML-IMAGETYPE 49420
+ . 49665)) (49667 50245 (\HTML.FILLCIRCLE 49667 . 50245)) (50247 51018 (\HTML.INIT-IMAGEDATA 50247 . 
+51018)) (51020 51542 (\HTMLSTREAM.INIT 51020 . 51542)) (51544 52405 (WRITE-BASE64-PNG 51544 . 52405)) 
+(52407 53070 (CONVERT-TO-PNG-BASE64 52407 . 53070)) (53072 55912 (\HTML.FONTCREATE 53072 . 55912)) (
+55914 56795 (\HTML.FONTSAVAILABLE 55914 . 56795)) (56797 58032 (\HTML.CREATECHARSET 56797 . 58032)) (
+58034 58829 (\HTML.CHANGECHARSET 58034 . 58829)) (58831 59168 (MAKE-CHARSET-BIT-ARRAY 58831 . 59168)) 
+(59170 59388 (KNOWN-CHARSET? 59170 . 59388)) (59449 60249 (\CLEAN-FONT-CACHE 59449 . 60249)) (60251 
+60325 (DO-NOT 60251 . 60325)))))
 STOP
