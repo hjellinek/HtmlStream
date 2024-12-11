@@ -2,11 +2,12 @@
 "ENCODE-BASE64" "DECODE-BASE64-BYTES" "ENCODE-BASE64-BYTES" "ENCODE-BASE64-GEN")) READTABLE "XCL" 
 BASE 10)
 
-(IL:FILECREATED "29-Nov-2024 17:01:33" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>BASE64.;14| 13080  
+(IL:FILECREATED " 2-Dec-2024 16:25:14" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>BASE64.;16| 13953  
 
-      :CHANGES-TO (IL:VARS IL:BASE64COMS)
+      :CHANGES-TO (IL:FUNCTIONS TEST-ENCODE-FILE ENCODE-BASE64 CORE-ENCODE-BASE64 ENCODE-BASE64-BYTES
+                         ENCODE-BASE64-GEN)
+                  (IL:VARS IL:BASE64COMS)
                   (XCL:FILE-ENVIRONMENTS IL:BASE64)
-                  (IL:FUNCTIONS ENCODE-BASE64-GEN)
 
       :PREVIOUS-DATE "26-Nov-2024 15:55:40" IL:|{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>BASE64.;13|
 )
@@ -66,7 +67,11 @@
            (IL:VARIABLES +BASE64-ALPHABET+ +INVERSE-BASE64-ALPHABET+)
            (IL:FUNCTIONS CORE-DECODE-BASE64 CORE-ENCODE-BASE64 SKIP-BASE64-WHITESPACE)
            (IL:FUNCTIONS DECODE-BASE64 DECODE-BASE64-BYTES)
-           (IL:FUNCTIONS ENCODE-BASE64 ENCODE-BASE64-BYTES ENCODE-BASE64-GEN)))
+           (IL:FUNCTIONS ENCODE-BASE64 ENCODE-BASE64-BYTES ENCODE-BASE64-GEN)
+           
+           (IL:* IL:|;;| "testing")
+
+           (IL:FUNCTIONS TEST-ENCODE-FILE)))
 
 
 
@@ -158,16 +163,16 @@
                       V4))))
 
 (DEFUN CORE-ENCODE-BASE64 (BYTE1 BYTE2 BYTE3)
-   (VALUES (CHAR +BASE64-ALPHABET+ (ASH BYTE1 -2))
-          (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE1 3)
-                                               4)
-                                         (ASH (LOGAND BYTE2 240)
-                                              -4)))
-          (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE2 15)
-                                               2)
-                                         (ASH (LOGAND BYTE3 192)
-                                              -6)))
-          (CHAR +BASE64-ALPHABET+ (LOGAND BYTE3 63))))
+   (LIST (CHAR +BASE64-ALPHABET+ (ASH BYTE1 -2))
+         (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE1 3)
+                                              4)
+                                        (ASH (LOGAND BYTE2 240)
+                                             -4)))
+         (CHAR +BASE64-ALPHABET+ (LOGIOR (ASH (LOGAND BYTE2 15)
+                                              2)
+                                        (ASH (LOGAND BYTE3 192)
+                                             -6)))
+         (CHAR +BASE64-ALPHABET+ (LOGAND BYTE3 63))))
 
 (DEFUN SKIP-BASE64-WHITESPACE (STREAM)
    (LOOP (LET ((CHAR (PEEK-CHAR NIL STREAM NIL NIL)))
@@ -241,26 +246,26 @@
                     (IN3 (READ-BYTE IN NIL NIL)))
                    (IF (NULL IN1)
                        (RETURN))
-                   (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
-                       (CORE-ENCODE-BASE64 IN1 (IF (NULL IN2)
-                                                   0
-                                                   IN2)
-                              (IF (NULL IN3)
-                                  0
-                                  IN3))
-                     (WRITE-CHAR OUT1 OUT)
-                     (WRITE-CHAR OUT2 OUT)
-                     (IF (NULL IN2)
-                         (PROGN (WRITE-CHAR #\= OUT)
-                                (WRITE-CHAR #\= OUT))
-                         (PROGN (WRITE-CHAR OUT3 OUT)
-                                (IF (NULL IN3)
-                                    (WRITE-CHAR #\= OUT)
-                                    (WRITE-CHAR OUT4 OUT))))
-                     (INCF COUNTER 4)
-                     (WHEN (AND BREAK-LINES (= COUNTER 76))
-                         (TERPRI OUT)
-                         (SETF COUNTER 0)))))))
+                   (XCL:DESTRUCTURING-BIND (OUT1 OUT2 OUT3 OUT4)
+                          (CORE-ENCODE-BASE64-LIST IN1 (IF (NULL IN2)
+                                                           0
+                                                           IN2)
+                                 (IF (NULL IN3)
+                                     0
+                                     IN3))
+                          (WRITE-CHAR OUT1 OUT)
+                          (WRITE-CHAR OUT2 OUT)
+                          (IF (NULL IN2)
+                              (PROGN (WRITE-CHAR #\= OUT)
+                                     (WRITE-CHAR #\= OUT))
+                              (PROGN (WRITE-CHAR OUT3 OUT)
+                                     (IF (NULL IN3)
+                                         (WRITE-CHAR #\= OUT)
+                                         (WRITE-CHAR OUT4 OUT))))
+                          (INCF COUNTER 4)
+                          (WHEN (AND BREAK-LINES (= COUNTER 76))
+                              (TERPRI OUT)
+                              (SETF COUNTER 0)))))))
 
 (DEFUN ENCODE-BASE64-BYTES (ARRAY STREAM &OPTIONAL (BREAK-LINES T))
    "Encode a byte array into a base64 encoded character stream"
@@ -278,27 +283,27 @@
                                 LEN)
                              (AREF ARRAY (+ INDEX 2))
                              NIL)))
-                   (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
-                       (CORE-ENCODE-BASE64 IN1 (IF (NULL IN2)
-                                                   0
-                                                   IN2)
-                              (IF (NULL IN3)
-                                  0
-                                  IN3))
-                     (WRITE-CHAR OUT1 STREAM)
-                     (WRITE-CHAR OUT2 STREAM)
-                     (IF (NULL IN2)
-                         (PROGN (WRITE-CHAR #\= STREAM)
-                                (WRITE-CHAR #\= STREAM))
-                         (PROGN (WRITE-CHAR OUT3 STREAM)
-                                (IF (NULL IN3)
-                                    (WRITE-CHAR #\= STREAM)
-                                    (WRITE-CHAR OUT4 STREAM))))
-                     (INCF INDEX 3)
-                     (INCF COUNTER 4)
-                     (WHEN (AND BREAK-LINES (= COUNTER 76))
-                         (TERPRI STREAM)
-                         (SETF COUNTER 0)))))))
+                   (XCL:DESTRUCTURING-BIND (OUT1 OUT2 OUT3 OUT4)
+                          (CORE-ENCODE-BASE64 IN1 (IF (NULL IN2)
+                                                      0
+                                                      IN2)
+                                 (IF (NULL IN3)
+                                     0
+                                     IN3))
+                          (WRITE-CHAR OUT1 STREAM)
+                          (WRITE-CHAR OUT2 STREAM)
+                          (IF (NULL IN2)
+                              (PROGN (WRITE-CHAR #\= STREAM)
+                                     (WRITE-CHAR #\= STREAM))
+                              (PROGN (WRITE-CHAR OUT3 STREAM)
+                                     (IF (NULL IN3)
+                                         (WRITE-CHAR #\= STREAM)
+                                         (WRITE-CHAR OUT4 STREAM))))
+                          (INCF INDEX 3)
+                          (INCF COUNTER 4)
+                          (WHEN (AND BREAK-LINES (= COUNTER 76))
+                              (TERPRI STREAM)
+                              (SETF COUNTER 0)))))))
 
 (DEFUN ENCODE-BASE64-GEN (IN OUT &OPTIONAL (BREAK-LINES T))
    "Encode a binary input GENNERATOR into a BASE64 encoded character output stream"
@@ -318,29 +323,41 @@
                                (IN3 (GET-NEXT)))
                               (IF (EOS? IN1)
                                   (RETURN))
-                              (MULTIPLE-VALUE-BIND (OUT1 OUT2 OUT3 OUT4)
-                                  (CORE-ENCODE-BASE64 IN1 (IF (EOS? IN2)
-                                                              0
-                                                              IN2)
-                                         (IF (EOS? IN3)
-                                             0
-                                             IN3))
-                                (WRITE-CHAR OUT1 OUT)
-                                (WRITE-CHAR OUT2 OUT)
-                                (IF (EOS? IN2)
-                                    (PROGN (WRITE-CHAR #\= OUT)
-                                           (WRITE-CHAR #\= OUT))
-                                    (PROGN (WRITE-CHAR OUT3 OUT)
-                                           (IF (EOS? IN3)
-                                               (WRITE-CHAR #\= OUT)
-                                               (WRITE-CHAR OUT4 OUT))))
-                                (INCF COUNTER 4)
-                                (WHEN (AND BREAK-LINES (= COUNTER 76))
-                                    (TERPRI OUT)
-                                    (SETF COUNTER 0)))))))))
+                              (XCL:DESTRUCTURING-BIND (OUT1 OUT2 OUT3 OUT4)
+                                     (CORE-ENCODE-BASE64 IN1 (IF (EOS? IN2)
+                                                                 0
+                                                                 IN2)
+                                            (IF (EOS? IN3)
+                                                0
+                                                IN3))
+                                     (WRITE-CHAR OUT1 OUT)
+                                     (WRITE-CHAR OUT2 OUT)
+                                     (IF (EOS? IN2)
+                                         (PROGN (WRITE-CHAR #\= OUT)
+                                                (WRITE-CHAR #\= OUT))
+                                         (PROGN (WRITE-CHAR OUT3 OUT)
+                                                (IF (EOS? IN3)
+                                                    (WRITE-CHAR #\= OUT)
+                                                    (WRITE-CHAR OUT4 OUT))))
+                                     (INCF COUNTER 4)
+                                     (WHEN (AND BREAK-LINES (= COUNTER 76))
+                                         (TERPRI OUT)
+                                         (SETF COUNTER 0)))))))))
+
+
+
+(IL:* IL:|;;| "testing")
+
+
+(DEFUN TEST-ENCODE-FILE (&OPTIONAL (INPUT-FILE "/tmp/bitmap.png"))
+   (WITH-OPEN-STREAM (IN (IL:OPENSTREAM INPUT-FILE 'IL:INPUT NIL '((IL:FORMAT :THROUGH))))
+          (WITH-OPEN-STREAM (OUT (IL:OPENSTREAM (CONCATENATE 'STRING INPUT-FILE ".base64")
+                                        'IL:OUTPUT NIL '((IL:FORMAT :THROUGH))))
+                 (ENCODE-BASE64 IN OUT NIL))))
 (IL:DECLARE\: IL:DONTCOPY
-  (IL:FILEMAP (NIL (3809 4407 (CORE-DECODE-BASE64 3809 . 4407)) (4409 5027 (CORE-ENCODE-BASE64 4409 . 
-5027)) (5029 5359 (SKIP-BASE64-WHITESPACE 5029 . 5359)) (5361 6483 (DECODE-BASE64 5361 . 6483)) (6485 
-7890 (DECODE-BASE64-BYTES 6485 . 7890)) (7892 9258 (ENCODE-BASE64 7892 . 9258)) (9260 10967 (
-ENCODE-BASE64-BYTES 9260 . 10967)) (10969 13051 (ENCODE-BASE64-GEN 10969 . 13051)))))
+  (IL:FILEMAP (NIL (4000 4598 (CORE-DECODE-BASE64 4000 . 4598)) (4600 5207 (CORE-ENCODE-BASE64 4600 . 
+5207)) (5209 5539 (SKIP-BASE64-WHITESPACE 5209 . 5539)) (5541 6663 (DECODE-BASE64 5541 . 6663)) (6665 
+8070 (DECODE-BASE64-BYTES 6665 . 8070)) (8072 9535 (ENCODE-BASE64 8072 . 9535)) (9537 11335 (
+ENCODE-BASE64-BYTES 9537 . 11335)) (11337 13505 (ENCODE-BASE64-GEN 11337 . 13505)) (13540 13924 (
+TEST-ENCODE-FILE 13540 . 13924)))))
 IL:STOP
