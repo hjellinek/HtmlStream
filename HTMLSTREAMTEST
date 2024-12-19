@@ -1,38 +1,54 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 1-Dec-2024 09:16:24" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21 14356  
+(FILECREATED "19-Dec-2024 10:55:01" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;29 21010  
 
       :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
-                  (FUNCTIONS HTMLTEST.BITBLT GEN-TEST-BITMAP)
+                  (FUNCTIONS HTMLTEST.FUNNY-CHARS GEN-TEST-BITMAP HTMLTEST.TALL-BITBLT 
+                         HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.TEXT-TWO-FONTS HTMLTEST.BITBLT 
+                         HTMLTEST.BLTSHADE HTMLTEST.ONE-PAGE-SIMPLE 
+                         HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-WITH-CURVE 
+                         HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
+                         HTMLTEST.SPECIAL-TEXT-ENTITIES)
 
-      :PREVIOUS-DATE "20-Nov-2024 15:09:23" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;18)
+      :PREVIOUS-DATE " 1-Dec-2024 09:16:24" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
 
-(RPAQQ HTMLSTREAMTESTCOMS ((FUNCTIONS GEN-TEST-BITMAP)
-                           (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.ONE-PAGE-SIMPLE 
-                                  HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.SHOW-TEXT-BOUNDS 
-                                  HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS 
-                                  HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW)
-                           (FUNCTIONS WINDOWTEST.SHOW-TEXT-BOUNDS)
-                           (FUNCTIONS HTMLTEST.TRANSFORM HTMLTEST.TRANSFORM-POINTS)))
+(RPAQQ HTMLSTREAMTESTCOMS
+       ((FUNCTIONS GEN-TEST-BITMAP)
+        (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE)
+        (FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
+               HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS 
+               HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
+               HTMLTEST.SPECIAL-TEXT-ENTITIES)
+        
+        (* ;; "charsets")
+
+        (FUNCTIONS HTMLTEST.FUNNY-CHARS)
+        (FUNCTIONS WINDOWTEST.SHOW-TEXT-BOUNDS)
+        (FUNCTIONS HTMLTEST.TRANSFORM HTMLTEST.TRANSFORM-POINTS)))
 
 (CL:DEFUN GEN-TEST-BITMAP (W H)
    "Generate a test bitmap image"
-   (LET ((BITMAP (BITMAPCREATE W H)))
-        (FOR X FROM 0 TO W DO (BITMAPBIT BITMAP X 0 1)
-                              (BITMAPBIT BITMAP X (- H 1)
-                                     1))
-        (FOR Y FROM 0 TO H DO (BITMAPBIT BITMAP 0 Y 1)
-                              (BITMAPBIT BITMAP (- W 1)
-                                     Y 1))
-        BITMAP))
+   (LET* [(BITMAP (BITMAPCREATE W H))
+          (STREAM (DSPCREATE BITMAP))
+          (FONT-HEIGHT (FONTPROP STREAM 'HEIGHT]
+         (FOR X FROM 0 TO W DO (BITMAPBIT BITMAP X 0 1)
+                               (BITMAPBIT BITMAP X (- H 1)
+                                      1))
+         (FOR Y FROM 0 TO H DO (BITMAPBIT BITMAP 0 Y 1)
+                               (BITMAPBIT BITMAP (- W 1)
+                                      Y 1))
+         (MOVETO 2 (- H FONT-HEIGHT)
+                STREAM)
+         (CL:FORMAT STREAM "~dx~d" W H)
+         BITMAP))
 
 (CL:DEFUN HTMLTEST.BITBLT (&OPTIONAL (FILE-NAME "/tmp/bitblt.html"))
    "Test bitblt in a single-page document"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "BitBLT test document"))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BitBLT test document"]
           (LET* ((W 400)
                  (H 50)
                  (TEST-BITMAP (GEN-TEST-BITMAP W H)))
@@ -48,39 +64,103 @@
                 (CL:FORMAT HTMLSTREAM "Second line"))
           FILE-NAME))
 
+(CL:DEFUN HTMLTEST.TALL-BITBLT (&OPTIONAL (FILE-NAME "/tmp/bitblt.html"))
+   "Test bitblt in a single-page document"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BitBLT test document"]
+          (LET* ((W 50)
+                 (H 400)
+                 (TEST-BITMAP (GEN-TEST-BITMAP W H))
+                 (SCALE (DSPSCALE NIL HTMLSTREAM)))
+                (PRINTOUT T "y1 = " (DSPYPOSITION NIL HTMLSTREAM)
+                       T)
+                (TERPRI HTMLSTREAM)
+                (CL:FORMAT HTMLSTREAM "Here's some text.")
+                (PRINTOUT T "y2 = " (DSPYPOSITION NIL HTMLSTREAM)
+                       T)
+                (TERPRI HTMLSTREAM)
+                (BITBLT TEST-BITMAP 0 0 HTMLSTREAM (TIMES 100 SCALE)
+                       (TIMES 200 SCALE))
+                (MOVETO (TIMES 40 SCALE)
+                       (TIMES 100 SCALE)
+                       HTMLSTREAM)
+                (CL:FORMAT HTMLSTREAM "Second line"))
+          FILE-NAME))
+
+(CL:DEFUN HTMLTEST.BLTSHADE (&OPTIONAL (FILE-NAME "/tmp/bltshade.html"))
+   "Test BLTSHADE in a single-page document"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BLTSHADE test document"]
+          [LET* ((PAGE-HEIGHT (HTML.INCHES-TO-CENTIPOINTS 11))
+                 (PAGE-WIDTH (HTML.INCHES-TO-CENTIPOINTS 8.5))
+                 (FONT-HEIGHT (FONTPROP (DSPFONT NIL HTMLSTREAM)
+                                     'HEIGHT))
+                 (NUM-SHADES 16)
+                 (BLT-WIDTH PAGE-WIDTH)
+                 (BLT-HEIGHT (IQUOTIENT PAGE-HEIGHT NUM-SHADES))
+                 (Y (- PAGE-HEIGHT BLT-HEIGHT))
+                 (SHADE-BITS 0))
+                (FOR SHADE FROM 0 TO NUM-SHADES
+                   DO (LET ((SHADE (MASK.1'S 0 SHADE)))
+                           (DRAWPOLYGON (LIST (CONS 0 Y)
+                                              (CONS BLT-WIDTH Y)
+                                              (CONS BLT-WIDTH (+ Y BLT-HEIGHT))
+                                              (CONS 0 (+ Y BLT-HEIGHT)))
+                                  T
+                                  (DSPSCALE NIL HTMLSTREAM)
+                                  NIL HTMLSTREAM)
+                           (BLTSHADE SHADE HTMLSTREAM 0 Y BLT-WIDTH BLT-HEIGHT)
+                           (MOVETO 0 (+ Y (/ BLT-HEIGHT 2))
+                                  HTMLSTREAM)
+                           (CL:FORMAT HTMLSTREAM "Shade ~16,'0B" SHADE)
+                           (CL:DECF Y BLT-HEIGHT]
+          FILE-NAME))
+
 (CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "/tmp/one-page-simple.html"))
    "Simple text + graphics test for a single-page document"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
-          (CL:FORMAT HTMLSTREAM "First line, Y position = ~d" (DSPYPOSITION NIL HTMLSTREAM))
-          (TERPRI HTMLSTREAM)
-          (CL:FORMAT HTMLSTREAM "Second line, Y position = ~d" (DSPYPOSITION NIL HTMLSTREAM))
-          (MOVETO 40 50 HTMLSTREAM)
-          (CL:FORMAT HTMLSTREAM "Third line: Moved to ~d,~d" (DSPXPOSITION NIL HTMLSTREAM)
-                 (DSPYPOSITION NIL HTMLSTREAM))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "One page test document"]
+          (FOR I FROM 0 TO 4 DO (MOVETO (ITIMES I 5000)
+                                       (ITIMES I 5000)
+                                       HTMLSTREAM)
+                                (CL:FORMAT HTMLSTREAM "Line ~d  X,Y = ~d,~d" I (DSPXPOSITION NIL 
+                                                                                      HTMLSTREAM)
+                                       (DSPYPOSITION NIL HTMLSTREAM)))
           FILE-NAME))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS (&OPTIONAL (FILE-NAME 
                                                                  "/tmp/one-page-simple-graphics.html"
                                                                    ))
    "Simple text + graphics test for a single-page document"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "One page test document"]
           (TERPRI HTMLSTREAM)
           (CL:FORMAT HTMLSTREAM "First line, x = ~d, y = ~d!" (DSPXPOSITION NIL HTMLSTREAM)
                  (DSPYPOSITION NIL HTMLSTREAM))
           (TERPRI HTMLSTREAM)
           (CL:FORMAT HTMLSTREAM "Second line, x = ~d, y = ~d" (DSPXPOSITION NIL HTMLSTREAM)
                  (DSPYPOSITION NIL HTMLSTREAM))
-          (MOVETO 40 50 HTMLSTREAM)
+          (MOVETO (P-TO-CP 40)
+                 (P-TO-CP 50)
+                 HTMLSTREAM)
           (CL:FORMAT HTMLSTREAM "Third line: Moved to ~d, ~d." (DSPXPOSITION NIL HTMLSTREAM)
                  (DSPYPOSITION NIL HTMLSTREAM))
-          (DRAWCIRCLE 140 150 130 NIL NIL HTMLSTREAM)
-          (FILLCIRCLE 340 150 130 NIL HTMLSTREAM)
-          (for ANGLE from 0 to 359 by 15 do (DRAWELLIPSE 200 250 100 180 ANGLE NIL NIL HTMLSTREAM))
-          (for LINE-Y from 450 to 550 by 10 do (DRAWLINE 0 LINE-Y 800 LINE-Y (IQUOTIENT (- LINE-Y 449
-                                                                                           )
-                                                                                    10)
-                                                      NIL HTMLSTREAM))
-          (LET* ([POLY-POINTS '((100 . 100)
+          (DRAWCIRCLE (P-TO-CP 140)
+                 (P-TO-CP 150)
+                 (P-TO-CP 130)
+                 NIL NIL HTMLSTREAM)
+          (FILLCIRCLE (P-TO-CP 340)
+                 (P-TO-CP 150)
+                 (P-TO-CP 130)
+                 NIL HTMLSTREAM)
+          (for ANGLE from 0 to 359 by 15 do (DRAWELLIPSE (P-TO-CP 200)
+                                                   (P-TO-CP 250)
+                                                   (P-TO-CP 100)
+                                                   (P-TO-CP 180)
+                                                   ANGLE NIL NIL HTMLSTREAM))
+          (for LINE-Y from (P-TO-CP 450) to (P-TO-CP 550) by (P-TO-CP 10)
+             do (DRAWLINE 0 LINE-Y (P-TO-CP 800)
+                       LINE-Y
+                       (IQUOTIENT (- LINE-Y (P-TO-CP 449))
+                              10)
+                       NIL HTMLSTREAM))
+          (LET* [[POLY-POINTS '((100 . 100)
                                 (50 . 125)
                                 (150 . 175)
                                 (200 . 100)
@@ -90,24 +170,29 @@
                                 (98 . 35)
                                 (2 . 35)
                                 (79 . 90]
-                 (TRANSFORMED-POLY-POINTS (HTMLTEST.TRANSFORM-POINTS POLY-POINTS -20 -20 3 3))
-                 (TRANSFORMED-STAR-POINTS (HTMLTEST.TRANSFORM-POINTS STAR-POINTS 0 200 3 3)))
-                (DRAWPOLYGON POLY-POINTS T '(ROUND 3)
-                       '(4 2)
+                 (TRANSFORMED-POLY-POINTS (HTMLTEST.TRANSFORM-POINTS POLY-POINTS (P-TO-CP -20)
+                                                 (P-TO-CP -20)
+                                                 (TIMES 3 *CENTIPOINTS-PER-POINT*)
+                                                 (TIMES 3 *CENTIPOINTS-PER-POINT*)))
+                 (TRANSFORMED-STAR-POINTS (HTMLTEST.TRANSFORM-POINTS STAR-POINTS 0 (P-TO-CP 200)
+                                                 (TIMES 3 *CENTIPOINTS-PER-POINT*)
+                                                 (TIMES 3 *CENTIPOINTS-PER-POINT*]
+                (DRAWPOLYGON POLY-POINTS T `(ROUND 300)
+                       '(400 200)
                        HTMLSTREAM)
-                (DRAWPOLYGON TRANSFORMED-POLY-POINTS NIL '(ROUND 3)
-                       '(4 2)
+                (DRAWPOLYGON TRANSFORMED-POLY-POINTS NIL `(ROUND 300)
+                       '(400 200)
                        HTMLSTREAM)
                 (FILLPOLYGON TRANSFORMED-STAR-POINTS NIL HTMLSTREAM)
-                (LET [(CURVE-KNOTS '((10 . 10)
-                                     (50 . 50)
-                                     (100 . 10)
-                                     (150 . 50]
+                (LET [(CURVE-KNOTS '((1000 . 1000)
+                                     (5000 . 5000)
+                                     (10000 . 1000)
+                                     (15000 . 5000]
                      (DRAWCURVE CURVE-KNOTS NIL NIL NIL HTMLSTREAM)))
           FILE-NAME))
 
 (CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
-   "Output text, draw bounds, dump widths"
+   "Output text, draw bounds."
 
    (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
 
@@ -123,90 +208,102 @@
           (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
                 (FONT10 (FONTCREATE 'NOTO-SANS-DISPLAY 10 'REGULAR NIL STREAM))
                 (FONT20 (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL STREAM))
-                STARTING-X STARTING-Y BASELINE-Y FONT-HEIGHT SAMPLE-WIDTH)
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
 
                (* ;; "display a string with a corner of a box at its origin, the width of the text")
 
                (DSPFONT FONT10 STREAM)
                (TERPRI STREAM)
-               (SETQ FONT-HEIGHT (FONTPROP (DSPFONT NIL STREAM)
-                                        'HEIGHT))
+               (SETQ FONT-ASCENT (FONTPROP (DSPFONT NIL STREAM)
+                                        'ASCENT))
+               (SETQ FONT-DESCENT (FONTPROP (DSPFONT NIL STREAM)
+                                         'DESCENT))
                (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
                (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (PRINTOUT T "SVG y pos before text = " (- (DSPTOPMARGIN NIL STREAM)
-                                                         (DSPYPOSITION NIL STREAM))
-                      T)
                (PRINTOUT STREAM SAMPLE T)
-               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE (DSPFONT NIL STREAM)))
-               (PRINTOUT T "SVG y pos before polygon = " (- (DSPTOPMARGIN NIL STREAM)
-                                                            (DSPYPOSITION NIL STREAM))
-                      T)
-               (DRAWPOLYGON (LIST (CONS (+ STARTING-X SAMPLE-WIDTH)
-                                        STARTING-Y)
-                                  (CONS STARTING-X STARTING-Y)
-                                  (CONS STARTING-X (+ STARTING-Y FONT-HEIGHT)))
-                      NIL NIL NIL STREAM)
-               (PRINTOUT T "SVG y pos after polygon = " (- (DSPTOPMARGIN NIL STREAM)
-                                                           (DSPYPOSITION NIL STREAM))
-                      T)
+               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
+
+               (* ;; "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
+
+               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                      STARTING-Y STARTING-X STARTING-Y *CENTIPOINTS-PER-POINT* NIL STREAM)
+
+               (* ;; "draw from (start-X, descent-Y) to (start-X, ascent-Y)")
+
+               (DRAWLINE STARTING-X (- STARTING-Y FONT-DESCENT)
+                      STARTING-X
+                      (+ STARTING-Y FONT-ASCENT)
+                      *CENTIPOINTS-PER-POINT* NIL STREAM)
+
+               (* ;; "draw a short line at the end, the height of the descent")
+
+               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                      (- STARTING-Y FONT-DESCENT)
+                      (+ STARTING-X SAMPLE-WIDTH)
+                      (+ STARTING-Y FONT-DESCENT)
+                      *CENTIPOINTS-PER-POINT* NIL STREAM)
                (TERPRI STREAM)
                (TERPRI STREAM)
                (TERPRI STREAM)
                FILE-NAME)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "/tmp/one-page-with-curve.html"))
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
-          (DRAWCURVE '((10 . 10)
-                       (50 . 50)
-                       (100 . 10)
-                       (150 . 50))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Curve test document"]
+          (DRAWCURVE (HTMLTEST.TRANSFORM-POINTS '((10 . 10)
+                                                  (50 . 50)
+                                                  (100 . 10)
+                                                  (150 . 50))
+                            0 0 *CENTIPOINTS-PER-POINT* *CENTIPOINTS-PER-POINT*)
                  NIL
                  '(ROUND 5)
-                 '(1 1 1 2)
+                 '(1000 1000 1000 2000)
                  HTMLSTREAM)
           FILE-NAME))
 
 (CL:DEFUN HTMLTEST.TEXT-TWO-FONTS (&OPTIONAL (FILE-NAME "/tmp/two-fonts.html"))
    "Output text, change fonts, output more text"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "Two fonts"))
-          (LET* ((FIRST-FONT (DSPFONT NIL HTMLSTREAM))
-                 (SECOND-FONT (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL HTMLSTREAM))
-                 (SECOND-FONT-BOLD (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(BOLD REGULAR REGULAR)
-                                          NIL HTMLSTREAM))
-                 (SECOND-FONT-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(MEDIUM ITALIC REGULAR)
-                                            NIL HTMLSTREAM))
-                 (SECOND-FONT-BOLD-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(BOLD ITALIC REGULAR)
-                                                 NIL HTMLSTREAM)))
-                (CL:FORMAT HTMLSTREAM "This is in the default font, ~s.~%%" FIRST-FONT)
-                (TERPRI HTMLSTREAM)
-                (DSPFONT SECOND-FONT HTMLSTREAM)
-                (CL:FORMAT HTMLSTREAM "We just changed the font to ~s.~%%" (DSPFONT NIL HTMLSTREAM))
-                (TERPRI HTMLSTREAM)
-                (DSPFONT SECOND-FONT-BOLD HTMLSTREAM)
-                (CL:FORMAT HTMLSTREAM "That font but bold, ~s.~%%" (DSPFONT NIL HTMLSTREAM))
-                (TERPRI HTMLSTREAM)
-                (DSPFONT SECOND-FONT-ITALIC HTMLSTREAM)
-                (CL:FORMAT HTMLSTREAM "That font but italic, ~s.~%%" (DSPFONT NIL HTMLSTREAM))
-                (TERPRI HTMLSTREAM)
-                (DSPFONT SECOND-FONT-BOLD-ITALIC HTMLSTREAM)
-                (CL:FORMAT HTMLSTREAM "Bold and italic too, ~s.~%%" (DSPFONT NIL HTMLSTREAM))
-                (TERPRI HTMLSTREAM)
-                FILE-NAME)))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Two fonts"]
+          (CL:FLET [(FONT-SPEC NIL (FONTPROP (DSPFONT NIL HTMLSTREAM)
+                                          'SPEC]
+                 (LET* ((FIRST-FONT (DSPFONT NIL HTMLSTREAM))
+                        (SECOND-FONT (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL HTMLSTREAM))
+                        (SECOND-FONT-BOLD (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(BOLD REGULAR REGULAR)
+                                                 NIL HTMLSTREAM))
+                        (SECOND-FONT-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(MEDIUM ITALIC REGULAR
+                                                                                      )
+                                                   NIL HTMLSTREAM))
+                        (SECOND-FONT-BOLD-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20
+                                                        '(BOLD ITALIC REGULAR)
+                                                        NIL HTMLSTREAM)))
+                       (CL:FORMAT HTMLSTREAM "This is in the default font, ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       (DSPFONT SECOND-FONT HTMLSTREAM)
+                       (CL:FORMAT HTMLSTREAM "We just changed the font to ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       (DSPFONT SECOND-FONT-BOLD HTMLSTREAM)
+                       (CL:FORMAT HTMLSTREAM "That font but bold, ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       (DSPFONT SECOND-FONT-ITALIC HTMLSTREAM)
+                       (CL:FORMAT HTMLSTREAM "That font but italic, ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       (DSPFONT SECOND-FONT-BOLD-ITALIC HTMLSTREAM)
+                       (CL:FORMAT HTMLSTREAM "Bold and italic too, ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       FILE-NAME))))
 
 (CL:DEFUN HTMLTEST.TEXT-VERTICAL-OVERFLOW (&OPTIONAL (FILE-NAME "/tmp/vertical-overflow.html"))
    "Output enough text to force a second page"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Overflow test document"]
           (for LINE from 0 to 66 do (CL:FORMAT HTMLSTREAM "This is line ~d.  Y position = ~d" LINE
                                            (DSPYPOSITION NIL HTMLSTREAM))
                                     (TERPRI HTMLSTREAM))
-          (CL:FORMAT HTMLSTREAM "This line will overflow.  Y position = ~d" (DSPYPOSITION NIL 
-                                                                                   HTMLSTREAM))
-          (TERPRI HTMLSTREAM)
           FILE-NAME))
 
 (CL:DEFUN HTMLTEST.TEXT-HORIZONTAL-OVERFLOW (&OPTIONAL (FILE-NAME "/tmp/horizontal-overflow.html"))
    "Output enough text to wrap around the right margin"
-   (CL:WITH-OPEN-STREAM (HTMLSTREAM (OPENHTMLSTREAM FILE-NAME "One page test document"))
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
+                                                                  "Horizontal overflow test document"
+                                                                      ]
           (CL:FORMAT HTMLSTREAM "char width = ~d~%%" (CHARWIDTH (CHARCODE SPACE)
                                                             HTMLSTREAM))
           (CL:FORMAT HTMLSTREAM "X pos = ~d~%%" (DSPXPOSITION NIL HTMLSTREAM))
@@ -217,6 +314,38 @@
           (TERPRI HTMLSTREAM)
           (CL:FORMAT HTMLSTREAM "The end!~%%")
           FILE-NAME))
+
+(CL:DEFUN HTMLTEST.SPECIAL-TEXT-ENTITIES (&OPTIONAL (FILE-NAME "/tmp/special-entities.html"))
+   "Output enough text to wrap around the right margin"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
+                                                                     "Special entities test document"
+                                                                      ]
+          (for REPETITION from 0 to 50 do (CL:FORMAT HTMLSTREAM "#~d: All work & no play > All work & all play but < %"neither%"! These will pass through: &#39; &copy; "
+                                                 REPETITION))
+          (TERPRI HTMLSTREAM)
+          (CL:FORMAT HTMLSTREAM "The end!~%%")
+          FILE-NAME))
+
+
+
+(* ;; "charsets")
+
+
+(CL:DEFUN HTMLTEST.FUNNY-CHARS (&OPTIONAL (FILE-NAME "/tmp/funny-chars.html"))
+   "Create a document that displays characters from various non-zero charsets"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Valid charsets test document"]
+          (LET ((GREEK-CHARSET 38))
+               (CL:FORMAT HTMLSTREAM "Here's some text in charset 0.~%%")
+               (CL:FORMAT HTMLSTREAM "Switching to charset 0x26 (Greek):~%%")
+               (FOR CHCODE FROM (LOGOR (LLSH GREEK-CHARSET 8)
+                                       33) TO (LOGOR (LLSH GREEK-CHARSET 8)
+                                                     56) DO  (* ; "from alpha to omega")
+                                                            (CL:FORMAT HTMLSTREAM "Code ~x = " CHCODE
+                                                                   )
+                                                            (\OUTCHAR HTMLSTREAM CHCODE)
+                                                            (CL:FORMAT HTMLSTREAM "~%%"))
+               (CL:FORMAT HTMLSTREAM "Done!~%%")
+               FILE-NAME)))
 
 (CL:DEFUN WINDOWTEST.SHOW-TEXT-BOUNDS (&OPTIONAL REUSE-WINDOW)
    "Output text, draw bounds, dump widths"
@@ -268,11 +397,13 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1022 1486 (GEN-TEST-BITMAP 1022 . 1486)) (1488 2291 (HTMLTEST.BITBLT 1488 . 2291)) (
-2293 2946 (HTMLTEST.ONE-PAGE-SIMPLE 2293 . 2946)) (2948 5685 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
-2948 . 5685)) (5687 8144 (HTMLTEST.SHOW-TEXT-BOUNDS 5687 . 8144)) (8146 8596 (
-HTMLTEST.ONE-PAGE-WITH-CURVE 8146 . 8596)) (8598 10326 (HTMLTEST.TEXT-TWO-FONTS 8598 . 10326)) (10328 
-11052 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 10328 . 11052)) (11054 11952 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW
- 11054 . 11952)) (11954 13817 (WINDOWTEST.SHOW-TEXT-BOUNDS 11954 . 13817)) (13819 14090 (
-HTMLTEST.TRANSFORM 13819 . 14090)) (14092 14333 (HTMLTEST.TRANSFORM-POINTS 14092 . 14333)))))
+  (FILEMAP (NIL (1516 2175 (GEN-TEST-BITMAP 1516 . 2175)) (2177 2987 (HTMLTEST.BITBLT 2177 . 2987)) (
+2989 3980 (HTMLTEST.TALL-BITBLT 2989 . 3980)) (3982 5527 (HTMLTEST.BLTSHADE 3982 . 5527)) (5529 6242 (
+HTMLTEST.ONE-PAGE-SIMPLE 5529 . 6242)) (6244 9808 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6244 . 9808)
+) (9810 12367 (HTMLTEST.SHOW-TEXT-BOUNDS 9810 . 12367)) (12369 13028 (HTMLTEST.ONE-PAGE-WITH-CURVE 
+12369 . 13028)) (13030 15138 (HTMLTEST.TEXT-TWO-FONTS 13030 . 15138)) (15140 15650 (
+HTMLTEST.TEXT-VERTICAL-OVERFLOW 15140 . 15650)) (15652 16706 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15652
+ . 16706)) (16708 17453 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16708 . 17453)) (17481 18606 (
+HTMLTEST.FUNNY-CHARS 17481 . 18606)) (18608 20471 (WINDOWTEST.SHOW-TEXT-BOUNDS 18608 . 20471)) (20473 
+20744 (HTMLTEST.TRANSFORM 20473 . 20744)) (20746 20987 (HTMLTEST.TRANSFORM-POINTS 20746 . 20987)))))
 STOP
