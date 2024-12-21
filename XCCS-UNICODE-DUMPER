@@ -1,13 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 6-Dec-2024 16:24:57" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;11 10556  
+(FILECREATED "21-Dec-2024 14:48:58" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;3 8886   
 
       :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
-                  (FUNCTIONS CREATE-ALL-FONT-METRICS WRITE-FONT-METRICS-FILE 
-                         WRITE-CHARSET-METRICS-FILE)
+                  (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING)
 
-      :PREVIOUS-DATE "19-Nov-2024 11:56:13" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;9)
+      :PREVIOUS-DATE " 6-Dec-2024 16:24:57" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;1)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
@@ -18,8 +17,7 @@
 
                                 (FUNCTIONS CREATE-ALL-FONT-METRICS)
                                 (FNS PROCESS-BROWSER-FONT-METRICS)
-                                (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING WRITE-FONT-METRICS-FILE 
-                                       WRITE-CHARSET-METRICS-FILE)
+                                (FUNCTIONS WRITE-FONT-METRICS-FILE WRITE-CHARSET-METRICS-FILE)
                                 (RECORDS WEB-FONT-DESCR WEB-FONT-FACE)))
 
 (FILESLOAD HTMLSTREAM)
@@ -96,28 +94,6 @@
                                                                FONT-LISP-FACE CHARSET])
 )
 
-(CL:DEFUN DUMP-XCCS-UNICODE-MAPPING ()                       (* ; "Edited  2-Sep-2024 16:23 by hdj")
-                                                             (* ; "Edited 30-Aug-2024 12:24 by hdj")
-
-   (* ;; "Dump the mapping from XCCS to Unicode character codes as JSON")
-                                                             (* ; "Edited 29-Aug-2024 15:30 by hdj")
-   (CL:WITH-OPEN-STREAM [OUT (OPENSTREAM "Unicode_to_XCCS.js" 'OUTPUT NIL '((FORMAT :THROUGH]
-          (LINELENGTH T OUT)
-          (CL:FORMAT OUT "// use a short temp variable name!~%%")
-          (CL:FORMAT OUT "const t = [];~%%")
-          (LET ((NUM-MAPPINGS 0)
-                (MAX-XCCS 0))
-               [for U from 32 to 65535 do (LET [(IN-XCCS (CONDITIONS:HANDLER-CASE (UTOXCODE U)
-                                                                (INTERLISP-ERROR (E)
-                                                                       NIL]
-                                               (CL:IF IN-XCCS
-                                                   (PROGN (CL:FORMAT OUT "t[~D]=~D;~%%" U IN-XCCS)
-                                                          (CL:INCF NUM-MAPPINGS)
-                                                          (SETQ MAX-XCCS (MAX MAX-XCCS IN-XCCS))))]
-               (CL:FORMAT OUT "const xccs_to_unicode = t;~%%")
-               (CL:FORMAT OUT "const max_xccs = ~d;~%%" MAX-XCCS)
-               (CL:FORMAT OUT "const num_mappings = ~D;~%%" NUM-MAPPINGS))))
-
 (CL:DEFUN WRITE-FONT-METRICS-FILE (OUTPUT-DIR FAMILY FACE SIZE HEIGHT CHARSETS MAX-ASCENT MAX-DESCENT
                                          )
    "Write a description of the font"
@@ -181,7 +157,7 @@
 (RECORD WEB-FONT-FACE (weight slope expansion))
 )
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1279 1933 (CREATE-ALL-FONT-METRICS 1279 . 1933)) (1934 5385 (
-PROCESS-BROWSER-FONT-METRICS 1944 . 5383)) (5387 6913 (DUMP-XCCS-UNICODE-MAPPING 5387 . 6913)) (6915 
-8738 (WRITE-FONT-METRICS-FILE 6915 . 8738)) (8740 10367 (WRITE-CHARSET-METRICS-FILE 8740 . 10367)))))
+  (FILEMAP (NIL (1137 1791 (CREATE-ALL-FONT-METRICS 1137 . 1791)) (1792 5243 (
+PROCESS-BROWSER-FONT-METRICS 1802 . 5241)) (5245 7068 (WRITE-FONT-METRICS-FILE 5245 . 7068)) (7070 
+8697 (WRITE-CHARSET-METRICS-FILE 7070 . 8697)))))
 STOP
