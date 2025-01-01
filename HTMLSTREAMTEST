@@ -1,10 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "21-Dec-2024 14:40:50" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;2 20677  
+(FILECREATED " 1-Jan-2025 14:58:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;6 22901  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.TEXT-HORIZONTAL-OVERFLOW HTMLTEST.FUNNY-CHARS GEN-TEST-BITMAP 
-                         HTMLTEST.TALL-BITBLT HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.TEXT-TWO-FONTS 
-                         HTMLTEST.BITBLT HTMLTEST.BLTSHADE HTMLTEST.ONE-PAGE-SIMPLE 
+      :CHANGES-TO (FUNCTIONS HTMLTEST.FUNNY-CHARS HTMLTEST.UNDEFINED-CHARS 
+                         HTMLTEST.TEXT-HORIZONTAL-OVERFLOW GEN-TEST-BITMAP HTMLTEST.TALL-BITBLT 
+                         HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.TEXT-TWO-FONTS HTMLTEST.BITBLT 
+                         HTMLTEST.BLTSHADE HTMLTEST.ONE-PAGE-SIMPLE 
                          HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-WITH-CURVE 
                          HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.SPECIAL-TEXT-ENTITIES)
                   (VARS HTMLSTREAMTESTCOMS)
@@ -25,7 +26,7 @@
         
         (* ;; "charsets")
 
-        (FUNCTIONS HTMLTEST.FUNNY-CHARS)
+        (FUNCTIONS HTMLTEST.FUNNY-CHARS HTMLTEST.UNDEFINED-CHARS)
         (FUNCTIONS WINDOWTEST.SHOW-TEXT-BOUNDS)
         (FUNCTIONS HTMLTEST.TRANSFORM HTMLTEST.TRANSFORM-POINTS)))
 
@@ -329,18 +330,53 @@
 (CL:DEFUN HTMLTEST.FUNNY-CHARS (&OPTIONAL (FILE-NAME "/tmp/funny-chars.html"))
    "Create a document that displays characters from various non-zero charsets"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Valid charsets test document"]
-          (LET ((GREEK-CHARSET 38))
-               (CL:FORMAT HTMLSTREAM "Here's some text in charset 0.~%%")
-               (CL:FORMAT HTMLSTREAM "Switching to charset 0x26 (Greek):~%%")
-               (FOR CHCODE FROM (LOGOR (LLSH GREEK-CHARSET 8)
-                                       33) TO (LOGOR (LLSH GREEK-CHARSET 8)
-                                                     56) DO  (* ; "from alpha to omega")
-                                                            (CL:FORMAT HTMLSTREAM "Code ~x = " CHCODE
-                                                                   )
-                                                            (\OUTCHAR HTMLSTREAM CHCODE)
-                                                            (CL:FORMAT HTMLSTREAM "~%%"))
-               (CL:FORMAT HTMLSTREAM "Done!~%%")
-               FILE-NAME)))
+          (LET ((GREEK-CHARSET 38)
+                (CAPITAL-ALPHA 65)
+                (CAPITAL-OMEGA 93)
+                (SMALL-ALPHA 97)
+                (SMALL-OMEGA 125))
+               (CL:FLET [(SHOW-CHAR-RANGE (START END CHARSET)
+                                (FOR BASE-CODE FROM START TO END
+                                   DO (LET ((CH (LOGOR (LLSH CHARSET 8)
+                                                       BASE-CODE)))
+                                           (CL:FORMAT HTMLSTREAM "Code 0x~4,'0X = " CH)
+                                           (\OUTCHAR HTMLSTREAM CH)
+                                           (CL:FORMAT HTMLSTREAM "~%%"]
+                      (CL:FORMAT HTMLSTREAM "Here's some text in charset 0.~%%")
+                      (CL:FORMAT HTMLSTREAM "And now 0x~2,'0X (Greek).~%%" GREEK-CHARSET)
+                      (CL:FORMAT HTMLSTREAM "Capital letters:~%%")
+                      (SHOW-CHAR-RANGE CAPITAL-ALPHA CAPITAL-OMEGA GREEK-CHARSET)
+                                                             (* ; "capitals from alpha to omega")
+                      (CL:FORMAT HTMLSTREAM "Small letters:~%%")
+                      (SHOW-CHAR-RANGE SMALL-ALPHA SMALL-OMEGA GREEK-CHARSET)
+                                                             (* ; "small alpha to omega")
+                      (CL:FORMAT HTMLSTREAM "Done!~%%")
+                      FILE-NAME))))
+
+(CL:DEFUN HTMLTEST.UNDEFINED-CHARS (&OPTIONAL (FILE-NAME "/tmp/undefined-chars.html"))
+   "Create a document that tries to display undefined characters from various charsets, real or not"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
+                                                                   "Undefined charsets test document"
+                                                                      ]
+          (LET ((UNDEFINED-CHARSET 10)
+                (START-GIBBERISH 65)
+                (END-GIBBERISH 93))
+               (CL:FLET [(SHOW-CHAR-RANGE (START END CHARSET)
+                                (FOR BASE-CODE FROM START TO END
+                                   DO (LET ((CH (LOGOR (LLSH CHARSET 8)
+                                                       BASE-CODE)))
+                                           (CL:FORMAT HTMLSTREAM "Code 0x~4,'0X = " CH)
+                                           (\OUTCHAR HTMLSTREAM CH)
+                                           (CL:FORMAT HTMLSTREAM "~%%"]
+                      (CL:FORMAT HTMLSTREAM "Here's some text in charset 0.~%%")
+                      (CL:FORMAT HTMLSTREAM "And now 0x~2,'0X (Undefined).~%%" UNDEFINED-CHARSET)
+                      (CL:FORMAT HTMLSTREAM "Gibberish letters:~%%")
+                      (SHOW-CHAR-RANGE START-GIBBERISH END-GIBBERISH UNDEFINED-CHARSET)
+
+                      (* ;; "TODO output REPLACEMENT raw text: '(239 191 189)")
+
+                      (CL:FORMAT HTMLSTREAM "Done!~%%")
+                      FILE-NAME))))
 
 (CL:DEFUN WINDOWTEST.SHOW-TEXT-BOUNDS (&OPTIONAL REUSE-WINDOW)
    "Output text, draw bounds, dump widths"
@@ -392,13 +428,14 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1489 2148 (GEN-TEST-BITMAP 1489 . 2148)) (2150 2960 (HTMLTEST.BITBLT 2150 . 2960)) (
-2962 3953 (HTMLTEST.TALL-BITBLT 2962 . 3953)) (3955 5500 (HTMLTEST.BLTSHADE 3955 . 5500)) (5502 6215 (
-HTMLTEST.ONE-PAGE-SIMPLE 5502 . 6215)) (6217 9781 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6217 . 9781)
-) (9783 12340 (HTMLTEST.SHOW-TEXT-BOUNDS 9783 . 12340)) (12342 13001 (HTMLTEST.ONE-PAGE-WITH-CURVE 
-12342 . 13001)) (13003 15111 (HTMLTEST.TEXT-TWO-FONTS 13003 . 15111)) (15113 15623 (
-HTMLTEST.TEXT-VERTICAL-OVERFLOW 15113 . 15623)) (15625 16373 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15625
- . 16373)) (16375 17120 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16375 . 17120)) (17148 18273 (
-HTMLTEST.FUNNY-CHARS 17148 . 18273)) (18275 20138 (WINDOWTEST.SHOW-TEXT-BOUNDS 18275 . 20138)) (20140 
-20411 (HTMLTEST.TRANSFORM 20140 . 20411)) (20413 20654 (HTMLTEST.TRANSFORM-POINTS 20413 . 20654)))))
+  (FILEMAP (NIL (1565 2224 (GEN-TEST-BITMAP 1565 . 2224)) (2226 3036 (HTMLTEST.BITBLT 2226 . 3036)) (
+3038 4029 (HTMLTEST.TALL-BITBLT 3038 . 4029)) (4031 5576 (HTMLTEST.BLTSHADE 4031 . 5576)) (5578 6291 (
+HTMLTEST.ONE-PAGE-SIMPLE 5578 . 6291)) (6293 9857 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6293 . 9857)
+) (9859 12416 (HTMLTEST.SHOW-TEXT-BOUNDS 9859 . 12416)) (12418 13077 (HTMLTEST.ONE-PAGE-WITH-CURVE 
+12418 . 13077)) (13079 15187 (HTMLTEST.TEXT-TWO-FONTS 13079 . 15187)) (15189 15699 (
+HTMLTEST.TEXT-VERTICAL-OVERFLOW 15189 . 15699)) (15701 16449 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15701
+ . 16449)) (16451 17196 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16451 . 17196)) (17224 18922 (
+HTMLTEST.FUNNY-CHARS 17224 . 18922)) (18924 20497 (HTMLTEST.UNDEFINED-CHARS 18924 . 20497)) (20499 
+22362 (WINDOWTEST.SHOW-TEXT-BOUNDS 20499 . 22362)) (22364 22635 (HTMLTEST.TRANSFORM 22364 . 22635)) (
+22637 22878 (HTMLTEST.TRANSFORM-POINTS 22637 . 22878)))))
 STOP
