@@ -1,20 +1,22 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "21-Dec-2024 14:40:51" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;2 62237  
+(FILECREATED " 1-Jan-2025 14:58:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;6 63180  
 
       :CHANGES-TO (VARS HTMLSTREAMCOMS)
-                  (VARIABLES *XCCS-KNOWN-CHARSETS* *HTML.DEFAULT-PAGE-SIZE* *CENTIPOINTS-PER-POINT*)
-                  (FUNCTIONS \HTML.FONTCREATE \HTML.CREATECHARSET \HTML.CHANGECHARSET 
-                         HTML.SCALEDBITBLT HTMLFILEP MAKE-HTML-FROM-TEXT MAKE-HTML-FROM-TEDIT 
-                         \HTMLSTREAM.INIT \HTML.SVG-Y HTML.OUTCHARFN HTML.RESET \HTML.INIT-IMAGEDATA
-                         P-TO-CP HTML.DRAWPOLYGON BEZIER-CONTROL-POINTS-TO-SVG HTML.OUTPUT-TEXT 
-                         \HTML.MAYBE-START-PAGE HTML.WRITE-PREFACE HTML.BLTSHADE HTML.DRAWELLIPSE 
-                         HTML.DRAWLINE HTML.FILLPOLYGON \HTML.FILLCIRCLE HTML.MOVETO CP-TO-P ICP-TO-P
-                         KNOWN-CHARSET? WRITE-BASE64-PNG HTML.INCHES-TO-CENTIPOINTS 
-                         MAKE-CHARSET-BIT-ARRAY)
+                  (VARIABLES *XCCS-UNDEFINED-CHARCODE* *WEB-FONT-MAPPINGS* *WEB-FONT-FAMILIES* 
+                         *WEB-FONT-SIZES* *WEB-FONT-FAMILY-NAMES* *XCCS-KNOWN-CHARSETS* 
+                         *HTML.DEFAULT-PAGE-SIZE* *CENTIPOINTS-PER-POINT*)
+                  (FUNCTIONS HTML.OUTCHARFN CSS-CLASS-FROM HTML.WRITE-PREFACE \HTML.CREATECHARSET 
+                         \HTML.CHANGECHARSET \HTML.FONTCREATE HTML.SCALEDBITBLT HTMLFILEP 
+                         MAKE-HTML-FROM-TEXT MAKE-HTML-FROM-TEDIT \HTMLSTREAM.INIT \HTML.SVG-Y 
+                         HTML.RESET \HTML.INIT-IMAGEDATA P-TO-CP HTML.DRAWPOLYGON 
+                         BEZIER-CONTROL-POINTS-TO-SVG HTML.OUTPUT-TEXT \HTML.MAYBE-START-PAGE 
+                         HTML.BLTSHADE HTML.DRAWELLIPSE HTML.DRAWLINE HTML.FILLPOLYGON 
+                         \HTML.FILLCIRCLE HTML.MOVETO CP-TO-P ICP-TO-P KNOWN-CHARSET? 
+                         WRITE-BASE64-PNG HTML.INCHES-TO-CENTIPOINTS MAKE-CHARSET-BIT-ARRAY)
                   (STRUCTURES HTML.IMAGEDATA)
 
-      :PREVIOUS-DATE " 6-Dec-2024 15:38:09" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;47
+      :PREVIOUS-DATE "21-Dec-2024 15:31:57" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;4
 )
 
 
@@ -28,14 +30,14 @@
                COMPUTE-MAX-DESCENT CONVERT-TO-BEZIER HTML.INCHES-TO-POINTS HTML.INCHES-TO-CENTIPOINTS
                CP-TO-P ICP-TO-P P-TO-CP PIXEL-TO-PT PT-TO-PIXEL \HTML.SVG-Y)
         (FUNCTIONS MAKE-FONT-METRICS-FILE-NAME MAKE-CHARSET-METRICS-FILE-NAME)
-        (VARIABLES *WEB-FONT-DIRECTORY* *DEFAULT-WEB-FONT-METRICS-FILE-NAME* *WEB-FONT-EXPANSIONS* 
-               *WEB-FONT-FAMILIES* *WEB-FONT-SIZES* *WEB-FONT-SLOPES* *WEB-FONT-WEIGHTS* 
-               *WEB-CHARSET-METRICS-EXT* *WEB-CHARSET-METRICS-DOT-EXT* *WEB-FONT-METRICS-EXT* 
-               *WEB-FONT-METRICS-DOT-EXT*)
+        (VARIABLES *WEB-FONT-DIRECTORY* *WEB-FONT-MAPPINGS* *DEFAULT-WEB-FONT-METRICS-FILE-NAME* 
+               *WEB-FONT-EXPANSIONS* *WEB-FONT-FAMILIES* *WEB-FONT-FAMILY-NAMES* *WEB-FONT-SIZES* 
+               *WEB-FONT-SLOPES* *WEB-FONT-WEIGHTS* *WEB-CHARSET-METRICS-EXT* 
+               *WEB-CHARSET-METRICS-DOT-EXT* *WEB-FONT-METRICS-EXT* *WEB-FONT-METRICS-DOT-EXT*)
         (VARIABLES *BROWSER-FONT-FILE-VERSION* *HTML.DEFAULT-PAGE-SIZE* HTML.FONTCREATE.DEVICENAME 
                HTML.IMAGETYPE HTML.STATE.BETWEEN-PAGES HTML.STATE.CLOSED HTML.STATE.NON-TEXT 
                HTML.STATE.NON-TEXT-OUTPUT HTML.STATE.TEXT-OUTPUT HTML.STATES \HTMLSTREAM.FDEV 
-               *XCCS-KNOWN-CHARSETS*)
+               *XCCS-KNOWN-CHARSETS* *XCCS-UNDEFINED-CHARCODE*)
         (FUNCTIONS CHECK-BROWSER-METRICS-FORMAT CSS-CLASS-FROM \HTML.READ-FONT-METRICS 
                \HTML.READ-CHARSET-METRICS)
         (STRUCTURES HTML.IMAGEDATA HTML.FONTINFO)
@@ -213,19 +215,44 @@
 (DEFGLOBALVAR *WEB-FONT-DIRECTORY* "."
    "The directory that holds .wfm and .wcm files")
 
+(DEFGLOBALVAR *WEB-FONT-MAPPINGS*
+   '((HELVETICA . NOTO-SANS)
+     (HELVETICAD . NOTO-SANS-DISPLAY)
+     (TIMESROMAN . NOTO-SERIF)
+     (TIMESROMAND . NOTO-SERIF-DISPLAY)
+     (COURIER . NOTO-SANS-MONO)
+     (GACHA . NOTO-SANS-MONO)
+     (CLASSIC . NOTO-SERIF)
+     (MODERN . NOTO-SANS)
+     (CREAM . NOTO-SANS)
+     (TERMINAL . NOTO-SANS-MONO)
+     (LOGO . NOTO-SANS-MONO)
+     (OPTIMA . NOTO-SERIF)
+     (TITAN . NOTO-SANS-MONO))
+   "Map common font families to Web font families")
+
 (CL:DEFCONSTANT *DEFAULT-WEB-FONT-METRICS-FILE-NAME* "font-metrics.data"
    "The usual name of the raw font metrics file we get from the browser")
 
 (CL:DEFCONSTANT *WEB-FONT-EXPANSIONS* '(REGULAR)
                                       "The Web font expansions we support")
 
-(CL:DEFCONSTANT *WEB-FONT-FAMILIES* '((ROBOTO . "r")
-                                      (ROBOTO-MONO . "rm")
-                                      (NOTO-SANS-DISPLAY . "nsd"))
+(CL:DEFCONSTANT *WEB-FONT-FAMILIES* '((NOTO-SANS . "ns")
+                                      (NOTO-SANS-MONO . "nsm")
+                                      (NOTO-SANS-DISPLAY . "nsd")
+                                      (NOTO-SERIF . "nsf"))
                                     
                               "A-list of supported Web font names, as atoms, with the CSS class name")
 
-(CL:DEFCONSTANT *WEB-FONT-SIZES* '(10 20)
+(CL:DEFCONSTANT *WEB-FONT-FAMILY-NAMES* '("Noto Sans" "Noto Sans Mono" "Noto Sans Display" 
+                                                "Noto Serif")
+
+                                        (* ;; "keep this synchronized with *WEB-FONT-FAMILIES*")
+
+                                        
+                               "The names of the font families we're using, suitable for use in CSS.")
+
+(CL:DEFCONSTANT *WEB-FONT-SIZES* '(8 10 12 14 16 18 20 24 32 40 92)
                                  "Sizes of the Web fonts we support, in points")
 
 (CL:DEFCONSTANT *WEB-FONT-SLOPES* '(REGULAR ITALIC)
@@ -282,6 +309,9 @@
    '(0 33 34 35 36 37 38 39 40 224 225 226 227 228 238 239 240 241)
    "The set of defined XCCS character sets")
 
+(CL:DEFCONSTANT *XCCS-UNDEFINED-CHARCODE* 61639
+   "XCCS defines 0xF0C7 (61639) as 'Replacement symbol (for undefined code points)'")
+
 (CL:DEFUN CHECK-BROWSER-METRICS-FORMAT (VERSION)
 
    (* ;; "check that the version looks like (format <number>)")
@@ -296,7 +326,7 @@
 (CL:DEFUN CSS-CLASS-FROM (FAMILY SIZE FACE)
    "Compute the CSS class names from the FAMILY, SIZE, and FACE"
 
-   (* ;; "the result will look like %"r10 bold italic%" or a variant")
+   (* ;; "the result will look like %"nsd10 bold italic%" or a variant")
 
    [LET* [(FONT-CLASS-NAME-ROOT (CDR (FASSOC FAMILY *WEB-FONT-FAMILIES*)))
           [FONT-AND-SIZE-CLASS-NAME (COND
@@ -373,7 +403,6 @@
    "Private data for HTMLSTREAMs"
    BACKING-STREAM
    FONT
-   (CHARSET \DEFAULTCHARSET)
    CLIPPING-REGION
    (SPACE-FACTOR 1.0)
    IMAGE-OPERATION BG-COLOR FG-COLOR (SCALE *CENTIPOINTS-PER-POINT*)
@@ -490,16 +519,14 @@
                (printout BACKING "<link rel=%"preconnect%" href=%"https://fonts.googleapis.com%">" T)
                (printout BACKING 
                       "<link rel=%"preconnect%" href=%"https://fonts.gstatic.com%" crossorigin>" T)
-               (printout BACKING "<link href=%"https://fonts.googleapis.com/css2?family=Noto+Sans+Display&family=Roboto&family=Roboto+Mono&display=swap%" rel=%"stylesheet%">"
+               (printout BACKING "<link rel=%"stylesheet%" href=%"https://fonts.googleapis.com/css2?display=swap&family=Noto+Sans+Mono&family=Noto+Sans+Display&family=Noto+Sans&family=Noto+Sans+Simplified+Chinese&family=Noto+Sans+Traditional+Chinese&family=Noto+Sans+Japanese&family=Noto+Sans+Korean&family=Noto+Sans+Arabic&family=Noto+Sans+Hebrew&family=Noto+Sans+Runic&family=Noto+Sans+Georgian&family=Noto+Sans+Armenian&family=Noto+Sans+Math&family=Noto+Sans+Symbols&family=Noto+Sans+Symbols+2&family=Noto+Serif&family=Noto+Serif+Simplified+Chinese&family=Noto+Serif+Traditional+Chinese&family=Noto+Serif+Japanese&family=Noto+Serif+Korean&family=Noto+Serif+Hebrew&family=Noto+Serif+Georgian&family=Noto+Serif+Armenian%">"
                       T)
                (printout BACKING "<script>" T)
                (printout BACKING "    const fontSpecs = [" T)
-               (printout BACKING "            {family: %"Roboto Mono%", size: %"10pt%"}," T)
-               (printout BACKING "            {family: %"Noto Sans Display%", size: %"10pt%"}," T)
-               (printout BACKING "            {family: %"Roboto%", size: %"10pt%"}," T)
-               (printout BACKING "            {family: %"Roboto Mono%", size: %"20pt%"}," T)
-               (printout BACKING "            {family: %"Noto Sans Display%", size: %"20pt%"}," T)
-               (printout BACKING "            {family: %"Roboto%", size: %"20pt%"}," T)
+               (for FAMILY in *WEB-FONT-FAMILY-NAMES*
+                  do (for SIZE in *WEB-FONT-SIZES* do (CL:FORMAT BACKING 
+                                                   "            {family: %"~A%", size: %"~dpt%"},~%%"
+                                                             FAMILY SIZE)))
                (printout BACKING "    ];" T T)
                (printout BACKING "    function fontFromSpec(font) {" T 
                       "        return font.size + %" %" + font.family;" T "    }" T T)
@@ -517,21 +544,18 @@
 
                (printout BACKING "text { white-space: pre }" T)
 
+               (* ;; "define styles")
+
                (* ;; 
  "the page is scaled to use centipoints, so font sizes below are measured in centipoints, not points")
 
-               (printout BACKING ".nsd10 { font-family: 'Noto Sans Display'; font-size: 1000pt }" T)
-               (printout BACKING ".nsd20 { font-family: 'Noto Sans Display'; font-size: 2000pt }" T)
-               (printout BACKING ".nsd30 { font-family: 'Noto Sans Display'; font-size: 3000pt }" T)
-               (printout BACKING ".nsd40 { font-family: 'Noto Sans Display'; font-size: 4000pt }" T)
-               (printout BACKING ".rm10 { font-family: 'Roboto Mono'; font-size: 1000pt }" T)
-               (printout BACKING ".rm20 { font-family: 'Roboto Mono'; font-size: 2000pt }" T)
-               (printout BACKING ".rm30 { font-family: 'Roboto Mono'; font-size: 3000pt }" T)
-               (printout BACKING ".rm40 { font-family: 'Roboto Mono'; font-size: 4000pt }" T)
-               (printout BACKING ".r10 { font-family: 'Roboto'; font-size: 1000pt }" T)
-               (printout BACKING ".r20 { font-family: 'Roboto'; font-size: 2000pt }" T)
-               (printout BACKING ".r30 { font-family: 'Roboto'; font-size: 3000pt }" T)
-               (printout BACKING ".r40 { font-family: 'Roboto'; font-size: 4000pt }" T)
+               [for FAMILY in *WEB-FONT-FAMILY-NAMES* as LISP-FAMILY in *WEB-FONT-FAMILIES*
+                  do (for SIZE in *WEB-FONT-SIZES* do (CL:FORMAT BACKING 
+                                                      ".~A { font-family: '~A'; font-size: ~dpt }~%%"
+                                                             (CSS-CLASS-FROM (CAR LISP-FAMILY)
+                                                                    SIZE NIL)
+                                                             FAMILY
+                                                             (FIXR (P-TO-CP SIZE]
                (printout BACKING ".bold { font-weight: bold }" T)
                (printout BACKING ".italic { font-style: italic }" T)
                (printout BACKING "</style>" T)
@@ -911,18 +935,11 @@
 (CL:DEFUN HTML.OUTCHARFN (STREAM CHCODE)
    "Write a character, which may cause us to write other markup first"
    (CHECK-OPEN STREAM)
-
-   (* ;; 
-   "Fetch the CHARSETINFO for a given charset from a FONTDESCRIPTOR by calling \GETCHARSETINFO.")
-
    [with-htmldata (DATA STREAM)
           (LET ((CHARSET (\CHARSET CHCODE))
                 (CHAR8CODE (\CHAR8CODE CHCODE))
-                (CURRENT-CHARSET (\HTML-CHARSET DATA))
                 (BACKING (\HTML-BACKING-STREAM DATA)))
                (HTML.OUTPUT-TEXT STREAM)
-               (if (NEQ CHARSET (\HTML-CHARSET DATA))
-                   then (\HTML.CHANGECHARSET DATA CHARSET))
                (SELECTC CHCODE
                    ((CHARCODE ^J)                            (* ; "handle LF")
                         (HTML.TERPRI STREAM))
@@ -934,6 +951,9 @@
                           (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
                                              CHAR-WIDTH)))
                          (CL:FLET [(OUT NIL (HTML.OUTPUT-TEXT STREAM)
+
+                                        (* ;; "TODO handle unmapped chars, undefined charset")
+
                                         (SELECTC CHCODE
                                             ((CHARCODE &) 
                                                  (CL:FORMAT BACKING "&amp;"))
@@ -1216,8 +1236,8 @@
                    (CSINFO (create CHARSETINFO
                                   OFFSETS _ NIL))
                    (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
-                  (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
-                     do (\FSETWIDTH CS-WIDTHS CH WIDTH))
+                  (for WIDTH in CHARSET-WIDTHS as CH from 0 to \MAXTHINCHAR
+                     do (CL:WHEN WIDTH (\FSETWIDTH CS-WIDTHS CH WIDTH)))
                   (replace (CHARSETINFO IMAGEWIDTHS) of CSINFO with CS-WIDTHS)
                   CSINFO)
             (PROGN (printout T "Font does not support charset " CHARSET T)
@@ -1236,9 +1256,7 @@
                                   (FONTPROP FONT 'SIZE)
                                   (FONTPROP FONT 'FACE)
                                   0 HTML.FONTCREATE.DEVICENAME CHARSET FONT T)))
-                  (\INSTALLCHARSETINFO FONT CSINFO CHARSET)
-                  (CL:SETF (\HTML-CHARSET DATA)
-                         CHARSET))
+                  (\INSTALLCHARSETINFO FONT CSINFO CHARSET))
              (printout T "Font does not contain charset " CHARSET T))))
 
 (CL:DEFUN MAKE-CHARSET-BIT-ARRAY (CHARSETS-LIST)
@@ -1309,40 +1327,40 @@
    "Ignore the body, return NIL"
    NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (4670 6157 (BEZIER-CONTROL-POINTS-TO-SVG 4670 . 6157)) (6159 6348 (CLOSE-KNOTS 6159 . 
-6348)) (6350 6605 (COMPUTE-LINE-HEIGHT 6350 . 6605)) (6607 6863 (COMPUTE-MAX-ASCENT 6607 . 6863)) (
-6865 7124 (COMPUTE-MAX-DESCENT 6865 . 7124)) (7126 8785 (CONVERT-TO-BEZIER 7126 . 8785)) (8787 8943 (
-HTML.INCHES-TO-POINTS 8787 . 8943)) (8945 9047 (HTML.INCHES-TO-CENTIPOINTS 8945 . 9047)) (9049 9138 (
-CP-TO-P 9049 . 9138)) (9140 9306 (ICP-TO-P 9140 . 9306)) (9308 9384 (P-TO-CP 9308 . 9384)) (9386 9545 
-(PIXEL-TO-PT 9386 . 9545)) (9547 9707 (PT-TO-PIXEL 9547 . 9707)) (9709 9857 (\HTML.SVG-Y 9709 . 9857))
- (9859 10202 (MAKE-FONT-METRICS-FILE-NAME 9859 . 10202)) (10204 10604 (MAKE-CHARSET-METRICS-FILE-NAME 
-10204 . 10604)) (13607 13996 (CHECK-BROWSER-METRICS-FORMAT 13607 . 13996)) (13998 15690 (
-CSS-CLASS-FROM 13998 . 15690)) (15692 17183 (\HTML.READ-FONT-METRICS 15692 . 17183)) (17185 18564 (
-\HTML.READ-CHARSET-METRICS 17185 . 18564)) (19185 19417 (with-htmldata 19185 . 19417)) (19419 19639 (
-CHECK-OPEN 19419 . 19639)) (19641 20298 (HTML.OUTPUT-GRAPHICS 19641 . 20298)) (20300 21436 (
-HTML.OUTPUT-TEXT 20300 . 21436)) (21438 22393 (\HTML.MAYBE-START-PAGE 21438 . 22393)) (22395 22802 (
-\HTML.END-PAGE 22395 . 22802)) (22804 26799 (HTML.WRITE-PREFACE 22804 . 26799)) (26801 32312 (
-OPENHTMLSTREAM 26801 . 32312)) (32314 32668 (HTML.BACKCOLOR 32314 . 32668)) (32670 33218 (HTML.BITBLT 
-32670 . 33218)) (33220 35188 (HTML.BLTSHADE 33220 . 35188)) (35190 35587 (HTML.BOTTOMMARGIN 35190 . 
-35587)) (35589 36098 (HTML.CHARWIDTH 35589 . 36098)) (36100 36453 (HTML.CLIPPINGREGION 36100 . 36453))
- (36455 36927 (HTML.CLOSEFN 36455 . 36927)) (36929 37275 (HTML.COLOR 36929 . 37275)) (37277 37493 (
-HTML.DRAWCIRCLE 37277 . 37493)) (37495 38733 (HTML.DRAWCURVE 37495 . 38733)) (38735 39484 (
-HTML.DRAWELLIPSE 38735 . 39484)) (39486 40120 (HTML.DRAWLINE 39486 . 40120)) (40122 41025 (
-HTML.DRAWPOLYGON 40122 . 41025)) (41027 41202 (HTML.FILLCIRCLE 41027 . 41202)) (41204 42150 (
-HTML.FILLPOLYGON 41204 . 42150)) (42152 43035 (HTML.FONT 42152 . 43035)) (43037 43423 (HTML.LEFTMARGIN
- 43037 . 43423)) (43425 43716 (HTML.LINEFEED 43425 . 43716)) (43718 43975 (HTML.MOVETO 43718 . 43975))
- (43977 44046 (HTML.NEWPAGE 43977 . 44046)) (44048 44370 (HTML.OPERATION 44048 . 44370)) (44372 46673 
-(HTML.OUTCHARFN 44372 . 46673)) (46675 47000 (HTML.RESET 46675 . 47000)) (47002 47396 (
-HTML.RIGHTMARGIN 47002 . 47396)) (47398 47772 (HTML.SCALE 47398 . 47772)) (47774 48872 (
-HTML.SCALEDBITBLT 47774 . 48872)) (48874 49217 (HTML.SPACEFACTOR 48874 . 49217)) (49219 49887 (
-HTML.TERPRI 49219 . 49887)) (49889 50232 (HTML.TOPMARGIN 49889 . 50232)) (50234 50577 (HTML.XPOSITION 
-50234 . 50577)) (50579 50922 (HTML.YPOSITION 50579 . 50922)) (50924 51169 (MAKE-HTML-IMAGETYPE 50924
- . 51169)) (51171 51749 (\HTML.FILLCIRCLE 51171 . 51749)) (51751 52568 (\HTML.INIT-IMAGEDATA 51751 . 
-52568)) (52570 53092 (\HTMLSTREAM.INIT 52570 . 53092)) (53094 53494 (WRITE-BASE64-PNG 53094 . 53494)) 
-(53496 54159 (CONVERT-TO-PNG-BASE64 53496 . 54159)) (54161 57059 (\HTML.FONTCREATE 54161 . 57059)) (
-57061 57942 (\HTML.FONTSAVAILABLE 57061 . 57942)) (57944 59127 (\HTML.CREATECHARSET 57944 . 59127)) (
-59129 60049 (\HTML.CHANGECHARSET 59129 . 60049)) (60051 60388 (MAKE-CHARSET-BIT-ARRAY 60051 . 60388)) 
-(60390 60614 (KNOWN-CHARSET? 60390 . 60614)) (60656 60808 (HTMLFILEP 60656 . 60808)) (60810 60943 (
-MAKE-HTML-FROM-TEXT 60810 . 60943)) (60945 61074 (MAKE-HTML-FROM-TEDIT 60945 . 61074)) (61338 62138 (
-\CLEAN-FONT-CACHE 61338 . 62138)) (62140 62214 (DO-NOT 62140 . 62214)))))
+  (FILEMAP (NIL (4915 6402 (BEZIER-CONTROL-POINTS-TO-SVG 4915 . 6402)) (6404 6593 (CLOSE-KNOTS 6404 . 
+6593)) (6595 6850 (COMPUTE-LINE-HEIGHT 6595 . 6850)) (6852 7108 (COMPUTE-MAX-ASCENT 6852 . 7108)) (
+7110 7369 (COMPUTE-MAX-DESCENT 7110 . 7369)) (7371 9030 (CONVERT-TO-BEZIER 7371 . 9030)) (9032 9188 (
+HTML.INCHES-TO-POINTS 9032 . 9188)) (9190 9292 (HTML.INCHES-TO-CENTIPOINTS 9190 . 9292)) (9294 9383 (
+CP-TO-P 9294 . 9383)) (9385 9551 (ICP-TO-P 9385 . 9551)) (9553 9629 (P-TO-CP 9553 . 9629)) (9631 9790 
+(PIXEL-TO-PT 9631 . 9790)) (9792 9952 (PT-TO-PIXEL 9792 . 9952)) (9954 10102 (\HTML.SVG-Y 9954 . 10102
+)) (10104 10447 (MAKE-FONT-METRICS-FILE-NAME 10104 . 10447)) (10449 10849 (
+MAKE-CHARSET-METRICS-FILE-NAME 10449 . 10849)) (14980 15369 (CHECK-BROWSER-METRICS-FORMAT 14980 . 
+15369)) (15371 17065 (CSS-CLASS-FROM 15371 . 17065)) (17067 18558 (\HTML.READ-FONT-METRICS 17067 . 
+18558)) (18560 19939 (\HTML.READ-CHARSET-METRICS 18560 . 19939)) (20531 20763 (with-htmldata 20531 . 
+20763)) (20765 20985 (CHECK-OPEN 20765 . 20985)) (20987 21644 (HTML.OUTPUT-GRAPHICS 20987 . 21644)) (
+21646 22782 (HTML.OUTPUT-TEXT 21646 . 22782)) (22784 23739 (\HTML.MAYBE-START-PAGE 22784 . 23739)) (
+23741 24148 (\HTML.END-PAGE 23741 . 24148)) (24150 28007 (HTML.WRITE-PREFACE 24150 . 28007)) (28009 
+33520 (OPENHTMLSTREAM 28009 . 33520)) (33522 33876 (HTML.BACKCOLOR 33522 . 33876)) (33878 34426 (
+HTML.BITBLT 33878 . 34426)) (34428 36396 (HTML.BLTSHADE 34428 . 36396)) (36398 36795 (
+HTML.BOTTOMMARGIN 36398 . 36795)) (36797 37306 (HTML.CHARWIDTH 36797 . 37306)) (37308 37661 (
+HTML.CLIPPINGREGION 37308 . 37661)) (37663 38135 (HTML.CLOSEFN 37663 . 38135)) (38137 38483 (
+HTML.COLOR 38137 . 38483)) (38485 38701 (HTML.DRAWCIRCLE 38485 . 38701)) (38703 39941 (HTML.DRAWCURVE 
+38703 . 39941)) (39943 40692 (HTML.DRAWELLIPSE 39943 . 40692)) (40694 41328 (HTML.DRAWLINE 40694 . 
+41328)) (41330 42233 (HTML.DRAWPOLYGON 41330 . 42233)) (42235 42410 (HTML.FILLCIRCLE 42235 . 42410)) (
+42412 43358 (HTML.FILLPOLYGON 42412 . 43358)) (43360 44243 (HTML.FONT 43360 . 44243)) (44245 44631 (
+HTML.LEFTMARGIN 44245 . 44631)) (44633 44924 (HTML.LINEFEED 44633 . 44924)) (44926 45183 (HTML.MOVETO 
+44926 . 45183)) (45185 45254 (HTML.NEWPAGE 45185 . 45254)) (45256 45578 (HTML.OPERATION 45256 . 45578)
+) (45580 47683 (HTML.OUTCHARFN 45580 . 47683)) (47685 48010 (HTML.RESET 47685 . 48010)) (48012 48406 (
+HTML.RIGHTMARGIN 48012 . 48406)) (48408 48782 (HTML.SCALE 48408 . 48782)) (48784 49882 (
+HTML.SCALEDBITBLT 48784 . 49882)) (49884 50227 (HTML.SPACEFACTOR 49884 . 50227)) (50229 50897 (
+HTML.TERPRI 50229 . 50897)) (50899 51242 (HTML.TOPMARGIN 50899 . 51242)) (51244 51587 (HTML.XPOSITION 
+51244 . 51587)) (51589 51932 (HTML.YPOSITION 51589 . 51932)) (51934 52179 (MAKE-HTML-IMAGETYPE 51934
+ . 52179)) (52181 52759 (\HTML.FILLCIRCLE 52181 . 52759)) (52761 53578 (\HTML.INIT-IMAGEDATA 52761 . 
+53578)) (53580 54102 (\HTMLSTREAM.INIT 53580 . 54102)) (54104 54504 (WRITE-BASE64-PNG 54104 . 54504)) 
+(54506 55169 (CONVERT-TO-PNG-BASE64 54506 . 55169)) (55171 58069 (\HTML.FONTCREATE 55171 . 58069)) (
+58071 58952 (\HTML.FONTSAVAILABLE 58071 . 58952)) (58954 60152 (\HTML.CREATECHARSET 58954 . 60152)) (
+60154 60992 (\HTML.CHANGECHARSET 60154 . 60992)) (60994 61331 (MAKE-CHARSET-BIT-ARRAY 60994 . 61331)) 
+(61333 61557 (KNOWN-CHARSET? 61333 . 61557)) (61599 61751 (HTMLFILEP 61599 . 61751)) (61753 61886 (
+MAKE-HTML-FROM-TEXT 61753 . 61886)) (61888 62017 (MAKE-HTML-FROM-TEDIT 61888 . 62017)) (62281 63081 (
+\CLEAN-FONT-CACHE 62281 . 63081)) (63083 63157 (DO-NOT 63083 . 63157)))))
 STOP
