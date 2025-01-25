@@ -1,17 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 7-Jan-2025 15:08:52" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;12 25300  
+(FILECREATED "24-Jan-2025 16:38:32" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21 28024  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.FUNNY-CHARS HTMLTEST.NOTO-SANS HTMLTEST.UNDEFINED-CHARS 
-                         HTMLTEST.TEXT-HORIZONTAL-OVERFLOW GEN-TEST-BITMAP HTMLTEST.TALL-BITBLT 
-                         HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.TEXT-TWO-FONTS HTMLTEST.BITBLT 
-                         HTMLTEST.BLTSHADE HTMLTEST.ONE-PAGE-SIMPLE 
-                         HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS HTMLTEST.ONE-PAGE-WITH-CURVE 
-                         HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.SPECIAL-TEXT-ENTITIES)
-                  (VARS HTMLSTREAMTESTCOMS)
+      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.BRIEF-TEXT HTMLTEST.FUNNY-CHARS)
 
-      :PREVIOUS-DATE " 1-Dec-2024 09:16:24" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21)
+      :PREVIOUS-DATE "22-Jan-2025 14:13:15" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;16)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -22,7 +17,7 @@
         (FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
                HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS 
                HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
-               HTMLTEST.SPECIAL-TEXT-ENTITIES)
+               HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT)
         
         (* ;; "charsets")
 
@@ -213,21 +208,19 @@
 
    (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
           (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
-                (FONT10 (FONTCREATE 'NOTO-SANS-DISPLAY 10 'REGULAR NIL STREAM))
-                (FONT20 (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL STREAM))
+                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
+                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
                 STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
 
                (* ;; "display a string with a corner of a box at its origin, the width of the text")
 
                (DSPFONT FONT10 STREAM)
                (TERPRI STREAM)
-               (SETQ FONT-ASCENT (FONTPROP (DSPFONT NIL STREAM)
-                                        'ASCENT))
-               (SETQ FONT-DESCENT (FONTPROP (DSPFONT NIL STREAM)
-                                         'DESCENT))
+               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
                (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
                (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (PRINTOUT STREAM SAMPLE T)
+               (CL:FORMAT STREAM "~a~%%" SAMPLE)
                (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
 
                (* ;; "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
@@ -329,6 +322,15 @@
           (CL:FORMAT HTMLSTREAM "The end!~%%")
           FILE-NAME))
 
+(CL:DEFUN HTMLTEST.BRIEF-TEXT (&OPTIONAL (FILE-NAME "/tmp/brief-text.html"))
+   "Output brief text"
+   (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
+                                                                  "Horizontal overflow test document"
+                                                                      ]
+          (CL:FORMAT HTMLSTREAM "Brief text no terpri")
+          (CL:FORMAT HTMLSTREAM " more.")
+          FILE-NAME))
+
 
 
 (* ;; "charsets")
@@ -337,25 +339,61 @@
 (CL:DEFUN HTMLTEST.FUNNY-CHARS (&OPTIONAL (FILE-NAME "/tmp/funny-chars.html"))
    "Create a document that displays characters from various non-zero charsets"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Valid charsets test document"]
-
-          (* ;; "TODO large font sizes like 24 produce clipping problems")
-
-          (DSPFONT (FONTCREATE 'NOTO-SANS 14 'MRR 0 'HTML)
+          (DSPFONT (FONTCREATE 'HELVETICA 10 'MRR 0 'HTML)
                  HTMLSTREAM)
-          (LET [(EXAMPLES '(("Charset 0" 0 ("Capital letters" 65 90)
+          (LET [(EXAMPLES '(("Charset 0 (Latin)" 0 ("Capital letters" 65 90)
                                    ("Small letters" 97 122))
+                            ("Accented Latin 1" 241 ("Capital letters" 33 43)
+                                   ("Small letters" 161 171))
+                            ("Accented Latin 2" 242 ("Capital letters" 33 43)
+                                   ("Small letters" 161 171))
                             ("Greek" 38 ("Capital letters" 65 93)
                                    ("Small letters" 97 125))
+                            ("Accented Greek 1" 243 ("A sample" 33 43))
+                            ("Accented Greek 2" 244 ("A sample" 33 43))
                             ("Cyrillic" 39 ("Capital letters" 33 65)
                                    ("Small letters" 81 113))
-                            ("Runic" 41 ("A sample" 33 44))
+                            ("Runic & Gothic" 41 ("Runes" 33 44)
+                                   ("Gothic" 225 230))
+                            ("Extended Cyrillic" 42 ("A sample" 46 51))
                             ("Arabic" 224 ("Consonants and vowels" 66 106))
+                            ("Extended Arabic" 228 ("Indian numerals" 48 57)
+                                   ("Isolated Arabic chars" 74 84))
+                            ("Initial, medial, and final Arabic characters" 245 ("A sample" 33 43))
                             ("Hebrew" 225 ("Consonants" 64 93))
                             ("Katakana" 37 ("A sample" 33 54))
                             ("Hiragana and Bo-po-mo-fo" 36 ("A sample" 33 54))
                             ("JIS Level-I Japanese kanji" 48 ("A sample" 33 54))
                             ("JIS Level-I Japanese kanji" 49 ("A sample" 33 54))
-                            ("JIS Level-I Japanese kanji" 79 ("A sample" 33 54]
+                            ("JIS Level-I Japanese kanji" 79 ("A sample" 33 54))
+                            ("Misc Japanese Symbols" 116 ("A sample" 34 42))
+                            ("Hangul" 227 ("A sample" 193 203))
+                            ("Georgian" 228 ("A sample" 33 43))
+                            ("Armenian" 228 ("A sample" 161 171))
+                            ("Forms" 40 ("Box elements" 35 42)
+                                   ("Mosaic tiles" 161 169))
+                            ("IPA" 226 ("Schwa assortment" 95 98)
+                                   ("Vowels" 81 90)
+                                   ("Plosives and fricatives" 162 172))
+                            ("Devanagari" 229 ("A sample" 165 174))
+                            ("Variant representations for graphic characters" 253 ("A sample" 224 233
+                                                                                         ))
+                            ("General and technical symbols 3" 235 ("A sample" 33 43))
+                            ("General and technical symbols 2" 238 ("A sample" 47 58))
+                            ("General and technical symbols 1" 239 ("Random sample" 33 43)
+                                   ("Roman numerals" 193 202)
+                                   ("Funny" 222 224)
+                                   ("Zodiac" 234 251))
+                            ("ITC Dingbats 1" 237 ("A sample" 33 44))
+                            ("ITC Dingbats 2 and general symbols" 236 ("Hands and scissors" 34 38)
+                                   ("Other hands" 117 119)
+                                   ("Circled numbers" 184 193))
+                            ("Ligatures and field format symbols" 240 ("Fractions" 112 121)
+                                   ("Control character names" 168 173)
+                                   ("Movement and substitution" 184 199))
+                            ("Enclosed numbers and letters" 118 ("A sample" 48 58))
+                            ("JIS Level-II Japanese kanji 1" 80 ("A sample" 33 43))
+                            ("JIS Level-II Japanese kanji 2" 81 ("A sample" 33 43]
                (CL:FLET [(SHOW-CHAR-RANGE (START END CHARSET)
                                 (FOR BASE-CODE FROM START TO END
                                    DO (LET ((CH (LOGOR (LLSH CHARSET 8)
@@ -478,15 +516,15 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1697 2356 (GEN-TEST-BITMAP 1697 . 2356)) (2358 3168 (HTMLTEST.BITBLT 2358 . 3168)) (
-3170 4161 (HTMLTEST.TALL-BITBLT 3170 . 4161)) (4163 5708 (HTMLTEST.BLTSHADE 4163 . 5708)) (5710 6423 (
-HTMLTEST.ONE-PAGE-SIMPLE 5710 . 6423)) (6425 9989 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6425 . 9989)
-) (9991 12548 (HTMLTEST.SHOW-TEXT-BOUNDS 9991 . 12548)) (12550 13209 (HTMLTEST.ONE-PAGE-WITH-CURVE 
-12550 . 13209)) (13211 15319 (HTMLTEST.TEXT-TWO-FONTS 13211 . 15319)) (15321 15831 (
-HTMLTEST.TEXT-VERTICAL-OVERFLOW 15321 . 15831)) (15833 16581 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15833
- . 16581)) (16583 17328 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16583 . 17328)) (17356 20478 (
-HTMLTEST.FUNNY-CHARS 17356 . 20478)) (20480 22053 (HTMLTEST.UNDEFINED-CHARS 20480 . 22053)) (22078 
-22874 (HTMLTEST.NOTO-SANS 22078 . 22874)) (22898 24761 (WINDOWTEST.SHOW-TEXT-BOUNDS 22898 . 24761)) (
-24763 25034 (HTMLTEST.TRANSFORM 24763 . 25034)) (25036 25277 (HTMLTEST.TRANSFORM-POINTS 25036 . 25277)
-))))
+  (FILEMAP (NIL (1278 1937 (GEN-TEST-BITMAP 1278 . 1937)) (1939 2749 (HTMLTEST.BITBLT 1939 . 2749)) (
+2751 3742 (HTMLTEST.TALL-BITBLT 2751 . 3742)) (3744 5289 (HTMLTEST.BLTSHADE 3744 . 5289)) (5291 6004 (
+HTMLTEST.ONE-PAGE-SIMPLE 5291 . 6004)) (6006 9570 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6006 . 9570)
+) (9572 12011 (HTMLTEST.SHOW-TEXT-BOUNDS 9572 . 12011)) (12013 12672 (HTMLTEST.ONE-PAGE-WITH-CURVE 
+12013 . 12672)) (12674 14782 (HTMLTEST.TEXT-TWO-FONTS 12674 . 14782)) (14784 15294 (
+HTMLTEST.TEXT-VERTICAL-OVERFLOW 14784 . 15294)) (15296 16044 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15296
+ . 16044)) (16046 16791 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16046 . 16791)) (16793 17261 (
+HTMLTEST.BRIEF-TEXT 16793 . 17261)) (17289 23202 (HTMLTEST.FUNNY-CHARS 17289 . 23202)) (23204 24777 (
+HTMLTEST.UNDEFINED-CHARS 23204 . 24777)) (24802 25598 (HTMLTEST.NOTO-SANS 24802 . 25598)) (25622 27485
+ (WINDOWTEST.SHOW-TEXT-BOUNDS 25622 . 27485)) (27487 27758 (HTMLTEST.TRANSFORM 27487 . 27758)) (27760 
+28001 (HTMLTEST.TRANSFORM-POINTS 27760 . 28001)))))
 STOP
