@@ -1,25 +1,32 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 4-Jan-2025 11:06:41" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;5 8941   
+(FILECREATED "23-Jan-2025 10:23:28" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;6 11718  
 
-      :CHANGES-TO (FNS PROCESS-BROWSER-FONT-METRICS)
-                  (VARS XCCS-UNICODE-DUMPERCOMS)
-                  (FUNCTIONS DUMP-XCCS-UNICODE-MAPPING)
+      :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
+                  (VARIABLES XCCS-TO-UNICODE-JS-FILE-NAME)
+                  (FUNCTIONS WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE)
 
-      :PREVIOUS-DATE " 6-Dec-2024 16:24:57" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;1)
+      :PREVIOUS-DATE " 4-Jan-2025 11:06:41" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;5)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
-(RPAQQ XCCS-UNICODE-DUMPERCOMS ((FILES HTMLSTREAM)
-                                
-                                (* ;; "Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files")
+(RPAQQ XCCS-UNICODE-DUMPERCOMS
+       ((FILES HTMLSTREAM)
+        
+        (* ;; "Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files")
 
-                                (FUNCTIONS CREATE-ALL-FONT-METRICS)
-                                (FNS PROCESS-BROWSER-FONT-METRICS)
-                                (FUNCTIONS WRITE-FONT-METRICS-FILE WRITE-CHARSET-METRICS-FILE)
-                                (RECORDS WEB-FONT-DESCR WEB-FONT-FACE)))
+        (FUNCTIONS CREATE-ALL-FONT-METRICS)
+        (FNS PROCESS-BROWSER-FONT-METRICS)
+        (FUNCTIONS WRITE-FONT-METRICS-FILE WRITE-CHARSET-METRICS-FILE)
+        (RECORDS WEB-FONT-DESCR WEB-FONT-FACE)
+        
+        (* ;; 
+        "Call (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE :output-dir %"yy%") to write xccs_to_unicode.js")
+
+        (VARIABLES XCCS-TO-UNICODE-JS-FILE-NAME)
+        (FUNCTIONS WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE)))
 
 (FILESLOAD HTMLSTREAM)
 
@@ -157,8 +164,53 @@
 
 (RECORD WEB-FONT-FACE (weight slope expansion))
 )
+
+
+
+(* ;; "Call (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE :output-dir %"yy%") to write xccs_to_unicode.js")
+
+
+(CL:DEFCONSTANT XCCS-TO-UNICODE-JS-FILE-NAME "xccs_to_unicode.js"
+   "The name part of the JavaScript XCCS to Unicode mapping file")
+
+(CL:DEFUN WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE (&KEY (OUTPUT-DIR *WEB-FONT-DIRECTORY*))
+   "Write the XCCS to Unicode mapping table to xccs_to_unicode.js"
+   [LET* [(JS-FILE (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
+                                                       (LIST 'NAME XCCS-TO-UNICODE-JS-FILE-NAME]
+         (CL:FORMAT T "Writing mapping file ~A~%%" JS-FILE)
+         (CL:WITH-OPEN-STREAM (STREAM (OPENSTREAM JS-FILE 'OUTPUT))
+                (CL:FORMAT STREAM "// the missing and undefined codes:~%%")
+                (CL:FORMAT STREAM "const XCCS_UNDEFINED = 0xFFFF;~%%")
+                (CL:FORMAT STREAM "const XCCS_MISSING = 0xFFFE;~%%")
+                (CL:FORMAT STREAM "// use a short temp variable name!~%%")
+                (CL:FORMAT STREAM "const t = [];~2%%")
+                (CL:FORMAT STREAM "// t[xccs] = unicode;~%%")
+                (LET ((USED-CHARSETS (HASHARRAY (IPLUS \MAXCHARSET 1)))
+                      (NUM-MAPPED-XCCS-CODES 0))
+                     [for XCCS-CODE from 0 to 65535
+                        do (LET* [(U-CODES (XTOUCODE? XCCS-CODE))
+                                  (U-CODE (COND
+                                             ((LISTP U-CODES)
+                                              (CAR U-CODES))
+                                             ((NUMBERP U-CODES)
+                                              U-CODES)
+                                             (T NIL]
+                                 (CL:WHEN U-CODE
+                                     (CL:INCF NUM-MAPPED-XCCS-CODES)
+                                     (CL:FORMAT STREAM "t[0x~4,'0x] = 0x~4,'0x;~%%" XCCS-CODE U-CODE)
+                                     (PUTHASH (\CHARSET XCCS-CODE)
+                                            T USED-CHARSETS))]
+                     (CL:FORMAT STREAM 
+                            "// There were ~d XCCS codes among ~d charsets that mapped to Unicode~%%"
+                            NUM-MAPPED-XCCS-CODES (HARRAYPROP USED-CHARSETS 'NUMKEYS))
+                     (CL:FORMAT STREAM "const xccs_to_unicode = t;~%%")
+                     (CL:FORMAT STREAM "const xccs_charsets = new Set([")
+                     [MAPHASH USED-CHARSETS #'(LAMBDA (VAL KEY)
+                                                (CL:FORMAT STREAM "0x~2,'0x, " KEY]
+                     (CL:FORMAT STREAM "]);~%%"])
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1190 1844 (CREATE-ALL-FONT-METRICS 1190 . 1844)) (1845 5298 (
-PROCESS-BROWSER-FONT-METRICS 1855 . 5296)) (5300 7123 (WRITE-FONT-METRICS-FILE 5300 . 7123)) (7125 
-8752 (WRITE-CHARSET-METRICS-FILE 7125 . 8752)))))
+  (FILEMAP (NIL (1314 1968 (CREATE-ALL-FONT-METRICS 1314 . 1968)) (1969 5422 (
+PROCESS-BROWSER-FONT-METRICS 1979 . 5420)) (5424 7247 (WRITE-FONT-METRICS-FILE 5424 . 7247)) (7249 
+8876 (WRITE-CHARSET-METRICS-FILE 7249 . 8876)) (9291 11695 (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE 9291
+ . 11695)))))
 STOP
