@@ -1,12 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "24-Jan-2025 16:38:32" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21 28024  
+(FILECREATED "26-Jan-2025 14:38:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;23 31623  
 
-      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
-                  (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.BRIEF-TEXT HTMLTEST.FUNNY-CHARS)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.SHOW-TEXT-BOUNDS)
+                  (VARS HTMLSTREAMTESTCOMS)
 
-      :PREVIOUS-DATE "22-Jan-2025 14:13:15" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;16)
+      :PREVIOUS-DATE "24-Jan-2025 16:38:32" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -15,9 +15,9 @@
        ((FUNCTIONS GEN-TEST-BITMAP)
         (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE)
         (FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
-               HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS 
-               HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
-               HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT)
+               HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE 
+               HTMLTEST.TEXT-TWO-FONTS HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+               HTMLTEST.TEXT-HORIZONTAL-OVERFLOW HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT)
         
         (* ;; "charsets")
 
@@ -204,7 +204,8 @@
 
    (* ;; "Text is drawn with baseline at current Y position")
 
-   (* ;; "The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+   (* ;; 
+   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
 
    (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
           (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
@@ -242,6 +243,79 @@
                       (+ STARTING-X SAMPLE-WIDTH)
                       (+ STARTING-Y FONT-DESCENT)
                       *CENTIPOINTS-PER-POINT* NIL STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               FILE-NAME)))
+
+(CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
+   "Output text, draw bounds for each character."
+
+   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
+
+   (* ;; "We invert the Y coordinate to match Medley:")
+
+   (* ;; "    In Medley, Y = 0 is the bottom left")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   (* ;; 
+   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+
+   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Character Bounds"]
+          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
+                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
+                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
+                (LINEWIDTH (/ *CENTIPOINTS-PER-POINT* 2))
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
+               (DSPFONT FONT10 STREAM)
+               (TERPRI STREAM)
+               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+               (CL:FORMAT STREAM "~a~%%" SAMPLE)
+               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
+               (PRINTOUT T "string width = " SAMPLE-WIDTH T)
+               [CL:FLET [(DRAWCHARBOX (CH X BASELINE)
+                                (LET ((WIDTH (CHARWIDTH CH STREAM)))
+
+                                     (* ;; "draw the descent")
+
+                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                            (+ X WIDTH)
+                                            (- BASELINE FONT-DESCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the baseline")
+
+                                     (DRAWLINE X BASELINE (+ X WIDTH)
+                                            BASELINE LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the left bearing")
+
+                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                            X
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the right bearing")
+
+                                     (DRAWLINE (+ X WIDTH)
+                                            (- BASELINE FONT-DESCENT)
+                                            (+ X WIDTH)
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the ascent")
+
+                                     (DRAWLINE X (+ BASELINE FONT-ASCENT)
+                                            (+ X WIDTH)
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+                                     (+ X WIDTH]
+                      (for CH instring SAMPLE do (SETQ STARTING-X (DRAWCHARBOX CH STARTING-X 
+                                                                         STARTING-Y]
                (TERPRI STREAM)
                (TERPRI STREAM)
                (TERPRI STREAM)
@@ -516,15 +590,16 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1278 1937 (GEN-TEST-BITMAP 1278 . 1937)) (1939 2749 (HTMLTEST.BITBLT 1939 . 2749)) (
-2751 3742 (HTMLTEST.TALL-BITBLT 2751 . 3742)) (3744 5289 (HTMLTEST.BLTSHADE 3744 . 5289)) (5291 6004 (
-HTMLTEST.ONE-PAGE-SIMPLE 5291 . 6004)) (6006 9570 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6006 . 9570)
-) (9572 12011 (HTMLTEST.SHOW-TEXT-BOUNDS 9572 . 12011)) (12013 12672 (HTMLTEST.ONE-PAGE-WITH-CURVE 
-12013 . 12672)) (12674 14782 (HTMLTEST.TEXT-TWO-FONTS 12674 . 14782)) (14784 15294 (
-HTMLTEST.TEXT-VERTICAL-OVERFLOW 14784 . 15294)) (15296 16044 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15296
- . 16044)) (16046 16791 (HTMLTEST.SPECIAL-TEXT-ENTITIES 16046 . 16791)) (16793 17261 (
-HTMLTEST.BRIEF-TEXT 16793 . 17261)) (17289 23202 (HTMLTEST.FUNNY-CHARS 17289 . 23202)) (23204 24777 (
-HTMLTEST.UNDEFINED-CHARS 23204 . 24777)) (24802 25598 (HTMLTEST.NOTO-SANS 24802 . 25598)) (25622 27485
- (WINDOWTEST.SHOW-TEXT-BOUNDS 25622 . 27485)) (27487 27758 (HTMLTEST.TRANSFORM 27487 . 27758)) (27760 
-28001 (HTMLTEST.TRANSFORM-POINTS 27760 . 28001)))))
+  (FILEMAP (NIL (1289 1948 (GEN-TEST-BITMAP 1289 . 1948)) (1950 2760 (HTMLTEST.BITBLT 1950 . 2760)) (
+2762 3753 (HTMLTEST.TALL-BITBLT 2762 . 3753)) (3755 5300 (HTMLTEST.BLTSHADE 3755 . 5300)) (5302 6015 (
+HTMLTEST.ONE-PAGE-SIMPLE 5302 . 6015)) (6017 9581 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6017 . 9581)
+) (9583 12035 (HTMLTEST.SHOW-TEXT-BOUNDS 9583 . 12035)) (12037 15610 (HTMLTEST.SHOW-CHAR-BOUNDS 12037
+ . 15610)) (15612 16271 (HTMLTEST.ONE-PAGE-WITH-CURVE 15612 . 16271)) (16273 18381 (
+HTMLTEST.TEXT-TWO-FONTS 16273 . 18381)) (18383 18893 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 18383 . 18893)) 
+(18895 19643 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 18895 . 19643)) (19645 20390 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 19645 . 20390)) (20392 20860 (HTMLTEST.BRIEF-TEXT 20392 . 20860)) (
+20888 26801 (HTMLTEST.FUNNY-CHARS 20888 . 26801)) (26803 28376 (HTMLTEST.UNDEFINED-CHARS 26803 . 28376
+)) (28401 29197 (HTMLTEST.NOTO-SANS 28401 . 29197)) (29221 31084 (WINDOWTEST.SHOW-TEXT-BOUNDS 29221 . 
+31084)) (31086 31357 (HTMLTEST.TRANSFORM 31086 . 31357)) (31359 31600 (HTMLTEST.TRANSFORM-POINTS 31359
+ . 31600)))))
 STOP
