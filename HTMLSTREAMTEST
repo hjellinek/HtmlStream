@@ -1,12 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "26-Jan-2025 14:38:26" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;23 31623  
+(FILECREATED "29-Jan-2025 17:41:53" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;24 31665  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.SHOW-TEXT-BOUNDS)
-                  (VARS HTMLSTREAMTESTCOMS)
+      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS)
 
-      :PREVIOUS-DATE "24-Jan-2025 16:38:32" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;21)
+      :PREVIOUS-DATE "26-Jan-2025 14:38:26" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;23)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -15,13 +15,16 @@
        ((FUNCTIONS GEN-TEST-BITMAP)
         (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE)
         (FUNCTIONS HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
-               HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.ONE-PAGE-WITH-CURVE 
-               HTMLTEST.TEXT-TWO-FONTS HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+               HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.TEXT-TWO-FONTS HTMLTEST.TEXT-VERTICAL-OVERFLOW 
                HTMLTEST.TEXT-HORIZONTAL-OVERFLOW HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT)
         
         (* ;; "charsets")
 
         (FUNCTIONS HTMLTEST.FUNNY-CHARS HTMLTEST.UNDEFINED-CHARS)
+        
+        (* ;; "metrics")
+
+        (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.SHOW-CHAR-BOUNDS)
         
         (* ;; "fonts")
 
@@ -192,134 +195,6 @@
                                      (15000 . 5000]
                      (DRAWCURVE CURVE-KNOTS NIL NIL NIL HTMLSTREAM)))
           FILE-NAME))
-
-(CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
-   "Output text, draw bounds."
-
-   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
-
-   (* ;; "We invert the Y coordinate to match Medley:")
-
-   (* ;; "    In Medley, Y = 0 is the bottom left")
-
-   (* ;; "Text is drawn with baseline at current Y position")
-
-   (* ;; 
-   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
-
-   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
-          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
-                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
-                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
-                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
-
-               (* ;; "display a string with a corner of a box at its origin, the width of the text")
-
-               (DSPFONT FONT10 STREAM)
-               (TERPRI STREAM)
-               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
-               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
-               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
-               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (CL:FORMAT STREAM "~a~%%" SAMPLE)
-               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
-
-               (* ;; "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
-
-               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
-                      STARTING-Y STARTING-X STARTING-Y *CENTIPOINTS-PER-POINT* NIL STREAM)
-
-               (* ;; "draw from (start-X, descent-Y) to (start-X, ascent-Y)")
-
-               (DRAWLINE STARTING-X (- STARTING-Y FONT-DESCENT)
-                      STARTING-X
-                      (+ STARTING-Y FONT-ASCENT)
-                      *CENTIPOINTS-PER-POINT* NIL STREAM)
-
-               (* ;; "draw a short line at the end, the height of the descent")
-
-               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
-                      (- STARTING-Y FONT-DESCENT)
-                      (+ STARTING-X SAMPLE-WIDTH)
-                      (+ STARTING-Y FONT-DESCENT)
-                      *CENTIPOINTS-PER-POINT* NIL STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               FILE-NAME)))
-
-(CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
-   "Output text, draw bounds for each character."
-
-   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
-
-   (* ;; "We invert the Y coordinate to match Medley:")
-
-   (* ;; "    In Medley, Y = 0 is the bottom left")
-
-   (* ;; "Text is drawn with baseline at current Y position")
-
-   (* ;; 
-   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
-
-   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Character Bounds"]
-          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
-                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
-                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
-                (LINEWIDTH (/ *CENTIPOINTS-PER-POINT* 2))
-                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
-               (DSPFONT FONT10 STREAM)
-               (TERPRI STREAM)
-               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
-               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
-               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
-               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (CL:FORMAT STREAM "~a~%%" SAMPLE)
-               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
-               (PRINTOUT T "string width = " SAMPLE-WIDTH T)
-               [CL:FLET [(DRAWCHARBOX (CH X BASELINE)
-                                (LET ((WIDTH (CHARWIDTH CH STREAM)))
-
-                                     (* ;; "draw the descent")
-
-                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
-                                            (+ X WIDTH)
-                                            (- BASELINE FONT-DESCENT)
-                                            LINEWIDTH NIL STREAM)
-
-                                     (* ;; "draw the baseline")
-
-                                     (DRAWLINE X BASELINE (+ X WIDTH)
-                                            BASELINE LINEWIDTH NIL STREAM)
-
-                                     (* ;; "draw the left bearing")
-
-                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
-                                            X
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
-
-                                     (* ;; "draw the right bearing")
-
-                                     (DRAWLINE (+ X WIDTH)
-                                            (- BASELINE FONT-DESCENT)
-                                            (+ X WIDTH)
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
-
-                                     (* ;; "draw the ascent")
-
-                                     (DRAWLINE X (+ BASELINE FONT-ASCENT)
-                                            (+ X WIDTH)
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
-                                     (+ X WIDTH]
-                      (for CH instring SAMPLE do (SETQ STARTING-X (DRAWCHARBOX CH STARTING-X 
-                                                                         STARTING-Y]
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               FILE-NAME)))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "/tmp/one-page-with-curve.html"))
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Curve test document"]
@@ -518,6 +393,139 @@
 
 
 
+(* ;; "metrics")
+
+
+(CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
+   "Output text, draw bounds."
+
+   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
+
+   (* ;; "We invert the Y coordinate to match Medley:")
+
+   (* ;; "    In Medley, Y = 0 is the bottom left")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   (* ;; 
+   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+
+   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
+          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
+                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
+                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
+
+               (* ;; "display a string with a corner of a box at its origin, the width of the text")
+
+               (DSPFONT FONT10 STREAM)
+               (TERPRI STREAM)
+               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+               (CL:FORMAT STREAM "~a~%%" SAMPLE)
+               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
+
+               (* ;; "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
+
+               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                      STARTING-Y STARTING-X STARTING-Y *CENTIPOINTS-PER-POINT* NIL STREAM)
+
+               (* ;; "draw from (start-X, descent-Y) to (start-X, ascent-Y)")
+
+               (DRAWLINE STARTING-X (- STARTING-Y FONT-DESCENT)
+                      STARTING-X
+                      (+ STARTING-Y FONT-ASCENT)
+                      *CENTIPOINTS-PER-POINT* NIL STREAM)
+
+               (* ;; "draw a short line at the end, the height of the descent")
+
+               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                      (- STARTING-Y FONT-DESCENT)
+                      (+ STARTING-X SAMPLE-WIDTH)
+                      (+ STARTING-Y FONT-DESCENT)
+                      *CENTIPOINTS-PER-POINT* NIL STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               FILE-NAME)))
+
+(CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
+   "Output text, draw bounds for each character."
+
+   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
+
+   (* ;; "We invert the Y coordinate to match Medley:")
+
+   (* ;; "    In Medley, Y = 0 is the bottom left")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   (* ;; 
+   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+
+   (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Character Bounds"]
+          (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
+                (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
+                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
+                (LINEWIDTH (/ *CENTIPOINTS-PER-POINT* 2))
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
+               (DSPFONT FONT10 STREAM)
+               (TERPRI STREAM)
+               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+               (CL:FORMAT STREAM "~a~%%" SAMPLE)
+               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
+               (PRINTOUT T "string width = " SAMPLE-WIDTH T)
+               [CL:FLET [(DRAWCHARBOX (CH X BASELINE)
+                                (LET ((WIDTH (CHARWIDTH CH STREAM)))
+
+                                     (* ;; "draw the descent")
+
+                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                            (+ X WIDTH)
+                                            (- BASELINE FONT-DESCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the baseline")
+
+                                     (DRAWLINE X BASELINE (+ X WIDTH)
+                                            BASELINE LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the left bearing")
+
+                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                            X
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the right bearing")
+
+                                     (DRAWLINE (+ X WIDTH)
+                                            (- BASELINE FONT-DESCENT)
+                                            (+ X WIDTH)
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+
+                                     (* ;; "draw the ascent")
+
+                                     (DRAWLINE X (+ BASELINE FONT-ASCENT)
+                                            (+ X WIDTH)
+                                            (+ BASELINE FONT-ASCENT)
+                                            LINEWIDTH NIL STREAM)
+                                     (+ X WIDTH]
+                      (for CH instring SAMPLE do (SETQ STARTING-X (DRAWCHARBOX CH STARTING-X 
+                                                                         STARTING-Y]
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               (TERPRI STREAM)
+               FILE-NAME)))
+
+
+
 (* ;; "fonts")
 
 
@@ -590,16 +598,16 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1289 1948 (GEN-TEST-BITMAP 1289 . 1948)) (1950 2760 (HTMLTEST.BITBLT 1950 . 2760)) (
-2762 3753 (HTMLTEST.TALL-BITBLT 2762 . 3753)) (3755 5300 (HTMLTEST.BLTSHADE 3755 . 5300)) (5302 6015 (
-HTMLTEST.ONE-PAGE-SIMPLE 5302 . 6015)) (6017 9581 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6017 . 9581)
-) (9583 12035 (HTMLTEST.SHOW-TEXT-BOUNDS 9583 . 12035)) (12037 15610 (HTMLTEST.SHOW-CHAR-BOUNDS 12037
- . 15610)) (15612 16271 (HTMLTEST.ONE-PAGE-WITH-CURVE 15612 . 16271)) (16273 18381 (
-HTMLTEST.TEXT-TWO-FONTS 16273 . 18381)) (18383 18893 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 18383 . 18893)) 
-(18895 19643 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 18895 . 19643)) (19645 20390 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 19645 . 20390)) (20392 20860 (HTMLTEST.BRIEF-TEXT 20392 . 20860)) (
-20888 26801 (HTMLTEST.FUNNY-CHARS 20888 . 26801)) (26803 28376 (HTMLTEST.UNDEFINED-CHARS 26803 . 28376
-)) (28401 29197 (HTMLTEST.NOTO-SANS 28401 . 29197)) (29221 31084 (WINDOWTEST.SHOW-TEXT-BOUNDS 29221 . 
-31084)) (31086 31357 (HTMLTEST.TRANSFORM 31086 . 31357)) (31359 31600 (HTMLTEST.TRANSFORM-POINTS 31359
- . 31600)))))
+  (FILEMAP (NIL (1306 1965 (GEN-TEST-BITMAP 1306 . 1965)) (1967 2777 (HTMLTEST.BITBLT 1967 . 2777)) (
+2779 3770 (HTMLTEST.TALL-BITBLT 2779 . 3770)) (3772 5317 (HTMLTEST.BLTSHADE 3772 . 5317)) (5319 6032 (
+HTMLTEST.ONE-PAGE-SIMPLE 5319 . 6032)) (6034 9598 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6034 . 9598)
+) (9600 10259 (HTMLTEST.ONE-PAGE-WITH-CURVE 9600 . 10259)) (10261 12369 (HTMLTEST.TEXT-TWO-FONTS 10261
+ . 12369)) (12371 12881 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 12371 . 12881)) (12883 13631 (
+HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 12883 . 13631)) (13633 14378 (HTMLTEST.SPECIAL-TEXT-ENTITIES 13633
+ . 14378)) (14380 14848 (HTMLTEST.BRIEF-TEXT 14380 . 14848)) (14876 20789 (HTMLTEST.FUNNY-CHARS 14876
+ . 20789)) (20791 22364 (HTMLTEST.UNDEFINED-CHARS 20791 . 22364)) (22391 24843 (
+HTMLTEST.SHOW-TEXT-BOUNDS 22391 . 24843)) (24845 28418 (HTMLTEST.SHOW-CHAR-BOUNDS 24845 . 28418)) (
+28443 29239 (HTMLTEST.NOTO-SANS 28443 . 29239)) (29263 31126 (WINDOWTEST.SHOW-TEXT-BOUNDS 29263 . 
+31126)) (31128 31399 (HTMLTEST.TRANSFORM 31128 . 31399)) (31401 31642 (HTMLTEST.TRANSFORM-POINTS 31401
+ . 31642)))))
 STOP
