@@ -1,12 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "29-Jan-2025 17:41:53" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;24 31665  
+(FILECREATED "13-Feb-2025 14:44:01" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;28 33685  
 
-      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
-                  (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.TEXT-TWO-FONTS 
+                         HTMLTEST.SHOW-TEXT-BOUNDS)
 
-      :PREVIOUS-DATE "26-Jan-2025 14:38:26" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;23)
+      :PREVIOUS-DATE "29-Jan-2025 17:41:53" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;24)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -214,17 +214,18 @@
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Two fonts"]
           (CL:FLET [(FONT-SPEC NIL (FONTPROP (DSPFONT NIL HTMLSTREAM)
                                           'SPEC]
-                 (LET* ((FIRST-FONT (DSPFONT NIL HTMLSTREAM))
-                        (SECOND-FONT (FONTCREATE 'NOTO-SANS-DISPLAY 20 'REGULAR NIL HTMLSTREAM))
-                        (SECOND-FONT-BOLD (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(BOLD REGULAR REGULAR)
+                 (LET* ((FIRST-FONT (FONTCREATE 'NOTO-SANS-DISPLAY 10 'REGULAR NIL HTMLSTREAM))
+                        (SECOND-FONT (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL HTMLSTREAM))
+                        (SECOND-FONT-BOLD (FONTCREATE 'NOTO-SANS 20 '(BOLD REGULAR REGULAR)
                                                  NIL HTMLSTREAM))
-                        (SECOND-FONT-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20 '(MEDIUM ITALIC REGULAR
-                                                                                      )
+                        (SECOND-FONT-ITALIC (FONTCREATE 'NOTO-SANS 20 '(MEDIUM ITALIC REGULAR)
                                                    NIL HTMLSTREAM))
-                        (SECOND-FONT-BOLD-ITALIC (FONTCREATE 'NOTO-SANS-DISPLAY 20
-                                                        '(BOLD ITALIC REGULAR)
+                        (SECOND-FONT-BOLD-ITALIC (FONTCREATE 'NOTO-SANS 20 '(BOLD ITALIC REGULAR)
                                                         NIL HTMLSTREAM)))
                        (CL:FORMAT HTMLSTREAM "This is in the default font, ~s.~%%" (FONT-SPEC))
+                       (TERPRI HTMLSTREAM)
+                       (DSPFONT FIRST-FONT HTMLSTREAM)
+                       (CL:FORMAT HTMLSTREAM "This is in the first font, ~s.~%%" (FONT-SPEC))
                        (TERPRI HTMLSTREAM)
                        (DSPFONT SECOND-FONT HTMLSTREAM)
                        (CL:FORMAT HTMLSTREAM "We just changed the font to ~s.~%%" (FONT-SPEC))
@@ -407,48 +408,56 @@
 
    (* ;; "Text is drawn with baseline at current Y position")
 
-   (* ;; 
-   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
-
    (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Text Bounds"]
           (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
                 (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
-                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
-                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
+                (FONT12 (FONTCREATE 'NOTO-SANS 12 'REGULAR NIL STREAM))
+                (FONT14 (FONTCREATE 'NOTO-SANS 14 'REGULAR NIL STREAM))
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT)
+               (CL:FLET [(WRITE NIL (LET ((SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM)))
 
-               (* ;; "display a string with a corner of a box at its origin, the width of the text")
+                                         (* ;; 
+                       "display a string with a corner of a box at its origin, the width of the text")
 
-               (DSPFONT FONT10 STREAM)
-               (TERPRI STREAM)
-               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
-               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
-               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
-               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (CL:FORMAT STREAM "~a~%%" SAMPLE)
-               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
+                                         (TERPRI STREAM)
+                                         (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+                                         (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+                                         (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+                                         (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+                                         (CL:FORMAT STREAM "~a~%%" SAMPLE)
 
-               (* ;; "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
+                                         (* ;; 
+                      "draw from (end-X, baseline-Y) to (start-X, baseline-Y) to (start-X, height-Y)")
 
-               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
-                      STARTING-Y STARTING-X STARTING-Y *CENTIPOINTS-PER-POINT* NIL STREAM)
+                                         (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                                                STARTING-Y STARTING-X STARTING-Y 
+                                                *CENTIPOINTS-PER-POINT* NIL STREAM)
 
-               (* ;; "draw from (start-X, descent-Y) to (start-X, ascent-Y)")
+                                         (* ;; 
+                                         "draw from (start-X, descent-Y) to (start-X, ascent-Y)")
 
-               (DRAWLINE STARTING-X (- STARTING-Y FONT-DESCENT)
-                      STARTING-X
-                      (+ STARTING-Y FONT-ASCENT)
-                      *CENTIPOINTS-PER-POINT* NIL STREAM)
+                                         (DRAWLINE STARTING-X (- STARTING-Y FONT-DESCENT)
+                                                STARTING-X
+                                                (+ STARTING-Y FONT-ASCENT)
+                                                *CENTIPOINTS-PER-POINT* NIL STREAM)
 
-               (* ;; "draw a short line at the end, the height of the descent")
+                                         (* ;; 
+                                         "draw a short line at the end, the height of the descent")
 
-               (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
-                      (- STARTING-Y FONT-DESCENT)
-                      (+ STARTING-X SAMPLE-WIDTH)
-                      (+ STARTING-Y FONT-DESCENT)
-                      *CENTIPOINTS-PER-POINT* NIL STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
+                                         (DRAWLINE (+ STARTING-X SAMPLE-WIDTH)
+                                                (- STARTING-Y FONT-DESCENT)
+                                                (+ STARTING-X SAMPLE-WIDTH)
+                                                (+ STARTING-Y FONT-DESCENT)
+                                                *CENTIPOINTS-PER-POINT* NIL STREAM)
+                                         (TERPRI STREAM)
+                                         (TERPRI STREAM)
+                                         (TERPRI STREAM]
+                      (DSPFONT FONT10 STREAM)
+                      (WRITE)
+                      (DSPFONT FONT12 STREAM)
+                      (WRITE)
+                      (DSPFONT FONT14 STREAM)
+                      (WRITE))
                FILE-NAME)))
 
 (CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
@@ -468,60 +477,63 @@
    (CL:WITH-OPEN-STREAM [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Character Bounds"]
           (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
                 (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
-                (FONT20 (FONTCREATE 'NOTO-SANS 20 'REGULAR NIL STREAM))
+                (FONT14 (FONTCREATE 'NOTO-SANS 14 'REGULAR NIL STREAM))
                 (LINEWIDTH (/ *CENTIPOINTS-PER-POINT* 2))
-                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT SAMPLE-WIDTH)
-               (DSPFONT FONT10 STREAM)
-               (TERPRI STREAM)
-               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
-               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
-               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
-               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
-               (CL:FORMAT STREAM "~a~%%" SAMPLE)
-               (SETQ SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM))
-               (PRINTOUT T "string width = " SAMPLE-WIDTH T)
-               [CL:FLET [(DRAWCHARBOX (CH X BASELINE)
-                                (LET ((WIDTH (CHARWIDTH CH STREAM)))
+                STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT)
+               (CL:FLET [(SAMPLE (FONT)
+                                (DSPFONT FONT STREAM)
+                                (LET ((SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM)))
+                                     (TERPRI STREAM)
+                                     (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+                                     (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+                                     (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+                                     (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+                                     (CL:FORMAT STREAM "~a~%%" SAMPLE)
+                                     (CL:FLET [(DRAWCHARBOX (CH X BASELINE)
+                                                      (LET ((WIDTH (CHARWIDTH CH STREAM)))
 
-                                     (* ;; "draw the descent")
+                                                           (* ;; "draw the descent")
 
-                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
-                                            (+ X WIDTH)
-                                            (- BASELINE FONT-DESCENT)
-                                            LINEWIDTH NIL STREAM)
+                                                           (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                                                  (+ X WIDTH)
+                                                                  (- BASELINE FONT-DESCENT)
+                                                                  LINEWIDTH NIL STREAM)
 
-                                     (* ;; "draw the baseline")
+                                                           (* ;; "draw the baseline")
 
-                                     (DRAWLINE X BASELINE (+ X WIDTH)
-                                            BASELINE LINEWIDTH NIL STREAM)
+                                                           (DRAWLINE X BASELINE (+ X WIDTH)
+                                                                  BASELINE LINEWIDTH NIL STREAM)
 
-                                     (* ;; "draw the left bearing")
+                                                           (* ;; "draw the left bearing")
 
-                                     (DRAWLINE X (- BASELINE FONT-DESCENT)
-                                            X
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
+                                                           (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                                                  X
+                                                                  (+ BASELINE FONT-ASCENT)
+                                                                  LINEWIDTH NIL STREAM)
 
-                                     (* ;; "draw the right bearing")
+                                                           (* ;; "draw the right bearing")
 
-                                     (DRAWLINE (+ X WIDTH)
-                                            (- BASELINE FONT-DESCENT)
-                                            (+ X WIDTH)
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
+                                                           (DRAWLINE (+ X WIDTH)
+                                                                  (- BASELINE FONT-DESCENT)
+                                                                  (+ X WIDTH)
+                                                                  (+ BASELINE FONT-ASCENT)
+                                                                  LINEWIDTH NIL STREAM)
 
-                                     (* ;; "draw the ascent")
+                                                           (* ;; "draw the ascent")
 
-                                     (DRAWLINE X (+ BASELINE FONT-ASCENT)
-                                            (+ X WIDTH)
-                                            (+ BASELINE FONT-ASCENT)
-                                            LINEWIDTH NIL STREAM)
-                                     (+ X WIDTH]
-                      (for CH instring SAMPLE do (SETQ STARTING-X (DRAWCHARBOX CH STARTING-X 
-                                                                         STARTING-Y]
-               (TERPRI STREAM)
-               (TERPRI STREAM)
-               (TERPRI STREAM)
+                                                           (DRAWLINE X (+ BASELINE FONT-ASCENT)
+                                                                  (+ X WIDTH)
+                                                                  (+ BASELINE FONT-ASCENT)
+                                                                  LINEWIDTH NIL STREAM)
+                                                           (+ X WIDTH]
+                                            (for CH instring SAMPLE
+                                               do (SETQ STARTING-X (DRAWCHARBOX CH STARTING-X 
+                                                                          STARTING-Y)))
+                                            (TERPRI STREAM)
+                                            (TERPRI STREAM)
+                                            (TERPRI STREAM]
+                      (SAMPLE FONT10)
+                      (SAMPLE FONT14))
                FILE-NAME)))
 
 
@@ -598,16 +610,16 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1306 1965 (GEN-TEST-BITMAP 1306 . 1965)) (1967 2777 (HTMLTEST.BITBLT 1967 . 2777)) (
-2779 3770 (HTMLTEST.TALL-BITBLT 2779 . 3770)) (3772 5317 (HTMLTEST.BLTSHADE 3772 . 5317)) (5319 6032 (
-HTMLTEST.ONE-PAGE-SIMPLE 5319 . 6032)) (6034 9598 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6034 . 9598)
-) (9600 10259 (HTMLTEST.ONE-PAGE-WITH-CURVE 9600 . 10259)) (10261 12369 (HTMLTEST.TEXT-TWO-FONTS 10261
- . 12369)) (12371 12881 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 12371 . 12881)) (12883 13631 (
-HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 12883 . 13631)) (13633 14378 (HTMLTEST.SPECIAL-TEXT-ENTITIES 13633
- . 14378)) (14380 14848 (HTMLTEST.BRIEF-TEXT 14380 . 14848)) (14876 20789 (HTMLTEST.FUNNY-CHARS 14876
- . 20789)) (20791 22364 (HTMLTEST.UNDEFINED-CHARS 20791 . 22364)) (22391 24843 (
-HTMLTEST.SHOW-TEXT-BOUNDS 22391 . 24843)) (24845 28418 (HTMLTEST.SHOW-CHAR-BOUNDS 24845 . 28418)) (
-28443 29239 (HTMLTEST.NOTO-SANS 28443 . 29239)) (29263 31126 (WINDOWTEST.SHOW-TEXT-BOUNDS 29263 . 
-31126)) (31128 31399 (HTMLTEST.TRANSFORM 31128 . 31399)) (31401 31642 (HTMLTEST.TRANSFORM-POINTS 31401
- . 31642)))))
+  (FILEMAP (NIL (1338 1997 (GEN-TEST-BITMAP 1338 . 1997)) (1999 2809 (HTMLTEST.BITBLT 1999 . 2809)) (
+2811 3802 (HTMLTEST.TALL-BITBLT 2811 . 3802)) (3804 5349 (HTMLTEST.BLTSHADE 3804 . 5349)) (5351 6064 (
+HTMLTEST.ONE-PAGE-SIMPLE 5351 . 6064)) (6066 9630 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6066 . 9630)
+) (9632 10291 (HTMLTEST.ONE-PAGE-WITH-CURVE 9632 . 10291)) (10293 12452 (HTMLTEST.TEXT-TWO-FONTS 10293
+ . 12452)) (12454 12964 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 12454 . 12964)) (12966 13714 (
+HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 12966 . 13714)) (13716 14461 (HTMLTEST.SPECIAL-TEXT-ENTITIES 13716
+ . 14461)) (14463 14931 (HTMLTEST.BRIEF-TEXT 14463 . 14931)) (14959 20872 (HTMLTEST.FUNNY-CHARS 14959
+ . 20872)) (20874 22447 (HTMLTEST.UNDEFINED-CHARS 20874 . 22447)) (22474 25901 (
+HTMLTEST.SHOW-TEXT-BOUNDS 22474 . 25901)) (25903 30438 (HTMLTEST.SHOW-CHAR-BOUNDS 25903 . 30438)) (
+30463 31259 (HTMLTEST.NOTO-SANS 30463 . 31259)) (31283 33146 (WINDOWTEST.SHOW-TEXT-BOUNDS 31283 . 
+33146)) (33148 33419 (HTMLTEST.TRANSFORM 33148 . 33419)) (33421 33662 (HTMLTEST.TRANSFORM-POINTS 33421
+ . 33662)))))
 STOP
