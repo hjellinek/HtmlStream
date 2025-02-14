@@ -1,198 +1,22 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 2-Feb-2025 13:29:33" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;13 13578  
+(FILECREATED "12-Feb-2025 15:19:44" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;15 3558   
 
       :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
-                  (VARIABLES XCCS-TO-UNICODE-DATA-FILE-NAME)
-                  (FUNCTIONS WRITE-JAVA-X-TO-U-MAPPING-TABLE WRITE-X-TO-U-MAPPING-TABLE-DATA)
+                  (RECORDS WEB-FONT-FACE)
 
-      :PREVIOUS-DATE "26-Jan-2025 14:41:24" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;10)
+      :PREVIOUS-DATE " 2-Feb-2025 13:29:33" 
+{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;13)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
-(RPAQQ XCCS-UNICODE-DUMPERCOMS
-       ((FILES HTMLSTREAM)
-        
-        (* ;; "Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files")
-
-        (FUNCTIONS CREATE-ALL-FONT-METRICS)
-        (FNS PROCESS-BROWSER-FONT-METRICS)
-        (FUNCTIONS WRITE-FONT-METRICS-FILE WRITE-CHARSET-METRICS-FILE)
-        (VARIABLES *METRICS-PROGRESS-WINDOW*)
-        (FUNCTIONS METRICS-WRITE-PROGRESS)
-        (RECORDS WEB-FONT-DESCR WEB-FONT-FACE)
-        
-        (* ;; 
+(RPAQQ XCCS-UNICODE-DUMPERCOMS (
+                                (* ;; 
         "Call (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE :output-dir %"yy%") to write xccs_to_unicode.js")
 
-        (VARIABLES XCCS-TO-UNICODE-JS-FILE-NAME)
-        (FUNCTIONS WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE)))
-
-(FILESLOAD HTMLSTREAM)
-
-
-
-(* ;; 
-"Call (CREATE-ALL-FONT-METRICS :data-dir %"xx%" :output-dir %"yy%") to build all font descriptor files"
-)
-
-
-(CL:DEFUN CREATE-ALL-FONT-METRICS (&KEY (DATA-DIR *WEB-FONT-DIRECTORY*)
-                                        (DATA-FILE-NAME *DEFAULT-WEB-FONT-METRICS-FILE-NAME*)
-                                        (OUTPUT-DIR *WEB-FONT-DIRECTORY*))
-   "Process all Web fonts and create metrics files"
-   (LET* [(METRICS-DATA-FILE (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING DATA-DIR)
-                                                                 (LIST 'NAME DATA-FILE-NAME]
-         (CL:FORMAT T "Will read from ~A and write to ~A~%%" METRICS-DATA-FILE OUTPUT-DIR)
-         (PROCESS-BROWSER-FONT-METRICS METRICS-DATA-FILE OUTPUT-DIR #'METRICS-WRITE-PROGRESS)))
-(DEFINEQ
-
-(PROCESS-BROWSER-FONT-METRICS
-  [LAMBDA (METRICS-DATA-FILE-NAME OUTPUT-DIR PROGRESS-FN)
-
-    (* ;; 
-  "Read a series of font metrics from the metrics file and translate them into individual .wfm files")
-
-    (* ;; "The file name looks like <family>-<size>-<weight>-<slope>-<expansion>.wfm")
-
-    (* ;; "For example, NOTO-SANS-MONO-40-MEDIUM-REGULAR-REGULAR.wfm")
-
-    (CL:WITH-OPEN-STREAM [IN (OPENSTREAM METRICS-DATA-FILE-NAME 'INPUT NIL '((FORMAT :THROUGH]
-
-           (* ;; "read and check the version, then read the TOC")
-
-           (LET* ((VERSION (CHECK-BROWSER-METRICS-FORMAT (READ IN)))
-                  (TOC (READ IN))
-                  (METRICS-COUNT 1)
-                  (NUM-METRICS (LENGTH TOC)))                (* ; 
-                                                             "TOC contains family, size, face tuples")
-                 (while (SKIPSEPRS IN)
-                    do (LET* ((FONT-MEASUREMENT (READ IN))
-                              (FONT-FAMILY (fetch (WEB-FONT-METRICS family) of FONT-MEASUREMENT))
-                              (FONT-SIZE (fetch (WEB-FONT-METRICS size) of FONT-MEASUREMENT))
-                              (FONT-WEIGHT (fetch (WEB-FONT-METRICS weight) of FONT-MEASUREMENT))
-                              (FONT-STYLE (fetch (WEB-FONT-METRICS style) of FONT-MEASUREMENT))
-                              (CHARSETS (fetch (WEB-FONT-METRICS charsets) of FONT-MEASUREMENT))
-                              (LINE-HEIGHT (COMPUTE-LINE-HEIGHT CHARSETS))
-                              (MAX-ASCENT (COMPUTE-MAX-ASCENT CHARSETS))
-                              (MAX-DESCENT (COMPUTE-MAX-DESCENT CHARSETS))
-                              (FONT-LISP-NAME (MKATOM (fetch (WEB-FONT-METRICS lispName) of 
-                                                                                     FONT-MEASUREMENT
-                                                             )))
-                              (FONT-LISP-FACE (MAPCAR (fetch (WEB-FONT-METRICS lispFace) of 
-                                                                                     FONT-MEASUREMENT
-                                                             )
-                                                     #'MKATOM))
-                              (FONT-LISP-SIZE (fetch (WEB-FONT-METRICS lispSize) of FONT-MEASUREMENT)
-                                     ))
-                             (AND PROGRESS-FN (APPLY* PROGRESS-FN
-                                                     (CL:FORMAT NIL 
-                                     "~s, ~A ~A ~A: height ~d, ascent ~d, descent ~d, ~d charsets~%%"
-                                                            FONT-FAMILY FONT-SIZE FONT-WEIGHT 
-                                                            FONT-STYLE (CP-TO-P LINE-HEIGHT)
-                                                            (CP-TO-P MAX-ASCENT)
-                                                            (CP-TO-P MAX-DESCENT)
-                                                            (LENGTH CHARSETS))
-                                                     METRICS-COUNT NUM-METRICS))
-
-                             (* ;; "write a wfm file to describe the font itself")
-
-                             (WRITE-FONT-METRICS-FILE OUTPUT-DIR FONT-LISP-NAME FONT-LISP-FACE 
-                                    FONT-LISP-SIZE LINE-HEIGHT CHARSETS MAX-ASCENT MAX-DESCENT)
-                             (for CHARSET in CHARSETS do 
-                                                         (* ;; 
-                                          "write each charset's metrics as a set of standalone files")
-
-                                                         (WRITE-CHARSET-METRICS-FILE OUTPUT-DIR 
-                                                                FONT-LISP-NAME FONT-LISP-SIZE 
-                                                                FONT-LISP-FACE CHARSET)
-                                                         (BLOCK) 
-                                                             (* ; "give someone else a chance to run")
-                                  )
-                             (CL:INCF METRICS-COUNT)))
-                 (AND PROGRESS-FN (APPLY* PROGRESS-FN "Finished." METRICS-COUNT NUM-METRICS])
-)
-
-(CL:DEFUN WRITE-FONT-METRICS-FILE (OUTPUT-DIR FAMILY FACE SIZE HEIGHT CHARSETS MAX-ASCENT MAX-DESCENT
-                                         )
-   "Write a description of the font"
-
-   (* ;; "The file name looks like <family>-<size>-<weight>-<slope>-<expansion>.wfm")
-
-   (* ;; "For example, ROBOTO-MONO-10-MEDIUM-REGULAR-REGULAR.wfm")
-
-   [LET* [(WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
-          (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
-          (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
-          (FILE-NAME (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
-                                                         (LIST 'NAME (MAKE-FONT-METRICS-FILE-NAME
-                                                                      FAMILY SIZE WEIGHT SLOPE 
-                                                                      EXPANSION]
-         (CL:WITH-OPEN-STREAM (OUT (OPENSTREAM FILE-NAME 'OUTPUT 'NEW))
-                (PRINT (LIST 'format *BROWSER-FONT-FILE-VERSION*)
-                       OUT)
-                (PRINT (create WEB-FONT-DESCR
-                              name _ FAMILY
-                              face _ FACE
-                              size _ SIZE
-                              height _ HEIGHT
-                              maxAscent _ MAX-ASCENT
-                              maxDescent _ MAX-DESCENT
-                              charsets _ (for CHARSET in CHARSETS collect (fetch (WEB-CHARSET-METRICS
-                                                                                  charset)
-                                                                             of CHARSET)))
-                       OUT)
-                (AND NIL (CL:FORMAT T "Wrote font file ~A~%%" FILE-NAME])
-
-(CL:DEFUN WRITE-CHARSET-METRICS-FILE (OUTPUT-DIR FAMILY SIZE FACE CHARSET)
-   "Write a file containing a charset's metrics"
-
-   (* ;; "The file name looks like <family>-<size>-<weight>-<slope>-<expansion>-<charset>.wcm")
-
-   (* ;; "For example, ROBOTO-MONO-10-REGULAR-REGULAR-REGULAR-0.wcm")
-
-   [LET* [(WEIGHT (fetch (WEB-FONT-FACE weight) of FACE))
-          (SLOPE (fetch (WEB-FONT-FACE slope) of FACE))
-          (EXPANSION (fetch (WEB-FONT-FACE expansion) of FACE))
-          (CHARSET-NUM (fetch (WEB-CHARSET-METRICS charset) of CHARSET))
-          (HEIGHT (fetch (WEB-CHARSET-METRICS height) of CHARSET))
-          (MAX-ASCENT (fetch (WEB-CHARSET-METRICS maxAscent) of CHARSET))
-          (MAX-DESCENT (fetch (WEB-CHARSET-METRICS maxDescent) of CHARSET))
-          (WIDTHS (fetch (WEB-CHARSET-METRICS xccsWidths) of CHARSET))
-          (FILE-NAME (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
-                                                         (LIST 'NAME
-                                                               (MAKE-CHARSET-METRICS-FILE-NAME FAMILY
-                                                                      SIZE WEIGHT SLOPE EXPANSION 
-                                                                      CHARSET-NUM]
-         (CL:WITH-OPEN-STREAM (OUT (OPENSTREAM FILE-NAME 'OUTPUT 'NEW))
-                (PRINT (LIST 'format *BROWSER-FONT-FILE-VERSION*)
-                       OUT)
-                (PRINT CHARSET OUT)
-                (AND NIL (CL:FORMAT T "Wrote charset ~A~%%" FILE-NAME])
-
-(DEFGLOBALVAR *METRICS-PROGRESS-WINDOW* NIL)
-
-(CL:DEFUN METRICS-WRITE-PROGRESS (DESCRIPTION NUM TOTAL)
-   "Show the progress we've made writing metrics files"
-   [if (NOT *METRICS-PROGRESS-WINDOW*)
-       then (SETQ *METRICS-PROGRESS-WINDOW*
-             (CREATEW (create REGION
-                             LEFT _ 10
-                             BOTTOM _ 10
-                             WIDTH _ 400
-                             HEIGHT _ 60]
-   (LET [(DSP (WINDOWPROP *METRICS-PROGRESS-WINDOW* 'DSP]
-        (CLEARW *METRICS-PROGRESS-WINDOW*)
-        (MOVETO 0 30 DSP)
-        (CL:FORMAT DSP "Writing file ~d of ~d~%%~A" NUM TOTAL DESCRIPTION)))
-(DECLARE%: EVAL@COMPILE
-
-(PROPRECORD WEB-FONT-DESCR (name face size height maxAscent maxDescent charsets))
-
-(RECORD WEB-FONT-FACE (weight slope expansion))
-)
+                                (VARIABLES XCCS-TO-UNICODE-JS-FILE-NAME)
+                                (FUNCTIONS WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE)))
 
 
 
@@ -241,8 +65,5 @@
                           (FOR CHARSET IN SORTED-CHARSETS DO (CL:FORMAT STREAM "0x~2,'0x, " CHARSET))
                           (CL:FORMAT STREAM "]);~%%"])
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1433 2112 (CREATE-ALL-FONT-METRICS 1433 . 2112)) (2113 6517 (
-PROCESS-BROWSER-FONT-METRICS 2123 . 6515)) (6519 8342 (WRITE-FONT-METRICS-FILE 6519 . 8342)) (8344 
-9971 (WRITE-CHARSET-METRICS-FILE 8344 . 9971)) (10023 10638 (METRICS-WRITE-PROGRESS 10023 . 10638)) (
-11053 13555 (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE 11053 . 13555)))))
+  (FILEMAP (NIL (1033 3535 (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE 1033 . 3535)))))
 STOP
