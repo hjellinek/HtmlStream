@@ -1,9 +1,10 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "13-Feb-2025 14:44:01" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;28 33685  
+(FILECREATED "18-Feb-2025 16:40:10" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;29 35873  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.TEXT-TWO-FONTS 
-                         HTMLTEST.SHOW-TEXT-BOUNDS)
+      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.URL-ENCODE HTMLTEST.HTML-ENCODE HTMLTEST.SHOW-CHAR-BOUNDS 
+                         HTMLTEST.TEXT-TWO-FONTS HTMLTEST.SHOW-TEXT-BOUNDS)
 
       :PREVIOUS-DATE "29-Jan-2025 17:41:53" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;24)
@@ -29,6 +30,10 @@
         (* ;; "fonts")
 
         (FUNCTIONS HTMLTEST.NOTO-SANS)
+        
+        (* ;; "URL and HTML encodings")
+
+        (FUNCTIONS HTMLTEST.URL-ENCODE HTMLTEST.HTML-ENCODE)
         
         (* ;; "misc")
 
@@ -557,6 +562,40 @@
 
 
 
+(* ;; "URL and HTML encodings")
+
+
+(CL:DEFUN HTMLTEST.URL-ENCODE ()
+   "Test URL-ENCODE"
+   (CL:FORMAT T "Testing html-encode:~%%")
+   (CL:FORMAT T "%"Hello, world!%" -> ~a~%%" (URL-ENCODE "Hello, world!"))
+   (CL:FORMAT T "%"1234567890%" -> ~a~%%" (URL-ENCODE "1234567890"))
+   (CL:FORMAT T "%"Special chars: !@#$%%^&*()_+=-`~~[]{}|;':%",./<>?%" -> ~a~%%" (URL-ENCODE 
+                                                   "Special chars: !@#$%%^&*()_+=-`~[]{}|;':%",./<>?"
+                                                                                        ))
+   (CL:FORMAT T "%"A space:  %" -> ~a~%%" (URL-ENCODE "A space:  "))
+   (CL:FORMAT T "%"A unicode char: Ž%" -> ~a~%%" (URL-ENCODE "A unicode char: Ž"))
+   (CL:FORMAT T "%"A path: /foo/bar%" -> ~a~%%" (URL-ENCODE "A path: /foo/bar"))
+   (CL:FORMAT T "%"Empty string: %" -> ~a~%%" (URL-ENCODE "")))
+
+(CL:DEFUN HTMLTEST.HTML-ENCODE ()
+   "Test URL-ENCODE"
+   (CL:FORMAT T "Testing url-encode:~%%")
+   (CL:FORMAT T "%"Hello, world!%" -> %"~a%"~%%" (HTML-ENCODE "Hello, world!"))
+   (CL:FORMAT T "%"1234567890%" -> %"~a%"~%%" (HTML-ENCODE "1234567890"))
+   (CL:FORMAT T "%"Special chars: !@#$%%^&*()_+=-`~~[]{}|;':%",./<>?%" -> %"~a%"~%%" (HTML-ENCODE
+                                                                                      
+                                                                  "!@#$%%^&*()_+=-`~[]{}|;':%",./<>?"
+                                                                                      ))
+   (CL:FORMAT T "%"A space:  %" -> %"~a%"~%%" (HTML-ENCODE " "))
+   (CL:FORMAT T "%"A unicode char: Ž%" -> %"~a%"~%%" (HTML-ENCODE "Ž"))
+   (CL:FORMAT T "%"Some HTML: %"Do not end the </title> here%" -> %"~a%"~%%" (HTML-ENCODE 
+                                                                       "Do not end the </title> here"
+                                                                                    ))
+   (CL:FORMAT T "%"Empty string: %" -> %"~a%"~%%" (HTML-ENCODE "")))
+
+
+
 (* ;; "misc")
 
 
@@ -610,16 +649,17 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1338 1997 (GEN-TEST-BITMAP 1338 . 1997)) (1999 2809 (HTMLTEST.BITBLT 1999 . 2809)) (
-2811 3802 (HTMLTEST.TALL-BITBLT 2811 . 3802)) (3804 5349 (HTMLTEST.BLTSHADE 3804 . 5349)) (5351 6064 (
-HTMLTEST.ONE-PAGE-SIMPLE 5351 . 6064)) (6066 9630 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6066 . 9630)
-) (9632 10291 (HTMLTEST.ONE-PAGE-WITH-CURVE 9632 . 10291)) (10293 12452 (HTMLTEST.TEXT-TWO-FONTS 10293
- . 12452)) (12454 12964 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 12454 . 12964)) (12966 13714 (
-HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 12966 . 13714)) (13716 14461 (HTMLTEST.SPECIAL-TEXT-ENTITIES 13716
- . 14461)) (14463 14931 (HTMLTEST.BRIEF-TEXT 14463 . 14931)) (14959 20872 (HTMLTEST.FUNNY-CHARS 14959
- . 20872)) (20874 22447 (HTMLTEST.UNDEFINED-CHARS 20874 . 22447)) (22474 25901 (
-HTMLTEST.SHOW-TEXT-BOUNDS 22474 . 25901)) (25903 30438 (HTMLTEST.SHOW-CHAR-BOUNDS 25903 . 30438)) (
-30463 31259 (HTMLTEST.NOTO-SANS 30463 . 31259)) (31283 33146 (WINDOWTEST.SHOW-TEXT-BOUNDS 31283 . 
-33146)) (33148 33419 (HTMLTEST.TRANSFORM 33148 . 33419)) (33421 33662 (HTMLTEST.TRANSFORM-POINTS 33421
- . 33662)))))
+  (FILEMAP (NIL (1538 2197 (GEN-TEST-BITMAP 1538 . 2197)) (2199 3009 (HTMLTEST.BITBLT 2199 . 3009)) (
+3011 4002 (HTMLTEST.TALL-BITBLT 3011 . 4002)) (4004 5549 (HTMLTEST.BLTSHADE 4004 . 5549)) (5551 6264 (
+HTMLTEST.ONE-PAGE-SIMPLE 5551 . 6264)) (6266 9830 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6266 . 9830)
+) (9832 10491 (HTMLTEST.ONE-PAGE-WITH-CURVE 9832 . 10491)) (10493 12652 (HTMLTEST.TEXT-TWO-FONTS 10493
+ . 12652)) (12654 13164 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 12654 . 13164)) (13166 13914 (
+HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 13166 . 13914)) (13916 14661 (HTMLTEST.SPECIAL-TEXT-ENTITIES 13916
+ . 14661)) (14663 15131 (HTMLTEST.BRIEF-TEXT 14663 . 15131)) (15159 21072 (HTMLTEST.FUNNY-CHARS 15159
+ . 21072)) (21074 22647 (HTMLTEST.UNDEFINED-CHARS 21074 . 22647)) (22674 26101 (
+HTMLTEST.SHOW-TEXT-BOUNDS 22674 . 26101)) (26103 30638 (HTMLTEST.SHOW-CHAR-BOUNDS 26103 . 30638)) (
+30663 31459 (HTMLTEST.NOTO-SANS 30663 . 31459)) (31501 32329 (HTMLTEST.URL-ENCODE 31501 . 32329)) (
+32331 33447 (HTMLTEST.HTML-ENCODE 32331 . 33447)) (33471 35334 (WINDOWTEST.SHOW-TEXT-BOUNDS 33471 . 
+35334)) (35336 35607 (HTMLTEST.TRANSFORM 35336 . 35607)) (35609 35850 (HTMLTEST.TRANSFORM-POINTS 35609
+ . 35850)))))
 STOP
