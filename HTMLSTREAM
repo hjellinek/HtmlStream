@@ -1,14 +1,12 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 6-Mar-2025 10:04:40" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;8 78844  
+(FILECREATED "11-Mar-2025 15:44:38" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;12 79073  
 
-      :CHANGES-TO (FUNCTIONS HTML.DRAWPOLYGON HTML.DRAWELLIPSE \HTML.SVG-STROKE-DASHARRAY 
-                         HTML.DRAWCURVE HTML.DRAWLINE HTML.DRAWCIRCLE HTML.FILLCIRCLE 
-                         \HTML.SVG-BRUSH-WIDTH \HTML.SVG-CANONICALIZE-BRUSH \STROKE-DASHARRAY 
-                         CANONICALIZE-BRUSH)
-                  (VARS HTMLSTREAMCOMS)
+      :CHANGES-TO (VARS HTMLSTREAMCOMS)
+                  (FUNCTIONS HTML.DRAWCIRCLE HTML.DRAWCURVE HTML.DRAWELLIPSE HTML.DRAWLINE 
+                         HTML.DRAWPOLYGON HTML.FILLPOLYGON)
 
-      :PREVIOUS-DATE "18-Feb-2025 16:40:11" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;41
+      :PREVIOUS-DATE "11-Mar-2025 12:42:46" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAM.;10
 )
 
 
@@ -18,8 +16,8 @@
        ((FILES XCCS-UNICODE-DUMPER BASE64 U-PNG)
         (VARIABLES *CENTIPOINTS-PER-POINT*)
         (RECORDS WEB-FONT-DESCR WEB-FONT-FACE WEB-FONT-METRICS WEB-CHARSET-METRICS)
-        (FUNCTIONS CLOSE-KNOTS CONVERT-TO-BEZIER HTML.INCHES-TO-POINTS HTML.INCHES-TO-CENTIPOINTS 
-               CP-TO-P ICP-TO-P P-TO-CP PIXEL-TO-PT PT-TO-PIXEL \HTML.SVG-Y)
+        (FUNCTIONS CLOSE-KNOTS HTML.INCHES-TO-POINTS HTML.INCHES-TO-CENTIPOINTS CP-TO-P ICP-TO-P 
+               P-TO-CP PIXEL-TO-PT PT-TO-PIXEL \HTML.SVG-Y)
         (FUNCTIONS MAKE-FONT-METRICS-FILE-NAME MAKE-CHARSET-METRICS-FILE-NAME)
         (VARIABLES *WEB-FONT-DIRECTORY* *WEB-FONT-MAPPINGS* *GOOGLE-FONTS-BASE-URL* 
                *HTML-STANDARD-PAGE-WEB-FONT-FAMILIES* *HTML-STYLESHEET-FONT-FAMILY-DEFS* 
@@ -33,7 +31,7 @@
                *XCCS-KNOWN-CHARSETS* *XCCS-UNDEFINED-CHARCODE*)
         (FUNCTIONS CHECK-BROWSER-METRICS-FORMAT CSS-CLASS-FROM CSS-CLASS-FROM-FAMILY 
                \HTML.READ-FONT-METRICS \HTML.READ-CHARSET-METRICS \SF \HTML.SVG-STROKE-DASHARRAY 
-               \HTML.SVG-BRUSH-WIDTH)
+               \HTML.SVG-BRUSH-WIDTH \HTML.SVG-BRUSH-CLASS)
         (STRUCTURES HTML.IMAGEDATA HTML.FONTINFO)
         (FUNCTIONS with-htmldata)
         (FUNCTIONS HTML.OUTPUT-GRAPHICS HTML.OUTPUT-TEXT \HTML.MAYBE-START-PAGE \HTML.END-PAGE 
@@ -84,39 +82,6 @@
    "Create a closed polygon by adding the first point to the end of the list"
    (LET ((FIRST-KNOT (CAR KNOTS)))
         (APPEND KNOTS (LIST FIRST-KNOT))))
-
-(CL:DEFUN CONVERT-TO-BEZIER (POINTS)
-   "Convert a list of points on a parametric cubic spline to a roughly equivalent set of Bezier control points"
-   [LET ((NUM-POINTS (LENGTH POINTS)))
-        (for N from 0 to (- NUM-POINTS 2)
-           collect (LET* [(P0 (CL:NTH N POINTS))
-                          (P1 (CL:NTH (CL:1+ N)
-                                     POINTS))
-                          [T0 (CONS (FLOAT (/ (- (CAR P1)
-                                                 (CAR P0))
-                                              3))
-                                    (FLOAT (/ (- (CDR P1)
-                                                 (CDR P0))
-                                              3]
-                          [T1 (CONS (FLOAT (/ (- (CAR P1)
-                                                 (CAR P0))
-                                              -3))
-                                    (FLOAT (/ (- (CDR P1)
-                                                 (CDR P0))
-                                              -3]
-                          [B0 (CONS (+ (CAR P0)
-                                       (CAR T0))
-                                    (+ (CDR P0)
-                                       (CDR T0]
-                          (B1 (CONS (+ (CAR P1)
-                                       (CAR T1))
-                                    (+ (CDR P1)
-                                       (CDR T1]
-                         (create \BEZIER-POINT
-                                p0 _ P0
-                                b0 _ B0
-                                b1 _ B1
-                                p1 _ P1])
 
 (CL:DEFUN HTML.INCHES-TO-POINTS (INCHES)
    "Convert inches to points"
@@ -435,6 +400,28 @@
        BRUSH-SPEC)
       (T (ERROR "Not a valid brush:" BRUSH-SPEC))))
 
+(CL:DEFUN \HTML.SVG-BRUSH-CLASS (BRUSH-SPEC)
+   "Convert the brush to a CSS class value."
+   (LET [(LINEJOIN-CLASS (COND
+                            ((AND (LISTP BRUSH-SPEC)
+                                  (LITATOM (CAR BRUSH-SPEC))
+                                  (NUMBERP (CADR BRUSH-SPEC)))
+                             (SELECTQ (CAR BRUSH-SPEC)
+                                 (ROUND "joinr")
+                                 (SQUARE "joinm")
+                                 "joinm"))
+                            (T "joinm")))
+         (LINECAP-CLASS (COND
+                           ((AND (LISTP BRUSH-SPEC)
+                                 (LITATOM (CAR BRUSH-SPEC))
+                                 (NUMBERP (CADR BRUSH-SPEC)))
+                            (SELECTQ (CAR BRUSH-SPEC)
+                                (ROUND "capr")
+                                (SQUARE "caps")
+                                "capb"))
+                           (T "capb"]
+        (CONCAT LINEJOIN-CLASS " " LINECAP-CLASS)))
+
 (CL:DEFSTRUCT (HTML.IMAGEDATA (:CONC-NAME \HTML-))
    "Private data for HTMLSTREAMs"
    BACKING-STREAM
@@ -627,6 +614,20 @@
 
                 (CL:FORMAT BACKING ".bold { font-weight: bold; }~%%")
                 (CL:FORMAT BACKING ".italic { font-style: italic; }~%%")
+
+                (* ;; "define stroke-linejoin and stroke-linecap CSS classes")
+
+                (* ;; "linecaps")
+
+                (CL:FORMAT BACKING ".capb { stroke-linecap: butt; }~%%")
+                (CL:FORMAT BACKING ".capr { stroke-linecap: round; }~%%")
+                (CL:FORMAT BACKING ".caps { stroke-linecap: square; }~%%")
+
+                (* ;; "linejoins")
+
+                (CL:FORMAT BACKING ".joinm { stroke-linejoin: miter; }~%%")
+                (CL:FORMAT BACKING ".joinr { stroke-linejoin: round; }~%%")
+                (CL:FORMAT BACKING ".joinb { stroke-linejoin: bevel; }~%%")
 
                 (* ;; "end of the style definitions")
 
@@ -861,7 +862,11 @@
                       HTML.STATE.CLOSED))))
 
 (CL:DEFUN HTML.COLOR (STREAM NEW-COLOR)
+   "Return and optionally set the color of the stream"
    (with-htmldata (DATA STREAM)
+
+          (* ;; "TODO convert the color to an RGB value")
+
           (LET ((OLD-VALUE (\HTML-FG-COLOR DATA)))
                (COND
                   (NEW-COLOR (CL:SETF (\HTML-FG-COLOR DATA)
@@ -870,14 +875,17 @@
 
 (CL:DEFUN HTML.DRAWCIRCLE (STREAM CENTERX CENTERY RADIUS BRUSH DASHING)
    "Draw a circle"
-   (LET ((WIDTH (\HTML.SVG-BRUSH-WIDTH BRUSH)))
-        (with-htmldata (DATA STREAM)
-               (HTML.OUTPUT-GRAPHICS STREAM)
-               (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
-                    (CL:FORMAT BACKING "<circle cx=%"~d%" cy=%"~d%" r=%"~d%" fill=%"transparent%" stroke=%"black%" stroke-width=%"~d%"~A/>~%%"
-                           CENTERX (\HTML.SVG-Y DATA CENTERY)
-                           RADIUS WIDTH (\HTML.SVG-STROKE-DASHARRAY DASHING)))
-               (HTML.MOVETO STREAM CENTERX CENTERY))))
+   (with-htmldata (DATA STREAM)
+          (HTML.OUTPUT-GRAPHICS STREAM)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
+               (CL:FORMAT BACKING "<circle class='~a' cx='~d' cy='~d' r='~d' fill='transparent' stroke='black' stroke-width='~d'~A/>~%%"
+                      (\HTML.SVG-BRUSH-CLASS BRUSH)
+                      CENTERX
+                      (\HTML.SVG-Y DATA CENTERY)
+                      RADIUS
+                      (\HTML.SVG-BRUSH-WIDTH BRUSH)
+                      (\HTML.SVG-STROKE-DASHARRAY DASHING)))
+          (HTML.MOVETO STREAM CENTERX CENTERY)))
 
 (CL:DEFUN HTML.DRAWCURVE (STREAM KNOTS CLOSED BRUSH DASHING)
    "Interpret the knots as points on a cubic parametric curve, convert to cubic Bezier form, and draw it"
@@ -920,8 +928,10 @@
                                                         " " PREVX " " (\HTML.SVG-Y DATA PREVY)
                                                         " ")))
                 (CL:FORMAT BACKING 
-                       "<path fill='none' stroke='black' stroke-width='~d'~A d='~A' />~%%" 
-                       STROKE-WIDTH (\HTML.SVG-STROKE-DASHARRAY DASHING)
+                       "<path class='~a' fill='none' stroke='black' stroke-width='~d'~A d='~A' />~%%"
+                       (\HTML.SVG-BRUSH-CLASS BRUSH)
+                       STROKE-WIDTH
+                       (\HTML.SVG-STROKE-DASHARRAY DASHING)
                        PATH)
                 (HTML.MOVETO STREAM PREVX PREVY)
                 NIL)))
@@ -929,17 +939,18 @@
 (CL:DEFUN HTML.DRAWELLIPSE (STREAM CENTERX CENTERY SEMIMINORRADIUS SEMIMAJORRADIUS ORIENTATION BRUSH
                                   DASHING)
    "Draw an ellipse"
-   (with-htmldata (DATA STREAM)
+   [with-htmldata (DATA STREAM)
           (HTML.OUTPUT-GRAPHICS STREAM)
-          (LET ((BACKING (\HTML-BACKING-STREAM DATA))
-                (WIDTH (\HTML.SVG-BRUSH-WIDTH BRUSH)))
-               (CL:FORMAT BACKING "<ellipse cx=%"~d%" cy=%"~d%" rx=%"~d%" ry=%"~d%" transform=%"rotate(~d,~d,~d)%" fill=%"transparent%" stroke=%"black%"~A stroke-width=%"~d%"/>~%%"
-                      CENTERX (\HTML.SVG-Y DATA CENTERY)
+          (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
+               (CL:FORMAT BACKING "<ellipse class='~a' cx=%"~d%" cy=%"~d%" rx=%"~d%" ry=%"~d%" transform=%"rotate(~d,~d,~d)%" fill=%"transparent%" stroke=%"black%"~A stroke-width=%"~d%"/>~%%"
+                      (\HTML.SVG-BRUSH-CLASS BRUSH)
+                      CENTERX
+                      (\HTML.SVG-Y DATA CENTERY)
                       SEMIMAJORRADIUS SEMIMINORRADIUS (- ORIENTATION)
                       CENTERX
                       (\HTML.SVG-Y DATA CENTERY)
                       (\HTML.SVG-STROKE-DASHARRAY DASHING)
-                      WIDTH))))
+                      (\HTML.SVG-BRUSH-WIDTH BRUSH])
 
 (CL:DEFUN HTML.DRAWLINE (STREAM X1 Y1 X2 Y2 WIDTH OPERATION COLOR DASHING)
    "Draw a line"
@@ -950,8 +961,10 @@
           (HTML.OUTPUT-GRAPHICS STREAM)
           (LET ((BACKING (\HTML-BACKING-STREAM DATA)))
                (CL:FORMAT BACKING 
-          "<line x1=%"~d%" y1=%"~d%" x2=%"~d%" y2=%"~d%" stroke=%"black%" stroke-width=%"~d%"~A/>~%%"
-                      X1 (\HTML.SVG-Y DATA Y1)
+           "<line class='~a' x1='~d' y1='~d' x2='~d' y2='~d' stroke='black' stroke-width='~d'~A/>~%%"
+                      (\HTML.SVG-BRUSH-CLASS NIL)
+                      X1
+                      (\HTML.SVG-Y DATA Y1)
                       X2
                       (\HTML.SVG-Y DATA Y2)
                       (OR WIDTH (P-TO-CP 1))
@@ -968,11 +981,13 @@
                                   then "polygon"
                                 else "polyline")))
                (CL:FORMAT BACKING 
-                      "<~a fill=%"none%" stroke=%"black%" stroke-width=%"~d%"~A points=%"" 
-                      DRAWING-TYPE WIDTH (\HTML.SVG-STROKE-DASHARRAY DASHING))
+                      "<~a class='~a' fill='none' stroke='black' stroke-width='~d'~A points='" 
+                      DRAWING-TYPE (\HTML.SVG-BRUSH-CLASS BRUSH)
+                      WIDTH
+                      (\HTML.SVG-STROKE-DASHARRAY DASHING))
                [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (CAR POINT)
                                               (\HTML.SVG-Y DATA (CDR POINT]
-               (CL:FORMAT BACKING "%" />~%%"))))
+               (CL:FORMAT BACKING "' />~%%"))))
 
 (CL:DEFUN HTML.FILLCIRCLE (STREAM CENTERX CENTERY RADIUS TEXTURE)
 
@@ -995,18 +1010,17 @@
 
    (HTML.OUTPUT-GRAPHICS STREAM)
    (with-htmldata (DATA STREAM)
-          (LET [(STROKE-WIDTH-CHANGE-THIS 100)
-                (BACKING (\HTML-BACKING-STREAM DATA))
+          (LET [(BACKING (\HTML-BACKING-STREAM DATA))
                 (FILL-RULE (COND
                               ((ZEROP WINDING-NUMBER)
                                "nonzero")
                               (T "evenodd"]
                (CL:FORMAT BACKING 
-            "<polygon fill=%"black%" fill-rule=%"~A%" stroke=%"black%" stroke-width=%"~d%" points=%""
-                      STROKE-WIDTH-CHANGE-THIS FILL-RULE)
+                      "<polygon fill='black' fill-rule='~A' stroke='black' stroke-width='1' points='"
+                      FILL-RULE)
                [for POINT in POINTS do (CL:FORMAT BACKING "~d,~d " (CAR POINT)
                                               (\HTML.SVG-Y DATA (CDR POINT]
-               (CL:FORMAT BACKING "%"/>~%%"))))
+               (CL:FORMAT BACKING "'/>~%%"))))
 
 (CL:DEFUN HTML.FONT (STREAM NEW-FONT)
    (with-htmldata (DATA STREAM)
@@ -1567,42 +1581,42 @@
    "Ignore the body, return NIL"
    NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (4636 4825 (CLOSE-KNOTS 4636 . 4825)) (4827 6486 (CONVERT-TO-BEZIER 4827 . 6486)) (6488 
-6644 (HTML.INCHES-TO-POINTS 6488 . 6644)) (6646 6748 (HTML.INCHES-TO-CENTIPOINTS 6646 . 6748)) (6750 
-6839 (CP-TO-P 6750 . 6839)) (6841 7007 (ICP-TO-P 6841 . 7007)) (7009 7085 (P-TO-CP 7009 . 7085)) (7087
- 7246 (PIXEL-TO-PT 7087 . 7246)) (7248 7408 (PT-TO-PIXEL 7248 . 7408)) (7410 7558 (\HTML.SVG-Y 7410 . 
-7558)) (7560 7903 (MAKE-FONT-METRICS-FILE-NAME 7560 . 7903)) (7905 8305 (
-MAKE-CHARSET-METRICS-FILE-NAME 7905 . 8305)) (14763 15153 (CHECK-BROWSER-METRICS-FORMAT 14763 . 15153)
-) (15155 16691 (CSS-CLASS-FROM 15155 . 16691)) (16693 16831 (CSS-CLASS-FROM-FAMILY 16693 . 16831)) (
-16833 18426 (\HTML.READ-FONT-METRICS 16833 . 18426)) (18428 19709 (\HTML.READ-CHARSET-METRICS 18428 . 
-19709)) (19711 19807 (\SF 19711 . 19807)) (19809 20731 (\HTML.SVG-STROKE-DASHARRAY 19809 . 20731)) (
-20733 21084 (\HTML.SVG-BRUSH-WIDTH 20733 . 21084)) (21721 21953 (with-htmldata 21721 . 21953)) (21955 
-22614 (HTML.OUTPUT-GRAPHICS 21955 . 22614)) (22616 23752 (HTML.OUTPUT-TEXT 22616 . 23752)) (23754 
-24937 (\HTML.MAYBE-START-PAGE 23754 . 24937)) (24939 25346 (\HTML.END-PAGE 24939 . 25346)) (25348 
-30553 (HTML.WRITE-PREFACE 25348 . 30553)) (30555 31517 (CONVERT-FAMILY-TO-QUERY-PARAM 30555 . 31517)) 
-(31519 32180 (\HTML.MAKE-STYLESHEET-URL 31519 . 32180)) (32182 37690 (OPENHTMLSTREAM 32182 . 37690)) (
-37692 37984 (HTML.BACKCOLOR 37692 . 37984)) (37986 38534 (HTML.BITBLT 37986 . 38534)) (38536 40504 (
-HTML.BLTSHADE 38536 . 40504)) (40506 40840 (HTML.BOTTOMMARGIN 40506 . 40840)) (40842 41630 (
-HTML.CHARWIDTH 40842 . 41630)) (41632 41947 (HTML.CLIPPINGREGION 41632 . 41947)) (41949 42421 (
-HTML.CLOSEFN 41949 . 42421)) (42423 42711 (HTML.COLOR 42423 . 42711)) (42713 43360 (HTML.DRAWCIRCLE 
-42713 . 43360)) (43362 46293 (HTML.DRAWCURVE 43362 . 46293)) (46295 47146 (HTML.DRAWELLIPSE 46295 . 
-47146)) (47148 47849 (HTML.DRAWLINE 47148 . 47849)) (47851 48722 (HTML.DRAWPOLYGON 47851 . 48722)) (
-48724 49329 (HTML.FILLCIRCLE 48724 . 49329)) (49331 50250 (HTML.FILLPOLYGON 49331 . 50250)) (50252 
-51135 (HTML.FONT 50252 . 51135)) (51137 51460 (HTML.LEFTMARGIN 51137 . 51460)) (51462 51753 (
-HTML.LINEFEED 51462 . 51753)) (51755 52012 (HTML.MOVETO 51755 . 52012)) (52014 52130 (HTML.NEWPAGE 
-52014 . 52130)) (52132 52454 (HTML.OPERATION 52132 . 52454)) (52456 56346 (HTML.OUTCHARFN 52456 . 
-56346)) (56348 56673 (HTML.RESET 56348 . 56673)) (56675 57005 (HTML.RIGHTMARGIN 56675 . 57005)) (57007
- 57381 (HTML.SCALE 57007 . 57381)) (57383 58481 (HTML.SCALEDBITBLT 57383 . 58481)) (58483 58789 (
-HTML.SPACEFACTOR 58483 . 58789)) (58791 59432 (HTML.TERPRI 58791 . 59432)) (59434 59750 (
-HTML.TOPMARGIN 59434 . 59750)) (59752 60068 (HTML.XPOSITION 59752 . 60068)) (60070 60386 (
-HTML.YPOSITION 60070 . 60386)) (60388 60633 (MAKE-HTML-IMAGETYPE 60388 . 60633)) (60635 61452 (
-\HTML.INIT-IMAGEDATA 60635 . 61452)) (61454 62058 (\HTMLSTREAM.INIT 61454 . 62058)) (62060 62460 (
-WRITE-BASE64-PNG 62060 . 62460)) (62462 63125 (CONVERT-TO-PNG-BASE64 62462 . 63125)) (63127 64414 (
-URL-ENCODE 63127 . 64414)) (64416 65551 (HTML-ENCODE 64416 . 65551)) (65553 69368 (\HTML.FONTCREATE 
-65553 . 69368)) (69370 72219 (\HTML.FONTSAVAILABLE 69370 . 72219)) (72221 73835 (\HTML.CREATECHARSET 
-72221 . 73835)) (73837 74675 (\HTML.CHANGECHARSET 73837 . 74675)) (74677 75014 (MAKE-CHARSET-BIT-ARRAY
- 74677 . 75014)) (75016 75240 (KNOWN-CHARSET? 75016 . 75240)) (75242 75776 (\HTML.WARN-CHARSET 75242
- . 75776)) (76216 77399 (HTMLFILEP 76216 . 77399)) (77401 77543 (MAKE-HTML-FROM-TEXT 77401 . 77543)) (
-77545 77954 (MAKE-HTML-FROM-TEDIT 77545 . 77954)) (78194 78745 (\CLEAN-FONT-CACHE 78194 . 78745)) (
-78747 78821 (DO-NOT 78747 . 78821)))))
+  (FILEMAP (NIL (4475 4664 (CLOSE-KNOTS 4475 . 4664)) (4666 4822 (HTML.INCHES-TO-POINTS 4666 . 4822)) (
+4824 4926 (HTML.INCHES-TO-CENTIPOINTS 4824 . 4926)) (4928 5017 (CP-TO-P 4928 . 5017)) (5019 5185 (
+ICP-TO-P 5019 . 5185)) (5187 5263 (P-TO-CP 5187 . 5263)) (5265 5424 (PIXEL-TO-PT 5265 . 5424)) (5426 
+5586 (PT-TO-PIXEL 5426 . 5586)) (5588 5736 (\HTML.SVG-Y 5588 . 5736)) (5738 6081 (
+MAKE-FONT-METRICS-FILE-NAME 5738 . 6081)) (6083 6483 (MAKE-CHARSET-METRICS-FILE-NAME 6083 . 6483)) (
+12941 13331 (CHECK-BROWSER-METRICS-FORMAT 12941 . 13331)) (13333 14869 (CSS-CLASS-FROM 13333 . 14869))
+ (14871 15009 (CSS-CLASS-FROM-FAMILY 14871 . 15009)) (15011 16604 (\HTML.READ-FONT-METRICS 15011 . 
+16604)) (16606 17887 (\HTML.READ-CHARSET-METRICS 16606 . 17887)) (17889 17985 (\SF 17889 . 17985)) (
+17987 18909 (\HTML.SVG-STROKE-DASHARRAY 17987 . 18909)) (18911 19262 (\HTML.SVG-BRUSH-WIDTH 18911 . 
+19262)) (19264 20288 (\HTML.SVG-BRUSH-CLASS 19264 . 20288)) (20925 21157 (with-htmldata 20925 . 21157)
+) (21159 21818 (HTML.OUTPUT-GRAPHICS 21159 . 21818)) (21820 22956 (HTML.OUTPUT-TEXT 21820 . 22956)) (
+22958 24141 (\HTML.MAYBE-START-PAGE 22958 . 24141)) (24143 24550 (\HTML.END-PAGE 24143 . 24550)) (
+24552 30372 (HTML.WRITE-PREFACE 24552 . 30372)) (30374 31336 (CONVERT-FAMILY-TO-QUERY-PARAM 30374 . 
+31336)) (31338 31999 (\HTML.MAKE-STYLESHEET-URL 31338 . 31999)) (32001 37509 (OPENHTMLSTREAM 32001 . 
+37509)) (37511 37803 (HTML.BACKCOLOR 37511 . 37803)) (37805 38353 (HTML.BITBLT 37805 . 38353)) (38355 
+40323 (HTML.BLTSHADE 38355 . 40323)) (40325 40659 (HTML.BOTTOMMARGIN 40325 . 40659)) (40661 41449 (
+HTML.CHARWIDTH 40661 . 41449)) (41451 41766 (HTML.CLIPPINGREGION 41451 . 41766)) (41768 42240 (
+HTML.CLOSEFN 41768 . 42240)) (42242 42649 (HTML.COLOR 42242 . 42649)) (42651 43359 (HTML.DRAWCIRCLE 
+42651 . 43359)) (43361 46382 (HTML.DRAWCURVE 43361 . 46382)) (46384 47291 (HTML.DRAWELLIPSE 46384 . 
+47291)) (47293 48070 (HTML.DRAWLINE 47293 . 48070)) (48072 49024 (HTML.DRAWPOLYGON 48072 . 49024)) (
+49026 49631 (HTML.FILLCIRCLE 49026 . 49631)) (49633 50479 (HTML.FILLPOLYGON 49633 . 50479)) (50481 
+51364 (HTML.FONT 50481 . 51364)) (51366 51689 (HTML.LEFTMARGIN 51366 . 51689)) (51691 51982 (
+HTML.LINEFEED 51691 . 51982)) (51984 52241 (HTML.MOVETO 51984 . 52241)) (52243 52359 (HTML.NEWPAGE 
+52243 . 52359)) (52361 52683 (HTML.OPERATION 52361 . 52683)) (52685 56575 (HTML.OUTCHARFN 52685 . 
+56575)) (56577 56902 (HTML.RESET 56577 . 56902)) (56904 57234 (HTML.RIGHTMARGIN 56904 . 57234)) (57236
+ 57610 (HTML.SCALE 57236 . 57610)) (57612 58710 (HTML.SCALEDBITBLT 57612 . 58710)) (58712 59018 (
+HTML.SPACEFACTOR 58712 . 59018)) (59020 59661 (HTML.TERPRI 59020 . 59661)) (59663 59979 (
+HTML.TOPMARGIN 59663 . 59979)) (59981 60297 (HTML.XPOSITION 59981 . 60297)) (60299 60615 (
+HTML.YPOSITION 60299 . 60615)) (60617 60862 (MAKE-HTML-IMAGETYPE 60617 . 60862)) (60864 61681 (
+\HTML.INIT-IMAGEDATA 60864 . 61681)) (61683 62287 (\HTMLSTREAM.INIT 61683 . 62287)) (62289 62689 (
+WRITE-BASE64-PNG 62289 . 62689)) (62691 63354 (CONVERT-TO-PNG-BASE64 62691 . 63354)) (63356 64643 (
+URL-ENCODE 63356 . 64643)) (64645 65780 (HTML-ENCODE 64645 . 65780)) (65782 69597 (\HTML.FONTCREATE 
+65782 . 69597)) (69599 72448 (\HTML.FONTSAVAILABLE 69599 . 72448)) (72450 74064 (\HTML.CREATECHARSET 
+72450 . 74064)) (74066 74904 (\HTML.CHANGECHARSET 74066 . 74904)) (74906 75243 (MAKE-CHARSET-BIT-ARRAY
+ 74906 . 75243)) (75245 75469 (KNOWN-CHARSET? 75245 . 75469)) (75471 76005 (\HTML.WARN-CHARSET 75471
+ . 76005)) (76445 77628 (HTMLFILEP 76445 . 77628)) (77630 77772 (MAKE-HTML-FROM-TEXT 77630 . 77772)) (
+77774 78183 (MAKE-HTML-FROM-TEDIT 77774 . 78183)) (78423 78974 (\CLEAN-FONT-CACHE 78423 . 78974)) (
+78976 79050 (DO-NOT 78976 . 79050)))))
 STOP
