@@ -1,9 +1,9 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 3-Apr-2025 16:09:55" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;14 41884  
+(FILECREATED " 4-Apr-2025 14:49:16" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;15 47428  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-COLOR)
-                  (VARS HTMLSTREAMTESTCOMS)
+      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-COLOR HTMLTEST.SHOW-COLOR-CHAR-BOUNDS)
 
       :PREVIOUS-DATE " 2-Apr-2025 15:35:14" 
 {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;10)
@@ -30,7 +30,8 @@
         
         (* ;; "metrics")
 
-        (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.SHOW-CHAR-BOUNDS)
+        (FUNCTIONS HTMLTEST.SHOW-TEXT-BOUNDS HTMLTEST.SHOW-CHAR-BOUNDS 
+               HTMLTEST.SHOW-COLOR-CHAR-BOUNDS)
         
         (* ;; "fonts")
 
@@ -414,6 +415,19 @@
                  (P-TO-CP 100)
                  (P-TO-CP 70)
                  0 NIL NIL HTMLSTREAM)
+          (FILLCIRCLE (P-TO-CP 400)
+                 (P-TO-CP 200)
+                 (P-TO-CP 98)
+                 NIL HTMLSTREAM)
+          (DSPCOLOR '(128 128 128)
+                 HTMLSTREAM)
+          (FILLPOLYGON (LIST (CONS (P-TO-CP 430)
+                                   (P-TO-CP 30))
+                             (CONS (P-TO-CP 860)
+                                   (P-TO-CP 30))
+                             (CONS (P-TO-CP 860)
+                                   (P-TO-CP 860)))
+                 NIL HTMLSTREAM 0)
           FILE-NAME))
 
 
@@ -671,6 +685,90 @@
                       (SAMPLE FONT14))
                FILE-NAME)))
 
+(CL:DEFUN HTMLTEST.SHOW-COLOR-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
+   "Output text, draw bounds for each character."
+
+   (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
+
+   (* ;; "We invert the Y coordinate to match Medley:")
+
+   (* ;; "    In Medley, Y = 0 is the bottom left")
+
+   (* ;; "Text is drawn with baseline at current Y position")
+
+   (* ;; 
+   "TODO The bounding box ends short of the width of the text. the metrics are too small.  WHY?")
+
+   (CL:WITH-OPEN-STREAM
+    [STREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Character Bounds"]
+    (LET ((SAMPLE "All work and no play makes Jack a dull boy. 1234567890!")
+          (FONT10 (FONTCREATE 'NOTO-SANS 10 'REGULAR NIL STREAM))
+          (FONT14 (FONTCREATE 'NOTO-SANS 14 'REGULAR NIL STREAM))
+          (LINEWIDTH (/ *CENTIPOINTS-PER-POINT* 2))
+          STARTING-X STARTING-Y BASELINE-Y FONT-ASCENT FONT-DESCENT)
+         (CL:FLET [(SAMPLE (FONT)
+                          (DSPFONT FONT STREAM)
+                          (LET ((SAMPLE-WIDTH (STRINGWIDTH SAMPLE STREAM)))
+                               (TERPRI STREAM)
+                               (SETQ FONT-ASCENT (FONTPROP STREAM 'ASCENT))
+                               (SETQ FONT-DESCENT (FONTPROP STREAM 'DESCENT))
+                               (SETQ STARTING-X (DSPXPOSITION NIL STREAM))
+                               (SETQ STARTING-Y (DSPYPOSITION NIL STREAM))
+                               (CL:FORMAT STREAM "~a~%%" SAMPLE)
+                               (CL:FLET [(DRAWCHARBOX (CH X BASELINE)
+                                                (LET ((ORIG-COLOR (DSPCOLOR NIL STREAM)))
+                                                     (CL:UNWIND-PROTECT
+                                                         (LET ((WIDTH (CHARWIDTH CH STREAM)))
+
+                                                              (* ;; "draw red boxes")
+
+                                                              (DSPCOLOR 'RED STREAM)
+
+                                                              (* ;; "draw the descent")
+
+                                                              (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                                                     (+ X WIDTH)
+                                                                     (- BASELINE FONT-DESCENT)
+                                                                     LINEWIDTH NIL STREAM)
+
+                                                              (* ;; "draw the baseline")
+
+                                                              (DRAWLINE X BASELINE (+ X WIDTH)
+                                                                     BASELINE LINEWIDTH NIL STREAM)
+
+                                                              (* ;; "draw the left bearing")
+
+                                                              (DRAWLINE X (- BASELINE FONT-DESCENT)
+                                                                     X
+                                                                     (+ BASELINE FONT-ASCENT)
+                                                                     LINEWIDTH NIL STREAM)
+
+                                                              (* ;; "draw the right bearing")
+
+                                                              (DRAWLINE (+ X WIDTH)
+                                                                     (- BASELINE FONT-DESCENT)
+                                                                     (+ X WIDTH)
+                                                                     (+ BASELINE FONT-ASCENT)
+                                                                     LINEWIDTH NIL STREAM)
+
+                                                              (* ;; "draw the ascent")
+
+                                                              (DRAWLINE X (+ BASELINE FONT-ASCENT)
+                                                                     (+ X WIDTH)
+                                                                     (+ BASELINE FONT-ASCENT)
+                                                                     LINEWIDTH NIL STREAM)
+                                                              (+ X WIDTH))
+                                                         (DSPCOLOR ORIG-COLOR STREAM))]
+                                      (for CH instring SAMPLE do (SETQ STARTING-X
+                                                                  (DRAWCHARBOX CH STARTING-X 
+                                                                         STARTING-Y)))
+                                      (TERPRI STREAM)
+                                      (TERPRI STREAM)
+                                      (TERPRI STREAM]
+                (SAMPLE FONT10)
+                (SAMPLE FONT14))
+         FILE-NAME)))
+
 
 
 (* ;; "fonts")
@@ -779,19 +877,20 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1615 2274 (GEN-TEST-BITMAP 1615 . 2274)) (2276 3086 (HTMLTEST.BITBLT 2276 . 3086)) (
-3088 4079 (HTMLTEST.TALL-BITBLT 3088 . 4079)) (4081 5626 (HTMLTEST.BLTSHADE 4081 . 5626)) (5628 6341 (
-HTMLTEST.ONE-PAGE-SIMPLE 5628 . 6341)) (6343 9907 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6343 . 9907)
-) (9909 10741 (HTMLTEST.ONE-PAGE-WITH-CURVE 9909 . 10741)) (10743 11560 (HTMLTEST.ONE-PAGE-DASHING 
-10743 . 11560)) (11562 12901 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11562 . 12901)) (12903 15062 (
-HTMLTEST.TEXT-TWO-FONTS 12903 . 15062)) (15064 15574 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 15064 . 15574)) 
-(15576 16324 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15576 . 16324)) (16326 17071 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 16326 . 17071)) (17073 17541 (HTMLTEST.BRIEF-TEXT 17073 . 17541)) (
-17543 19244 (HTMLTEST.BRUSHES 17543 . 19244)) (19269 21142 (HTMLTEST.ONE-PAGE-WITH-COLOR 19269 . 21142
-)) (21170 27083 (HTMLTEST.FUNNY-CHARS 21170 . 27083)) (27085 28658 (HTMLTEST.UNDEFINED-CHARS 27085 . 
-28658)) (28685 32112 (HTMLTEST.SHOW-TEXT-BOUNDS 28685 . 32112)) (32114 36649 (
-HTMLTEST.SHOW-CHAR-BOUNDS 32114 . 36649)) (36674 37470 (HTMLTEST.NOTO-SANS 36674 . 37470)) (37512 
-38340 (HTMLTEST.URL-ENCODE 37512 . 38340)) (38342 39458 (HTMLTEST.HTML-ENCODE 38342 . 39458)) (39482 
-41345 (WINDOWTEST.SHOW-TEXT-BOUNDS 39482 . 41345)) (41347 41618 (HTMLTEST.TRANSFORM 41347 . 41618)) (
-41620 41861 (HTMLTEST.TRANSFORM-POINTS 41620 . 41861)))))
+  (FILEMAP (NIL (1695 2354 (GEN-TEST-BITMAP 1695 . 2354)) (2356 3166 (HTMLTEST.BITBLT 2356 . 3166)) (
+3168 4159 (HTMLTEST.TALL-BITBLT 3168 . 4159)) (4161 5706 (HTMLTEST.BLTSHADE 4161 . 5706)) (5708 6421 (
+HTMLTEST.ONE-PAGE-SIMPLE 5708 . 6421)) (6423 9987 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6423 . 9987)
+) (9989 10821 (HTMLTEST.ONE-PAGE-WITH-CURVE 9989 . 10821)) (10823 11640 (HTMLTEST.ONE-PAGE-DASHING 
+10823 . 11640)) (11642 12981 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11642 . 12981)) (12983 15142 (
+HTMLTEST.TEXT-TWO-FONTS 12983 . 15142)) (15144 15654 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 15144 . 15654)) 
+(15656 16404 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15656 . 16404)) (16406 17151 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 16406 . 17151)) (17153 17621 (HTMLTEST.BRIEF-TEXT 17153 . 17621)) (
+17623 19324 (HTMLTEST.BRUSHES 17623 . 19324)) (19349 21747 (HTMLTEST.ONE-PAGE-WITH-COLOR 19349 . 21747
+)) (21775 27688 (HTMLTEST.FUNNY-CHARS 21775 . 27688)) (27690 29263 (HTMLTEST.UNDEFINED-CHARS 27690 . 
+29263)) (29290 32717 (HTMLTEST.SHOW-TEXT-BOUNDS 29290 . 32717)) (32719 37254 (
+HTMLTEST.SHOW-CHAR-BOUNDS 32719 . 37254)) (37256 42193 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 37256 . 42193)
+) (42218 43014 (HTMLTEST.NOTO-SANS 42218 . 43014)) (43056 43884 (HTMLTEST.URL-ENCODE 43056 . 43884)) (
+43886 45002 (HTMLTEST.HTML-ENCODE 43886 . 45002)) (45026 46889 (WINDOWTEST.SHOW-TEXT-BOUNDS 45026 . 
+46889)) (46891 47162 (HTMLTEST.TRANSFORM 46891 . 47162)) (47164 47405 (HTMLTEST.TRANSFORM-POINTS 47164
+ . 47405)))))
 STOP
