@@ -1,12 +1,18 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 4-Apr-2025 14:49:16" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;15 47428  
+(FILECREATED "16-Apr-2025 15:48:17" {HTMLSTREAM}HTMLSTREAMTEST.;3 48168  
 
-      :CHANGES-TO (VARS HTMLSTREAMTESTCOMS)
-                  (FUNCTIONS HTMLTEST.ONE-PAGE-WITH-COLOR HTMLTEST.SHOW-COLOR-CHAR-BOUNDS)
+      :CHANGES-TO (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE 
+                         HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
+                         HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.ONE-PAGE-DASHING 
+                         HTMLTEST.ONE-PAGE-WITH-SPIRAL HTMLTEST.TEXT-TWO-FONTS 
+                         HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
+                         HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT HTMLTEST.BRUSHES 
+                         HTMLTEST.FUNNY-CHARS HTMLTEST.UNDEFINED-CHARS HTMLTEST.SHOW-TEXT-BOUNDS 
+                         HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.SHOW-COLOR-CHAR-BOUNDS HTMLTEST.NOTO-SANS
+                         HTMLTEST.ONE-PAGE-WITH-COLOR)
 
-      :PREVIOUS-DATE " 2-Apr-2025 15:35:14" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>HTMLSTREAMTEST.;10)
+      :PREVIOUS-DATE "16-Apr-2025 15:40:16" {HTMLSTREAM}HTMLSTREAMTEST.;2)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -62,7 +68,7 @@
          (CL:FORMAT STREAM "~dx~d" W H)
          BITMAP))
 
-(CL:DEFUN HTMLTEST.BITBLT (&OPTIONAL (FILE-NAME "/tmp/bitblt.html"))
+(CL:DEFUN HTMLTEST.BITBLT (&OPTIONAL (FILE-NAME "{DSK}/tmp/bitblt.html"))
    "Test bitblt in a single-page document"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BitBLT test document"]
           (LET* ((W 400)
@@ -80,7 +86,7 @@
                 (CL:FORMAT HTMLSTREAM "Second line"))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.TALL-BITBLT (&OPTIONAL (FILE-NAME "/tmp/bitblt.html"))
+(CL:DEFUN HTMLTEST.TALL-BITBLT (&OPTIONAL (FILE-NAME "{DSK}/tmp/bitblt.html"))
    "Test bitblt in a single-page document"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BitBLT test document"]
           (LET* ((W 50)
@@ -102,7 +108,7 @@
                 (CL:FORMAT HTMLSTREAM "Second line"))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.BLTSHADE (&OPTIONAL (FILE-NAME "/tmp/bltshade.html"))
+(CL:DEFUN HTMLTEST.BLTSHADE (&OPTIONAL (FILE-NAME "{DSK}/tmp/bltshade.html"))
    "Test BLTSHADE in a single-page document"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "BLTSHADE test document"]
           [LET* ((PAGE-HEIGHT (HTML.INCHES-TO-CENTIPOINTS 11))
@@ -130,7 +136,7 @@
                            (CL:DECF Y BLT-HEIGHT]
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "/tmp/one-page-simple.html"))
+(CL:DEFUN HTMLTEST.ONE-PAGE-SIMPLE (&OPTIONAL (FILE-NAME "{DSK}/tmp/one-page-simple.html"))
    "Simple text + graphics test for a single-page document"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "One page test document"]
           (FOR I FROM 0 TO 4 DO (MOVETO (ITIMES I 5000)
@@ -142,7 +148,7 @@
           FILE-NAME))
 
 (CL:DEFUN HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS (&OPTIONAL (FILE-NAME 
-                                                                 "/tmp/one-page-simple-graphics.html"
+                                                            "{DSK}/tmp/one-page-simple-graphics.html"
                                                                    ))
    "Simple text + graphics test for a single-page document"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "One page test document"]
@@ -207,7 +213,7 @@
                      (DRAWCURVE CURVE-KNOTS NIL NIL NIL HTMLSTREAM)))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "/tmp/one-page-with-curve.html"))
+(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-CURVE (&OPTIONAL (FILE-NAME "{DSK}/tmp/one-page-with-curve.html"))
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Curve test document"]
           (LET ([POINTS '((10 . 10)
                           (50 . 50)
@@ -223,7 +229,7 @@
                       HTMLSTREAM))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.ONE-PAGE-DASHING (&OPTIONAL (FILE-NAME "/tmp/dashing.html"))
+(CL:DEFUN HTMLTEST.ONE-PAGE-DASHING (&OPTIONAL (FILE-NAME "{DSK}/tmp/dashing.html"))
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Dashing test document"]
           (LET ((DASHING '(1000 2000 1000 3000 1000 4000 1000))
                 (Y (DSPYPOSITION NIL HTMLSTREAM)))
@@ -238,7 +244,7 @@
                       T 300 DASHING HTMLSTREAM))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-SPIRAL (&OPTIONAL (FILE-NAME "/tmp/one-page-with-spiral.html"))
+(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-SPIRAL (&OPTIONAL (FILE-NAME "{DSK}/tmp/one-page-with-spiral.html"))
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Spiral test document"]
           (LET* [(Y (DSPYPOSITION NIL HTMLSTREAM))
                  (ANGLE-INCREMENT (FQUOTIENT CL:PI 6))
@@ -261,7 +267,7 @@
                        HTMLSTREAM))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.TEXT-TWO-FONTS (&OPTIONAL (FILE-NAME "/tmp/two-fonts.html"))
+(CL:DEFUN HTMLTEST.TEXT-TWO-FONTS (&OPTIONAL (FILE-NAME "{DSK}/tmp/two-fonts.html"))
    "Output text, change fonts, output more text"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Two fonts"]
           (CL:FLET [(FONT-SPEC NIL (FONTPROP (DSPFONT NIL HTMLSTREAM)
@@ -293,7 +299,7 @@
                        (TERPRI HTMLSTREAM)
                        FILE-NAME))))
 
-(CL:DEFUN HTMLTEST.TEXT-VERTICAL-OVERFLOW (&OPTIONAL (FILE-NAME "/tmp/vertical-overflow.html"))
+(CL:DEFUN HTMLTEST.TEXT-VERTICAL-OVERFLOW (&OPTIONAL (FILE-NAME "{DSK}/tmp/vertical-overflow.html"))
    "Output enough text to force a second page"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Overflow test document"]
           (for LINE from 0 to 66 do (CL:FORMAT HTMLSTREAM "This is line ~d.  Y position = ~d" LINE
@@ -301,7 +307,8 @@
                                     (TERPRI HTMLSTREAM))
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.TEXT-HORIZONTAL-OVERFLOW (&OPTIONAL (FILE-NAME "/tmp/horizontal-overflow.html"))
+(CL:DEFUN HTMLTEST.TEXT-HORIZONTAL-OVERFLOW (&OPTIONAL (FILE-NAME 
+                                                              "{DSK}/tmp/horizontal-overflow.html"))
    "Output enough text to wrap around the right margin"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
                                                                   "Horizontal overflow test document"
@@ -313,7 +320,7 @@
           (CL:FORMAT HTMLSTREAM "The end!~%%")
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.SPECIAL-TEXT-ENTITIES (&OPTIONAL (FILE-NAME "/tmp/special-entities.html"))
+(CL:DEFUN HTMLTEST.SPECIAL-TEXT-ENTITIES (&OPTIONAL (FILE-NAME "{DSK}/tmp/special-entities.html"))
    "Output enough text to wrap around the right margin"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
                                                                      "Special entities test document"
@@ -324,7 +331,7 @@
           (CL:FORMAT HTMLSTREAM "The end!~%%")
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.BRIEF-TEXT (&OPTIONAL (FILE-NAME "/tmp/brief-text.html"))
+(CL:DEFUN HTMLTEST.BRIEF-TEXT (&OPTIONAL (FILE-NAME "{DSK}/tmp/brief-text.html"))
    "Output brief text"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
                                                                   "Horizontal overflow test document"
@@ -333,7 +340,7 @@
           (CL:FORMAT HTMLSTREAM " more.")
           FILE-NAME))
 
-(CL:DEFUN HTMLTEST.BRUSHES (&OPTIONAL (FILE-NAME "/tmp/brushes.html"))
+(CL:DEFUN HTMLTEST.BRUSHES (&OPTIONAL (FILE-NAME "{DSK}/tmp/brushes.html"))
    "Simple test of brushes"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Brush test document"]
           [LET* [(POLY-POINTS (HTMLTEST.TRANSFORM-POINTS '((100 . 100)
@@ -364,7 +371,7 @@
 (* ;; "color")
 
 
-(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-COLOR (&OPTIONAL (FILE-NAME "/tmp/one-page-with-color.html"))
+(CL:DEFUN HTMLTEST.ONE-PAGE-WITH-COLOR (&OPTIONAL (FILE-NAME "{DSK}/tmp/one-page-with-color.html"))
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Color test document" BG-COLOR
                                                                       (255 255 255]
 
@@ -435,7 +442,7 @@
 (* ;; "charsets")
 
 
-(CL:DEFUN HTMLTEST.FUNNY-CHARS (&OPTIONAL (FILE-NAME "/tmp/funny-chars.html"))
+(CL:DEFUN HTMLTEST.FUNNY-CHARS (&OPTIONAL (FILE-NAME "{DSK}/tmp/funny-chars.html"))
    "Create a document that displays characters from various non-zero charsets"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Valid charsets test document"]
           (DSPFONT (FONTCREATE 'HELVETICA 10 'MRR 0 'HTML)
@@ -516,7 +523,7 @@
                       (CL:FORMAT HTMLSTREAM "Done!~%%")
                       FILE-NAME))))
 
-(CL:DEFUN HTMLTEST.UNDEFINED-CHARS (&OPTIONAL (FILE-NAME "/tmp/undefined-chars.html"))
+(CL:DEFUN HTMLTEST.UNDEFINED-CHARS (&OPTIONAL (FILE-NAME "{DSK}/tmp/undefined-chars.html"))
    "Create a document that tries to display undefined characters from various charsets, real or not"
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE 
                                                                    "Undefined charsets test document"
@@ -546,7 +553,7 @@
 (* ;; "metrics")
 
 
-(CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/text-bounds.html"))
+(CL:DEFUN HTMLTEST.SHOW-TEXT-BOUNDS (&OPTIONAL (FILE-NAME "{DSK}/tmp/text-bounds.html"))
    "Output text, draw bounds."
 
    (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
@@ -609,7 +616,7 @@
                       (WRITE))
                FILE-NAME)))
 
-(CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
+(CL:DEFUN HTMLTEST.SHOW-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "{DSK}/tmp/char-bounds.html"))
    "Output text, draw bounds for each character."
 
    (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
@@ -685,7 +692,7 @@
                       (SAMPLE FONT14))
                FILE-NAME)))
 
-(CL:DEFUN HTMLTEST.SHOW-COLOR-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "/tmp/char-bounds.html"))
+(CL:DEFUN HTMLTEST.SHOW-COLOR-CHAR-BOUNDS (&OPTIONAL (FILE-NAME "{DSK}/tmp/char-bounds.html"))
    "Output text, draw bounds for each character."
 
    (* ;; "Remember: in SVG, Y = 0 is at the top left; Y increases as you go down the page.")
@@ -774,7 +781,7 @@
 (* ;; "fonts")
 
 
-(CL:DEFUN HTMLTEST.NOTO-SANS (&OPTIONAL (FILE-NAME "/tmp/noto-sans.html"))
+(CL:DEFUN HTMLTEST.NOTO-SANS (&OPTIONAL (FILE-NAME "{DSK}/tmp/noto-sans.html"))
    "Write simple text to a file using the Noto Sans font, which seems broken somehow."
    (CL:WITH-OPEN-STREAM [HTMLSTREAM (OPENHTMLSTREAM FILE-NAME '(TITLE "Noto Sans test document"]
 
@@ -877,20 +884,20 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1695 2354 (GEN-TEST-BITMAP 1695 . 2354)) (2356 3166 (HTMLTEST.BITBLT 2356 . 3166)) (
-3168 4159 (HTMLTEST.TALL-BITBLT 3168 . 4159)) (4161 5706 (HTMLTEST.BLTSHADE 4161 . 5706)) (5708 6421 (
-HTMLTEST.ONE-PAGE-SIMPLE 5708 . 6421)) (6423 9987 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6423 . 9987)
-) (9989 10821 (HTMLTEST.ONE-PAGE-WITH-CURVE 9989 . 10821)) (10823 11640 (HTMLTEST.ONE-PAGE-DASHING 
-10823 . 11640)) (11642 12981 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11642 . 12981)) (12983 15142 (
-HTMLTEST.TEXT-TWO-FONTS 12983 . 15142)) (15144 15654 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 15144 . 15654)) 
-(15656 16404 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15656 . 16404)) (16406 17151 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 16406 . 17151)) (17153 17621 (HTMLTEST.BRIEF-TEXT 17153 . 17621)) (
-17623 19324 (HTMLTEST.BRUSHES 17623 . 19324)) (19349 21747 (HTMLTEST.ONE-PAGE-WITH-COLOR 19349 . 21747
-)) (21775 27688 (HTMLTEST.FUNNY-CHARS 21775 . 27688)) (27690 29263 (HTMLTEST.UNDEFINED-CHARS 27690 . 
-29263)) (29290 32717 (HTMLTEST.SHOW-TEXT-BOUNDS 29290 . 32717)) (32719 37254 (
-HTMLTEST.SHOW-CHAR-BOUNDS 32719 . 37254)) (37256 42193 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 37256 . 42193)
-) (42218 43014 (HTMLTEST.NOTO-SANS 42218 . 43014)) (43056 43884 (HTMLTEST.URL-ENCODE 43056 . 43884)) (
-43886 45002 (HTMLTEST.HTML-ENCODE 43886 . 45002)) (45026 46889 (WINDOWTEST.SHOW-TEXT-BOUNDS 45026 . 
-46889)) (46891 47162 (HTMLTEST.TRANSFORM 46891 . 47162)) (47164 47405 (HTMLTEST.TRANSFORM-POINTS 47164
- . 47405)))))
+  (FILEMAP (NIL (2272 2931 (GEN-TEST-BITMAP 2272 . 2931)) (2933 3748 (HTMLTEST.BITBLT 2933 . 3748)) (
+3750 4746 (HTMLTEST.TALL-BITBLT 3750 . 4746)) (4748 6298 (HTMLTEST.BLTSHADE 4748 . 6298)) (6300 7018 (
+HTMLTEST.ONE-PAGE-SIMPLE 6300 . 7018)) (7020 10584 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 7020 . 
+10584)) (10586 11423 (HTMLTEST.ONE-PAGE-WITH-CURVE 10586 . 11423)) (11425 12247 (
+HTMLTEST.ONE-PAGE-DASHING 11425 . 12247)) (12249 13593 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 12249 . 13593)) 
+(13595 15759 (HTMLTEST.TEXT-TWO-FONTS 13595 . 15759)) (15761 16276 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+15761 . 16276)) (16278 17094 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 16278 . 17094)) (17096 17846 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 17096 . 17846)) (17848 18321 (HTMLTEST.BRIEF-TEXT 17848 . 18321)) (
+18323 20029 (HTMLTEST.BRUSHES 18323 . 20029)) (20054 22457 (HTMLTEST.ONE-PAGE-WITH-COLOR 20054 . 22457
+)) (22485 28403 (HTMLTEST.FUNNY-CHARS 22485 . 28403)) (28405 29983 (HTMLTEST.UNDEFINED-CHARS 28405 . 
+29983)) (30010 33442 (HTMLTEST.SHOW-TEXT-BOUNDS 30010 . 33442)) (33444 37984 (
+HTMLTEST.SHOW-CHAR-BOUNDS 33444 . 37984)) (37986 42928 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 37986 . 42928)
+) (42953 43754 (HTMLTEST.NOTO-SANS 42953 . 43754)) (43796 44624 (HTMLTEST.URL-ENCODE 43796 . 44624)) (
+44626 45742 (HTMLTEST.HTML-ENCODE 44626 . 45742)) (45766 47629 (WINDOWTEST.SHOW-TEXT-BOUNDS 45766 . 
+47629)) (47631 47902 (HTMLTEST.TRANSFORM 47631 . 47902)) (47904 48145 (HTMLTEST.TRANSFORM-POINTS 47904
+ . 48145)))))
 STOP
