@@ -1,8 +1,10 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "16-Apr-2025 15:48:17" {HTMLSTREAM}HTMLSTREAMTEST.;3 48168  
+(FILECREATED "17-Apr-2025 09:46:24" {HTMLSTREAM}HTMLSTREAMTEST.;5 53032  
 
-      :CHANGES-TO (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE 
+      :CHANGES-TO (FNS HTML-FILES)
+                  (VARS HTMLSTREAMTESTCOMS)
+                  (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE 
                          HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
                          HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.ONE-PAGE-DASHING 
                          HTMLTEST.ONE-PAGE-WITH-SPIRAL HTMLTEST.TEXT-TWO-FONTS 
@@ -46,6 +48,10 @@
         (* ;; "URL and HTML encodings")
 
         (FUNCTIONS HTMLTEST.URL-ENCODE HTMLTEST.HTML-ENCODE)
+        
+        (* ;; "HCFILES for HTML")
+
+        (FNS HTML-FILES)
         
         (* ;; "misc")
 
@@ -831,6 +837,94 @@
 
 
 
+(* ;; "HCFILES for HTML")
+
+(DEFINEQ
+
+(HTML-FILES
+  [LAMBDA (BASE OUTPUT-DIR REDO SUBSETS)                     (* ; "Edited 30-Jun-2024 08:27 by lmm")
+                                                             (* ; "Edited 23-Apr-2024 23:15 by lmm")
+                                                             (* ; "Edited 22-Apr-2024 13:22 by lmm")
+                                                             (* ; "Edited  5-Feb-2024 12:16 by lmm")
+                                                             (* ; "Edited  4-Nov-2023 11:14 by lmm")
+                                                             (* ; "Edited 20-Oct-2022 16:11 by lmm")
+
+(* ;;;; "BASE is the root directory. Doesn't replace PDF files except when REDO")
+
+(* ;;; " SUBSETS is some combination of TEDIT, HTML, PRETTY, and INDEX")
+
+    (DECLARE (GLOBALVARS *COMMON-LISP-READ-ENVIRONMENT*))
+    (LET
+     ([DIRLIST (LIST (OR BASE (PSEUDOFILENAME (MEDLEYDIR]
+      [PHASES (OR SUBSETS '(TEDIT PRETTY INDEX HRULE]
+      (OUTPUT-FORMAT 'HTML)
+      (OUTPUT-EXT ".html"))
+     (FILESLOAD SKETCH)
+     (FONTSET 'STANDARD)
+     (WHILE DIRLIST
+        DO
+        (SETQ BASE (POP DIRLIST))
+        (FOR SRCPATH IN (DIRECTORY (CONCAT BASE "*.*;"))
+           DO (PROG* [(SRC (UNPACKFILENAME SRCPATH))
+                      [EXT (U-CASE (LISTGET SRC 'EXTENSION]
+                      (DIR (LISTGET SRC 'DIRECTORY))
+                      FRDY LDGP DEST (NOV (PACKFILENAME `(VERSION NIL ,@SRC]
+                     (CL:FORMAT T "Starting on ~a:~%%" SRCPATH)
+                     (CL:WHEN (DIRECTORYNAMEP SRCPATH)
+
+                         (* ;; "any directory names, push them off and do them in another phase")
+
+                         (CL:UNLESS (OR (STRPOS ">." NOV)
+                                        (INFILEP (CONCAT NOV ".skip")))
+                             (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH)))
+                         (RETURN))
+                     (CL:WHEN 
+                         (MEMB EXT
+                               '(PDF SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR DFASL DISPLAYFONT 
+                                     ALL DATABASE DOCKERIGNORE GITIGNORE DS_STORE))
+
+                         (* ;; "ignore any of these extensions")
+
+                         (RETURN))
+
+               (* ;; 
+               " doesn't (yet) implement  / to - translation. .readme should show up as -.readme.")
+
+                     (SETQ DEST (PACKFILENAME.STRING 'DIRECTORY OUTPUT-DIR 'BODY (CONCAT NOV 
+                                                                                        OUTPUT-EXT)))
+                     (CL:WHEN (AND (NOT REDO)
+                                   (INFILEP DEST))
+                         (CL:FORMAT T "~a already exists~%%" DEST)
+                         (RETURN))
+                     (CL:WHEN (INFILEP (CONCAT DEST ".skip"))
+                         (PRINTOUT T "Explicit .skip " DEST T)
+                         (RETURN))
+                     (IF (MEMB 'TEDIT PHASES)
+                         THEN (CL:WHEN [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
+                                           (CAR (NLSETQ (TEDIT.FORMATTEDFILEP SRCPATH]
+                                  (IF (EQ REDO 'TEST)
+                                      THEN (CL:FORMAT T "Testing open ~a..." SRCPATH)
+                                           (CLOSEF? (OPENTEXTSTREAM SRCPATH))
+                                    ELSE (OR (NLSETQ (CL:WITH-OPEN-STREAM (S (OPENTEXTSTREAM SRCPATH)
+                                                                             )
+                                                            (TEDIT.FORMAT.HARDCOPY S DEST T NIL NIL 
+                                                                   NIL OUTPUT-FORMAT)))
+                                             (CL:FORMAT T "Failed~%%")))
+                                  (CL:FORMAT T "Done~%%")))
+                     (LET (LSFP)
+                          (CL:WHEN (AND (MEMB 'PRETTY PHASES)
+                                        (MEMB EXT '(NIL IL))
+                                        [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
+                                        (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
+                              (PRINTOUT T "Writing HTML to " DEST "...")
+                              (OR (NLSETQ (CL:WITH-OPEN-STREAM (STR (OPENIMAGESTREAM DEST))
+                                                 (PRETTYFILEINDEX SRCPATH NIL STR)))
+                                  (CL:FORMAT T "Failed~%%"))
+                              (CL:FORMAT T "Done~%%"))])
+)
+
+
+
 (* ;; "misc")
 
 
@@ -884,20 +978,20 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (2272 2931 (GEN-TEST-BITMAP 2272 . 2931)) (2933 3748 (HTMLTEST.BITBLT 2933 . 3748)) (
-3750 4746 (HTMLTEST.TALL-BITBLT 3750 . 4746)) (4748 6298 (HTMLTEST.BLTSHADE 4748 . 6298)) (6300 7018 (
-HTMLTEST.ONE-PAGE-SIMPLE 6300 . 7018)) (7020 10584 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 7020 . 
-10584)) (10586 11423 (HTMLTEST.ONE-PAGE-WITH-CURVE 10586 . 11423)) (11425 12247 (
-HTMLTEST.ONE-PAGE-DASHING 11425 . 12247)) (12249 13593 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 12249 . 13593)) 
-(13595 15759 (HTMLTEST.TEXT-TWO-FONTS 13595 . 15759)) (15761 16276 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
-15761 . 16276)) (16278 17094 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 16278 . 17094)) (17096 17846 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 17096 . 17846)) (17848 18321 (HTMLTEST.BRIEF-TEXT 17848 . 18321)) (
-18323 20029 (HTMLTEST.BRUSHES 18323 . 20029)) (20054 22457 (HTMLTEST.ONE-PAGE-WITH-COLOR 20054 . 22457
-)) (22485 28403 (HTMLTEST.FUNNY-CHARS 22485 . 28403)) (28405 29983 (HTMLTEST.UNDEFINED-CHARS 28405 . 
-29983)) (30010 33442 (HTMLTEST.SHOW-TEXT-BOUNDS 30010 . 33442)) (33444 37984 (
-HTMLTEST.SHOW-CHAR-BOUNDS 33444 . 37984)) (37986 42928 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 37986 . 42928)
-) (42953 43754 (HTMLTEST.NOTO-SANS 42953 . 43754)) (43796 44624 (HTMLTEST.URL-ENCODE 43796 . 44624)) (
-44626 45742 (HTMLTEST.HTML-ENCODE 44626 . 45742)) (45766 47629 (WINDOWTEST.SHOW-TEXT-BOUNDS 45766 . 
-47629)) (47631 47902 (HTMLTEST.TRANSFORM 47631 . 47902)) (47904 48145 (HTMLTEST.TRANSFORM-POINTS 47904
- . 48145)))))
+  (FILEMAP (NIL (2424 3083 (GEN-TEST-BITMAP 2424 . 3083)) (3085 3900 (HTMLTEST.BITBLT 3085 . 3900)) (
+3902 4898 (HTMLTEST.TALL-BITBLT 3902 . 4898)) (4900 6450 (HTMLTEST.BLTSHADE 4900 . 6450)) (6452 7170 (
+HTMLTEST.ONE-PAGE-SIMPLE 6452 . 7170)) (7172 10736 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 7172 . 
+10736)) (10738 11575 (HTMLTEST.ONE-PAGE-WITH-CURVE 10738 . 11575)) (11577 12399 (
+HTMLTEST.ONE-PAGE-DASHING 11577 . 12399)) (12401 13745 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 12401 . 13745)) 
+(13747 15911 (HTMLTEST.TEXT-TWO-FONTS 13747 . 15911)) (15913 16428 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+15913 . 16428)) (16430 17246 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 16430 . 17246)) (17248 17998 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 17248 . 17998)) (18000 18473 (HTMLTEST.BRIEF-TEXT 18000 . 18473)) (
+18475 20181 (HTMLTEST.BRUSHES 18475 . 20181)) (20206 22609 (HTMLTEST.ONE-PAGE-WITH-COLOR 20206 . 22609
+)) (22637 28555 (HTMLTEST.FUNNY-CHARS 22637 . 28555)) (28557 30135 (HTMLTEST.UNDEFINED-CHARS 28557 . 
+30135)) (30162 33594 (HTMLTEST.SHOW-TEXT-BOUNDS 30162 . 33594)) (33596 38136 (
+HTMLTEST.SHOW-CHAR-BOUNDS 33596 . 38136)) (38138 43080 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 38138 . 43080)
+) (43105 43906 (HTMLTEST.NOTO-SANS 43105 . 43906)) (43948 44776 (HTMLTEST.URL-ENCODE 43948 . 44776)) (
+44778 45894 (HTMLTEST.HTML-ENCODE 44778 . 45894)) (45929 50606 (HTML-FILES 45939 . 50604)) (50630 
+52493 (WINDOWTEST.SHOW-TEXT-BOUNDS 50630 . 52493)) (52495 52766 (HTMLTEST.TRANSFORM 52495 . 52766)) (
+52768 53009 (HTMLTEST.TRANSFORM-POINTS 52768 . 53009)))))
 STOP
