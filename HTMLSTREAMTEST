@@ -1,6 +1,6 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "17-Apr-2025 09:46:24" {HTMLSTREAM}HTMLSTREAMTEST.;5 53032  
+(FILECREATED "17-Apr-2025 10:57:01" {HTMLSTREAM}HTMLSTREAMTEST.;6 53131  
 
       :CHANGES-TO (FNS HTML-FILES)
                   (VARS HTMLSTREAMTESTCOMS)
@@ -14,7 +14,7 @@
                          HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.SHOW-COLOR-CHAR-BOUNDS HTMLTEST.NOTO-SANS
                          HTMLTEST.ONE-PAGE-WITH-COLOR)
 
-      :PREVIOUS-DATE "16-Apr-2025 15:40:16" {HTMLSTREAM}HTMLSTREAMTEST.;2)
+      :PREVIOUS-DATE "17-Apr-2025 09:46:24" {HTMLSTREAM}HTMLSTREAMTEST.;5)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -876,12 +876,13 @@
 
                          (CL:UNLESS (OR (STRPOS ">." NOV)
                                         (INFILEP (CONCAT NOV ".skip")))
+                             (CL:FORMAT T "Will process dir ~a later~%%" SRCPATH)
                              (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH)))
                          (RETURN))
                      (CL:WHEN 
                          (MEMB EXT
-                               '(PDF SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR DFASL DISPLAYFONT 
-                                     ALL DATABASE DOCKERIGNORE GITIGNORE DS_STORE))
+                               '(PDF SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR DISPLAYFONT ALL 
+                                     DATABASE DOCKERIGNORE GITIGNORE DS_STORE))
 
                          (* ;; "ignore any of these extensions")
 
@@ -894,10 +895,10 @@
                                                                                         OUTPUT-EXT)))
                      (CL:WHEN (AND (NOT REDO)
                                    (INFILEP DEST))
-                         (CL:FORMAT T "~a already exists~%%" DEST)
+                         (CL:FORMAT T "~a already exists, skipping it~%%" DEST)
                          (RETURN))
                      (CL:WHEN (INFILEP (CONCAT DEST ".skip"))
-                         (PRINTOUT T "Explicit .skip " DEST T)
+                         (CL:FORMAT T "We're told to .skip ~a~" DEST)
                          (RETURN))
                      (IF (MEMB 'TEDIT PHASES)
                          THEN (CL:WHEN [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
@@ -916,7 +917,7 @@
                                         (MEMB EXT '(NIL IL))
                                         [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
                                         (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
-                              (PRINTOUT T "Writing HTML to " DEST "...")
+                              (CL:FORMAT T "Writing HTML to ~a...~%%" DEST)
                               (OR (NLSETQ (CL:WITH-OPEN-STREAM (STR (OPENIMAGESTREAM DEST))
                                                  (PRETTYFILEINDEX SRCPATH NIL STR)))
                                   (CL:FORMAT T "Failed~%%"))
@@ -991,7 +992,7 @@ HTMLTEST.SPECIAL-TEXT-ENTITIES 17248 . 17998)) (18000 18473 (HTMLTEST.BRIEF-TEXT
 30135)) (30162 33594 (HTMLTEST.SHOW-TEXT-BOUNDS 30162 . 33594)) (33596 38136 (
 HTMLTEST.SHOW-CHAR-BOUNDS 33596 . 38136)) (38138 43080 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 38138 . 43080)
 ) (43105 43906 (HTMLTEST.NOTO-SANS 43105 . 43906)) (43948 44776 (HTMLTEST.URL-ENCODE 43948 . 44776)) (
-44778 45894 (HTMLTEST.HTML-ENCODE 44778 . 45894)) (45929 50606 (HTML-FILES 45939 . 50604)) (50630 
-52493 (WINDOWTEST.SHOW-TEXT-BOUNDS 50630 . 52493)) (52495 52766 (HTMLTEST.TRANSFORM 52495 . 52766)) (
-52768 53009 (HTMLTEST.TRANSFORM-POINTS 52768 . 53009)))))
+44778 45894 (HTMLTEST.HTML-ENCODE 44778 . 45894)) (45929 50705 (HTML-FILES 45939 . 50703)) (50729 
+52592 (WINDOWTEST.SHOW-TEXT-BOUNDS 50729 . 52592)) (52594 52865 (HTMLTEST.TRANSFORM 52594 . 52865)) (
+52867 53108 (HTMLTEST.TRANSFORM-POINTS 52867 . 53108)))))
 STOP
