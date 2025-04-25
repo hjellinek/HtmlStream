@@ -1,20 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "17-Apr-2025 10:57:01" {HTMLSTREAM}HTMLSTREAMTEST.;6 53131  
+(FILECREATED "23-Apr-2025 14:15:14" {HTMLSTREAM}HTMLSTREAMTEST.;23 53420  
 
-      :CHANGES-TO (FNS HTML-FILES)
+      :CHANGES-TO (FUNCTIONS CONVERT-SOURCE-TO-HTML CONVERT-TEDIT-TO-HTML HTML-FILES WITH-BACKTRACE)
                   (VARS HTMLSTREAMTESTCOMS)
-                  (FUNCTIONS HTMLTEST.BITBLT HTMLTEST.TALL-BITBLT HTMLTEST.BLTSHADE 
-                         HTMLTEST.ONE-PAGE-SIMPLE HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 
-                         HTMLTEST.ONE-PAGE-WITH-CURVE HTMLTEST.ONE-PAGE-DASHING 
-                         HTMLTEST.ONE-PAGE-WITH-SPIRAL HTMLTEST.TEXT-TWO-FONTS 
-                         HTMLTEST.TEXT-VERTICAL-OVERFLOW HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 
-                         HTMLTEST.SPECIAL-TEXT-ENTITIES HTMLTEST.BRIEF-TEXT HTMLTEST.BRUSHES 
-                         HTMLTEST.FUNNY-CHARS HTMLTEST.UNDEFINED-CHARS HTMLTEST.SHOW-TEXT-BOUNDS 
-                         HTMLTEST.SHOW-CHAR-BOUNDS HTMLTEST.SHOW-COLOR-CHAR-BOUNDS HTMLTEST.NOTO-SANS
-                         HTMLTEST.ONE-PAGE-WITH-COLOR)
 
-      :PREVIOUS-DATE "17-Apr-2025 09:46:24" {HTMLSTREAM}HTMLSTREAMTEST.;5)
+      :PREVIOUS-DATE "21-Apr-2025 16:35:02" {HTMLSTREAM}HTMLSTREAMTEST.;16)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -51,7 +42,7 @@
         
         (* ;; "HCFILES for HTML")
 
-        (FNS HTML-FILES)
+        (FUNCTIONS WITH-BACKTRACE HTML-FILES CONVERT-SOURCE-TO-HTML CONVERT-TEDIT-TO-HTML)
         
         (* ;; "misc")
 
@@ -839,90 +830,106 @@
 
 (* ;; "HCFILES for HTML")
 
-(DEFINEQ
 
-(HTML-FILES
-  [LAMBDA (BASE OUTPUT-DIR REDO SUBSETS)                     (* ; "Edited 30-Jun-2024 08:27 by lmm")
-                                                             (* ; "Edited 23-Apr-2024 23:15 by lmm")
-                                                             (* ; "Edited 22-Apr-2024 13:22 by lmm")
-                                                             (* ; "Edited  5-Feb-2024 12:16 by lmm")
-                                                             (* ; "Edited  4-Nov-2023 11:14 by lmm")
-                                                             (* ; "Edited 20-Oct-2022 16:11 by lmm")
+(DEFMACRO WITH-BACKTRACE (&BODY (BODY DECLS ENV))
+   `(HANDLER-BIND [((OR CL:ERROR INTERLISP-ERROR)
+                    #'(CL:LAMBDA (E)
+                             (CL:FORMAT T "-- Caught error ~s~%%" E)
+                             (BACKTRACE NIL NIL 3)
+                             (LET [(ERROR-FRAME (STKPOS 'ERROR]
+                                  (AND ERROR-FRAME (RETFROM ERROR-FRAME NIL]
+           (PROGN ,@BODY)))
 
-(* ;;;; "BASE is the root directory. Doesn't replace PDF files except when REDO")
+(CL:DEFUN HTML-FILES (&KEY BASE (OUTPUT-DIR "{DSK}/tmp/html")
+                           REDO SUBSETS (SHOW-STORAGE T))
 
-(* ;;; " SUBSETS is some combination of TEDIT, HTML, PRETTY, and INDEX")
+   (* ;; "BASE is the root directory. Doesn't replace HTML files except when REDO")
 
-    (DECLARE (GLOBALVARS *COMMON-LISP-READ-ENVIRONMENT*))
-    (LET
-     ([DIRLIST (LIST (OR BASE (PSEUDOFILENAME (MEDLEYDIR]
-      [PHASES (OR SUBSETS '(TEDIT PRETTY INDEX HRULE]
-      (OUTPUT-FORMAT 'HTML)
-      (OUTPUT-EXT ".html"))
-     (FILESLOAD SKETCH)
-     (FONTSET 'STANDARD)
-     (WHILE DIRLIST
-        DO
-        (SETQ BASE (POP DIRLIST))
-        (FOR SRCPATH IN (DIRECTORY (CONCAT BASE "*.*;"))
-           DO (PROG* [(SRC (UNPACKFILENAME SRCPATH))
-                      [EXT (U-CASE (LISTGET SRC 'EXTENSION]
-                      (DIR (LISTGET SRC 'DIRECTORY))
-                      FRDY LDGP DEST (NOV (PACKFILENAME `(VERSION NIL ,@SRC]
-                     (CL:FORMAT T "Starting on ~a:~%%" SRCPATH)
-                     (CL:WHEN (DIRECTORYNAMEP SRCPATH)
+   (* ;; "SUBSETS is some combination of TEDIT, HTML, PRETTY, and INDEX")
 
-                         (* ;; "any directory names, push them off and do them in another phase")
+   (DECLARE (GLOBALVARS *COMMON-LISP-READ-ENVIRONMENT*))
+   (LET*
+    [(THIS.WINDOW (PROCESSPROP (THIS.PROCESS)
+                         'WINDOW]
+    (WINDOWPROP THIS.WINDOW 'PAGEFULLFN #'NILL)
+    (STORAGE)
+    (CL:UNWIND-PROTECT
+        [LET ([DIRLIST (LIST (OR BASE (PSEUDOFILENAME (MEDLEYDIR]
+              [PHASES (OR SUBSETS '(TEDIT PRETTY INDEX HRULE]
+              (OUTPUT-EXT ".html"))
+             (FILESLOAD SKETCH)
+             (FONTSET 'STANDARD)
+             (WHILE DIRLIST
+                DO (SETQ BASE (POP DIRLIST))
+                   (FOR SRCPATH IN (DIRECTORY (CONCAT BASE "*.*;"))
+                      DO (PROG* [(SRC (UNPACKFILENAME SRCPATH))
+                                 [EXT (U-CASE (LISTGET SRC 'EXTENSION]
+                                 (DIR (LISTGET SRC 'DIRECTORY))
+                                 FRDY LDGP DEST (NOV (PACKFILENAME `(VERSION NIL ,@SRC]
+                                (CL:FORMAT T "Starting on ~a:~%%" SRCPATH)
+                                (CL:WHEN (DIRECTORYNAMEP SRCPATH)
 
-                         (CL:UNLESS (OR (STRPOS ">." NOV)
-                                        (INFILEP (CONCAT NOV ".skip")))
-                             (CL:FORMAT T "Will process dir ~a later~%%" SRCPATH)
-                             (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH)))
-                         (RETURN))
-                     (CL:WHEN 
-                         (MEMB EXT
-                               '(PDF SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR DISPLAYFONT ALL 
-                                     DATABASE DOCKERIGNORE GITIGNORE DS_STORE))
+                                    (* ;; 
+                                    "any directory names, push them off and do them in another phase")
 
-                         (* ;; "ignore any of these extensions")
+                                    (CL:UNLESS (OR (STRPOS ">." NOV)
+                                                   (INFILEP (CONCAT NOV ".skip")))
+                                        (CL:FORMAT T "Will process dir ~a later~%%" SRCPATH)
+                                        (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH)))
+                                    (RETURN))
+                                (CL:WHEN 
+                                    (MEMB EXT
+                                          '(PDF PS SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR 
+                                                DISPLAYFONT ALL DATABASE DOCKERIGNORE GITIGNORE 
+                                                DS_STORE))
 
-                         (RETURN))
+                                    (* ;; "ignore any of these extensions")
 
-               (* ;; 
-               " doesn't (yet) implement  / to - translation. .readme should show up as -.readme.")
+                                    (RETURN))
 
-                     (SETQ DEST (PACKFILENAME.STRING 'DIRECTORY OUTPUT-DIR 'BODY (CONCAT NOV 
-                                                                                        OUTPUT-EXT)))
-                     (CL:WHEN (AND (NOT REDO)
-                                   (INFILEP DEST))
-                         (CL:FORMAT T "~a already exists, skipping it~%%" DEST)
-                         (RETURN))
-                     (CL:WHEN (INFILEP (CONCAT DEST ".skip"))
-                         (CL:FORMAT T "We're told to .skip ~a~" DEST)
-                         (RETURN))
-                     (IF (MEMB 'TEDIT PHASES)
-                         THEN (CL:WHEN [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
-                                           (CAR (NLSETQ (TEDIT.FORMATTEDFILEP SRCPATH]
-                                  (IF (EQ REDO 'TEST)
-                                      THEN (CL:FORMAT T "Testing open ~a..." SRCPATH)
-                                           (CLOSEF? (OPENTEXTSTREAM SRCPATH))
-                                    ELSE (OR (NLSETQ (CL:WITH-OPEN-STREAM (S (OPENTEXTSTREAM SRCPATH)
-                                                                             )
-                                                            (TEDIT.FORMAT.HARDCOPY S DEST T NIL NIL 
-                                                                   NIL OUTPUT-FORMAT)))
-                                             (CL:FORMAT T "Failed~%%")))
-                                  (CL:FORMAT T "Done~%%")))
-                     (LET (LSFP)
-                          (CL:WHEN (AND (MEMB 'PRETTY PHASES)
-                                        (MEMB EXT '(NIL IL))
-                                        [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
-                                        (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
-                              (CL:FORMAT T "Writing HTML to ~a...~%%" DEST)
-                              (OR (NLSETQ (CL:WITH-OPEN-STREAM (STR (OPENIMAGESTREAM DEST))
-                                                 (PRETTYFILEINDEX SRCPATH NIL STR)))
-                                  (CL:FORMAT T "Failed~%%"))
-                              (CL:FORMAT T "Done~%%"))])
-)
+                          (* ;; 
+                  " doesn't (yet) implement  / to - translation. .readme should show up as -.readme.")
+
+                                (SETQ DEST (PACKFILENAME.STRING 'DIRECTORY OUTPUT-DIR 'BODY
+                                                  (CONCAT NOV OUTPUT-EXT)))
+                                (CL:WHEN (AND (NOT REDO)
+                                              (INFILEP DEST))
+                                    (CL:FORMAT T "~a already exists, skipping it~%%" DEST)
+                                    (RETURN))
+                                (CL:WHEN (INFILEP (CONCAT DEST ".skip"))
+                                    (CL:FORMAT T "We're told to .skip ~a~" DEST)
+                                    (RETURN))
+                                (IF (MEMB 'TEDIT PHASES)
+                                    THEN (CL:WHEN [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
+                                                      (CAR (NLSETQ (TEDIT.FORMATTEDFILEP SRCPATH]
+                                             (IF (EQ REDO 'TEST)
+                                                 THEN (CL:FORMAT T "Testing open ~a..." SRCPATH)
+                                                      (CLOSEF? (OPENTEXTSTREAM SRCPATH))
+                                               ELSE (CONVERT-TEDIT-TO-HTML SRCPATH DEST SHOW-STORAGE)
+                                                 )
+                                             (CL:FORMAT T "Done~%%")))
+                                (LET (LSFP)
+                                     (CL:WHEN (AND (MEMB 'PRETTY PHASES)
+                                                   (MEMB EXT '(NIL IL))
+                                                   [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
+                                                   (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
+                                         (CL:FORMAT T "Converting source file ~a to ~a...~%%" SRCPATH
+                                                DEST)
+                                         (CONVERT-SOURCE-TO-HTML SRCPATH DEST SHOW-STORAGE)
+                                         (CL:FORMAT T "Done~%%"))]
+        (WINDOWPROP THIS.WINDOW 'PAGEFULLFN NIL))))
+
+(CL:DEFUN CONVERT-SOURCE-TO-HTML (SRC DEST &OPTIONAL (SHOW-STORAGE T))
+   "Convert the Lisp source code at SRC to an HTML file at DEST, optionally logging storage used"
+   (CL:WITH-OPEN-STREAM (STR (OPENIMAGESTREAM DEST))
+          (WITH-BACKTRACE (PRETTYFILEINDEX SRC NIL STR)))
+   (CL:WHEN SHOW-STORAGE (STORAGE)))
+
+(CL:DEFUN CONVERT-TEDIT-TO-HTML (SRC DEST &OPTIONAL (SHOW-STORAGE T))
+   "Convert the TEdit file at SRC to an HTML file at DEST, optionally logging storage used"
+   [CL:WITH-OPEN-STREAM (S (OPENTEXTSTREAM SRC))
+          (WITH-BACKTRACE (TEDIT.FORMAT.HARDCOPY S DEST T NIL NIL NIL 'HTML]
+   (CL:WHEN SHOW-STORAGE (STORAGE)))
 
 
 
@@ -979,20 +986,21 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (2424 3083 (GEN-TEST-BITMAP 2424 . 3083)) (3085 3900 (HTMLTEST.BITBLT 3085 . 3900)) (
-3902 4898 (HTMLTEST.TALL-BITBLT 3902 . 4898)) (4900 6450 (HTMLTEST.BLTSHADE 4900 . 6450)) (6452 7170 (
-HTMLTEST.ONE-PAGE-SIMPLE 6452 . 7170)) (7172 10736 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 7172 . 
-10736)) (10738 11575 (HTMLTEST.ONE-PAGE-WITH-CURVE 10738 . 11575)) (11577 12399 (
-HTMLTEST.ONE-PAGE-DASHING 11577 . 12399)) (12401 13745 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 12401 . 13745)) 
-(13747 15911 (HTMLTEST.TEXT-TWO-FONTS 13747 . 15911)) (15913 16428 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
-15913 . 16428)) (16430 17246 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 16430 . 17246)) (17248 17998 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 17248 . 17998)) (18000 18473 (HTMLTEST.BRIEF-TEXT 18000 . 18473)) (
-18475 20181 (HTMLTEST.BRUSHES 18475 . 20181)) (20206 22609 (HTMLTEST.ONE-PAGE-WITH-COLOR 20206 . 22609
-)) (22637 28555 (HTMLTEST.FUNNY-CHARS 22637 . 28555)) (28557 30135 (HTMLTEST.UNDEFINED-CHARS 28557 . 
-30135)) (30162 33594 (HTMLTEST.SHOW-TEXT-BOUNDS 30162 . 33594)) (33596 38136 (
-HTMLTEST.SHOW-CHAR-BOUNDS 33596 . 38136)) (38138 43080 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 38138 . 43080)
-) (43105 43906 (HTMLTEST.NOTO-SANS 43105 . 43906)) (43948 44776 (HTMLTEST.URL-ENCODE 43948 . 44776)) (
-44778 45894 (HTMLTEST.HTML-ENCODE 44778 . 45894)) (45929 50705 (HTML-FILES 45939 . 50703)) (50729 
-52592 (WINDOWTEST.SHOW-TEXT-BOUNDS 50729 . 52592)) (52594 52865 (HTMLTEST.TRANSFORM 52594 . 52865)) (
-52867 53108 (HTMLTEST.TRANSFORM-POINTS 52867 . 53108)))))
+  (FILEMAP (NIL (1781 2440 (GEN-TEST-BITMAP 1781 . 2440)) (2442 3257 (HTMLTEST.BITBLT 2442 . 3257)) (
+3259 4255 (HTMLTEST.TALL-BITBLT 3259 . 4255)) (4257 5807 (HTMLTEST.BLTSHADE 4257 . 5807)) (5809 6527 (
+HTMLTEST.ONE-PAGE-SIMPLE 5809 . 6527)) (6529 10093 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6529 . 
+10093)) (10095 10932 (HTMLTEST.ONE-PAGE-WITH-CURVE 10095 . 10932)) (10934 11756 (
+HTMLTEST.ONE-PAGE-DASHING 10934 . 11756)) (11758 13102 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11758 . 13102)) 
+(13104 15268 (HTMLTEST.TEXT-TWO-FONTS 13104 . 15268)) (15270 15785 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+15270 . 15785)) (15787 16603 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15787 . 16603)) (16605 17355 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 16605 . 17355)) (17357 17830 (HTMLTEST.BRIEF-TEXT 17357 . 17830)) (
+17832 19538 (HTMLTEST.BRUSHES 17832 . 19538)) (19563 21966 (HTMLTEST.ONE-PAGE-WITH-COLOR 19563 . 21966
+)) (21994 27912 (HTMLTEST.FUNNY-CHARS 21994 . 27912)) (27914 29492 (HTMLTEST.UNDEFINED-CHARS 27914 . 
+29492)) (29519 32951 (HTMLTEST.SHOW-TEXT-BOUNDS 29519 . 32951)) (32953 37493 (
+HTMLTEST.SHOW-CHAR-BOUNDS 32953 . 37493)) (37495 42437 (HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 37495 . 42437)
+) (42462 43263 (HTMLTEST.NOTO-SANS 42462 . 43263)) (43305 44133 (HTMLTEST.URL-ENCODE 43305 . 44133)) (
+44135 45251 (HTMLTEST.HTML-ENCODE 44135 . 45251)) (45287 45716 (WITH-BACKTRACE 45287 . 45716)) (45718 
+50334 (HTML-FILES 45718 . 50334)) (50336 50660 (CONVERT-SOURCE-TO-HTML 50336 . 50660)) (50662 50994 (
+CONVERT-TEDIT-TO-HTML 50662 . 50994)) (51018 52881 (WINDOWTEST.SHOW-TEXT-BOUNDS 51018 . 52881)) (52883
+ 53154 (HTMLTEST.TRANSFORM 52883 . 53154)) (53156 53397 (HTMLTEST.TRANSFORM-POINTS 53156 . 53397)))))
 STOP
