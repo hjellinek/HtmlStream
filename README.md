@@ -33,4 +33,6 @@ describe the line height, max ascent, max descent, and character widths of all c
 the intersection of XCCS 3.0.0 and Unicode, segmented by XCCS charset.  We run the [WebFontMetrics](../WebFontMetrics)
 software to generate the metrics files.
 
+`HTMLSTREAM` maps common Medley font names to Noto font names using the a-list `*WEB-FONT-MAPPINGS*`.
+
 More details TK.
