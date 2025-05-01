@@ -11,7 +11,7 @@ accessible by Medley.
 
 ### Font metrics
 
-Clone the project [HtmlStreamFontMetrics](../HtmlStreamFontMetrics) into another local directory, say
+Clone the project [HtmlStreamFontMetrics](https://github.com/hjellinek/HtmlStreamFontMetrics) into another local directory, say
 `/Users/lisphacker/HtmlStreamFontMetrics`.
 
 ## Running
