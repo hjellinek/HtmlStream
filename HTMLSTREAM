@@ -1,8 +1,8 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "30-Apr-2025 12:11:27" {HTMLSTREAM}HTMLSTREAM.;21 83691  
+(FILECREATED " 1-May-2025 14:37:58" {HTMLSTREAM}HTMLSTREAM.;22 83691  
 
-      :CHANGES-TO (FUNCTIONS HTML.OUTCHARFN HTML.WRITE-PREFACE \HTML.MAYBE-START-PAGE OPENHTMLSTREAM
+      :CHANGES-TO (FUNCTIONS HTML.WRITE-PREFACE HTML.OUTCHARFN \HTML.MAYBE-START-PAGE OPENHTMLSTREAM
                          HTML.BACKCOLOR HTML.COLOR HTML.LINEFEED HTML.MOVETO HTML.XPOSITION 
                          HTML.YPOSITION HTML.SCALEDBITBLT \HTML.TAB-DELTA-X)
                   (VARS HTMLSTREAMCOMS)
@@ -581,11 +581,11 @@
                                        else (CL:FORMAT BACKING "%"~a%"" FONT]
                           (CL:FORMAT BACKING "].map(singleQuote).join(%",%");~%%")))
                 (CL:FORMAT BACKING "<!DOCTYPE HTML>~%%")
-                (CL:FORMAT BACKING 
-                       "<!-- Created by Medley Interlisp software. Details at interlisp.org. -->~%%")
                 (CL:FORMAT BACKING "<html>~%%")
                 (CL:FORMAT BACKING "<head>~%%")
                 (CL:FORMAT BACKING "<title>~a</title>~%%" (HTML-ENCODE TITLE))
+                (CL:FORMAT BACKING 
+                       "<!-- Created by Medley Interlisp software. Details at interlisp.org. -->~%%")
                 (CL:FORMAT BACKING 
                        "<link rel=%"preconnect%" href=%"https://fonts.googleapis.com%">~%%")
                 (CL:FORMAT BACKING 
