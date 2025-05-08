@@ -1,7 +1,7 @@
 (DEFINE-FILE-INFO PACKAGE (DEFPACKAGE "UNCOMPRESSED-PNG" (USE "COMMON-LISP") (NICKNAMES "U-PNG") (
 EXPORT "WRITE-BITMAP" "PIXEL-TO-MONOCHROME-RGBA")) READTABLE "XCL" BASE 10)
 
-(IL:FILECREATED " 7-May-2025 16:26:11" IL:{HTMLSTREAM}U-PNG.\;2 14415  
+(IL:FILECREATED " 8-May-2025 16:18:23" IL:{HTMLSTREAM}U-PNG.\;4 18002  
 
       :CHANGES-TO (IL:FUNCTIONS WRITE-BITMAP TEST-IT)
 
@@ -226,10 +226,14 @@
 
    (IL:* IL:|;;| "PIXEL-MAPPER takes three arguments: the source BITMAP, X and Y coordinates, returning 4 integers: red, green, blue,alpha")
 
-   (LET* ((WIDTH (OR WIDTH (IL:BITMAPWIDTH BITMAP)))
-          (HEIGHT (OR HEIGHT (IL:BITMAPHEIGHT BITMAP)))
-          (LEFT (OR LEFT 0))
+   (LET* ((LEFT (OR LEFT 0))
           (BOTTOM (OR BOTTOM 0))
+          (BITMAP-WIDTH (IL:BITMAPWIDTH BITMAP))
+          (BITMAP-HEIGHT (IL:BITMAPHEIGHT BITMAP))
+          (WIDTH (MIN (OR WIDTH BITMAP-WIDTH)
+                      (- BITMAP-WIDTH LEFT)))
+          (HEIGHT (MIN (OR HEIGHT BITMAP-HEIGHT)
+                       (- BITMAP-HEIGHT BOTTOM)))
           (THRESHOLD (OR THRESHOLD 1))
           (BIT-DEPTH 8)
           (A 1)                                              (IL:* IL:\; "ADLER-a")
@@ -239,6 +243,14 @@
           (PITCH (1+ (* WIDTH (IF USE-ALPHA
                                   4
                                   3)))))                     (IL:* IL:\; "image array pitch")
+         (IF (OR (>= LEFT BITMAP-WIDTH)
+                 (>= BOTTOM BITMAP-HEIGHT)
+                 (< LEFT 0)
+                 (< BOTTOM 0)
+                 (ZEROP WIDTH)
+                 (ZEROP HEIGHT))
+             (ERROR "Image parameters are out of range: left ~d bottom ~d width ~d height ~d" LEFT 
+                    BOTTOM WIDTH HEIGHT))
          (SVPNG-U8A '(137 80 78 71 13 10 26 10)
                 8 OUTPUT-FN)                                 (IL:* IL:\; "PNG magic number")
          (SVPNG-BEGIN "IHDR" 13 OUTPUT-FN)                   (IL:* IL:\; "(IHDR chunk:")
@@ -260,10 +272,10 @@
          (SVPNG-U8AC '(120 1)
                 2 OUTPUT-FN)                                 (IL:* IL:\; 
                                                              "deflate block begin (2 bytes)")
-         (LOOP :FOR Y :FROM BOTTOM :BELOW (+ BOTTOM HEIGHT)
-               :DO                                           (IL:* IL:\; 
+         (LOOP :FOR Y :FROM (+ BOTTOM HEIGHT -1)
+               :DOWNTO BOTTOM :DO                            (IL:* IL:\; 
                                                   "each horizontal line makes a block for simplicity")
-               (SVPNG-U8C (IF (= Y (+ BOTTOM HEIGHT -1))
+               (SVPNG-U8C (IF (= Y BOTTOM)
                               1
                               0)
                       OUTPUT-FN)                             (IL:* IL:\; 
@@ -277,8 +289,7 @@
                (LOOP :FOR X :FROM LEFT :BELOW (+ LEFT WIDTH)
                      :DO
                      (XCL:DESTRUCTURING-BIND (RED GREEN BLUE ALPHA)
-                            (FUNCALL PIXEL-MAPPER BITMAP THRESHOLD X (- (+ HEIGHT BOTTOM)
-                                                                        1 Y))
+                            (FUNCALL PIXEL-MAPPER BITMAP THRESHOLD X Y)
                                                              (IL:* IL:\; "output RGB and alpha")
                             (SVPNG-U8ADLER RED OUTPUT-FN)
                             (SVPNG-U8ADLER GREEN OUTPUT-FN)
@@ -302,17 +313,59 @@
 (DEFUN DEBUG-OUTPUT-FN (BYTE)
    (FORMAT T "Byte: ~2,'0X " BYTE))
 
-(DEFUN TEST-IT ()
+(DEFUN TEST-IT (&OPTIONAL (ROOT-FILE-NAME "{DSK}/tmp/test-images/test-image."))
    "Write a small bitmap as a PNG file"
-   (LET ((FILE-NAME "{DSK}/tmp/lisp-test.png")
-         (TEST-BITMAP (IL:BITMAPCREATE 16 16 1)))
-        (DOTIMES (D 16)
-            (IL:BITMAPBIT TEST-BITMAP D D 1))
-        (WITH-OPEN-STREAM (OUT (IL:OPENSTREAM FILE-NAME 'IL:OUTPUT NIL '((IL:FORMAT :THROUGH))))
-               (WRITE-BITMAP TEST-BITMAP NIL NIL NIL NIL NIL NIL #'(LAMBDA (BYTE)
-                                                                          (IL:BOUT OUT BYTE))
-                      #'PIXEL-TO-MONOCHROME-RGBA))
-        FILE-NAME))
+   (LET* ((TEST-BITMAP (IL:BITMAPCREATE 16 16))
+          (STREAM (IL:DSPCREATE TEST-BITMAP)))
+         (FLET ((OPEN (SUFFIX)
+                      (IL:OPENSTREAM (CONCATENATE 'STRING ROOT-FILE-NAME SUFFIX ".png")
+                             'IL:OUTPUT NIL '((IL:FORMAT :THROUGH)))))
+
+               (IL:* IL:|;;| "bitmap origin is the bottom left corner")
+
+               (IL:MOVETO 0 8 STREAM)                        (IL:* IL:\; 
+                                                             "draw \"A\" in upper left corner")
+               (FORMAT STREAM "A")
+               (IL:MOVETO 8 0 STREAM)
+               (FORMAT STREAM "B")                           (IL:* IL:\; 
+                                                             "draw \"B\" in lower right corner")
+               (DOTIMES (D 16)                               (IL:* IL:\; 
+                                                         "draw a line from lower left to upper right")
+                   (IL:BITMAPBIT TEST-BITMAP D D 1))
+               (WITH-OPEN-STREAM (OUT (OPEN "base"))         (IL:* IL:\; "write the full image")
+                      (WRITE-BITMAP TEST-BITMAP NIL NIL NIL NIL NIL NIL
+                             #'(LAMBDA (BYTE)
+                                      (IL:BOUT OUT BYTE))
+                             #'PIXEL-TO-MONOCHROME-RGBA))
+               (WITH-OPEN-STREAM (OUT (OPEN "@8x8"))         (IL:* IL:\; 
+                                                    "write the upper right corner - did lower right!")
+                      (WRITE-BITMAP TEST-BITMAP NIL 8 8 NIL NIL NIL #'(LAMBDA (BYTE)
+                                                                             (IL:BOUT OUT BYTE))
+                             #'PIXEL-TO-MONOCHROME-RGBA))
+               (WITH-OPEN-STREAM (OUT (OPEN "8x8"))          (IL:* IL:\; 
+                                                             "write the lower left corner - correct")
+                      (WRITE-BITMAP TEST-BITMAP NIL NIL NIL 8 8 NIL #'(LAMBDA (BYTE)
+                                                                             (IL:BOUT OUT BYTE))
+                             #'PIXEL-TO-MONOCHROME-RGBA))
+               (WITH-OPEN-STREAM (OUT (OPEN "too-big"))      (IL:* IL:\; 
+                                                             "write the entire thing again")
+                      (WRITE-BITMAP TEST-BITMAP NIL NIL NIL 100 100 NIL
+                             #'(LAMBDA (BYTE)
+                                      (IL:BOUT OUT BYTE))
+                             #'PIXEL-TO-MONOCHROME-RGBA))
+               (XCL:IGNORE-ERRORS (WITH-OPEN-STREAM (OUT (OPEN "0x0"))
+                                                             (IL:* IL:\; "error: 0 x 0")
+                                         (WRITE-BITMAP TEST-BITMAP NIL NIL NIL 0 0 NIL
+                                                #'(LAMBDA (BYTE)
+                                                         (IL:BOUT OUT BYTE))
+                                                #'PIXEL-TO-MONOCHROME-RGBA)))
+               (XCL:IGNORE-ERRORS (WITH-OPEN-STREAM (OUT (OPEN "out-of-bounds"))
+                                                             (IL:* IL:\; "error: out of bounds")
+                                         (WRITE-BITMAP TEST-BITMAP NIL 100 100 NIL NIL NIL
+                                                #'(LAMBDA (BYTE)
+                                                         (IL:BOUT OUT BYTE))
+                                                #'PIXEL-TO-MONOCHROME-RGBA)))
+               T)))
 
 (DEFUN WRITE-BITMAP-AS-PNG (BITMAP)
    (LET ((THRESHOLD (/ (IL:BITSPERPIXEL BITMAP)
@@ -339,7 +392,7 @@
 ) (4697 5165 (SVPNG-U32C 4697 . 5165)) (5167 5414 (SVPNG-U8A 5167 . 5414)) (5416 5939 (SVPNG-U8AC 5416
  . 5939)) (5941 6154 (SVPNG-U8ADLER 5941 . 6154)) (6156 6526 (SVPNG-U8C 6156 . 6526)) (6528 7154 (
 PIXEL-TO-MONOCHROME-RGBA 6528 . 7154)) (7156 7484 (LOGICAL-RIGHT-SHIFT 7156 . 7484)) (7486 7806 (
-LOGICAL-LEFT-SHIFT 7486 . 7806)) (7850 12774 (WRITE-BITMAP 7850 . 12774)) (12811 12880 (
-DEBUG-OUTPUT-FN 12811 . 12880)) (12882 13458 (TEST-IT 12882 . 13458)) (13460 13942 (
-WRITE-BITMAP-AS-PNG 13460 . 13942)) (13944 14386 (TEST-PNG-BASE64 13944 . 14386)))))
+LOGICAL-LEFT-SHIFT 7486 . 7806)) (7850 13182 (WRITE-BITMAP 7850 . 13182)) (13219 13288 (
+DEBUG-OUTPUT-FN 13219 . 13288)) (13290 17045 (TEST-IT 13290 . 17045)) (17047 17529 (
+WRITE-BITMAP-AS-PNG 17047 . 17529)) (17531 17973 (TEST-PNG-BASE64 17531 . 17973)))))
 IL:STOP
