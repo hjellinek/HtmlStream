@@ -1,9 +1,9 @@
 (DEFINE-FILE-INFO PACKAGE (DEFPACKAGE "UNCOMPRESSED-PNG" (USE "COMMON-LISP") (NICKNAMES "U-PNG") (
 EXPORT "WRITE-BITMAP" "PIXEL-TO-MONOCHROME-RGBA")) READTABLE "XCL" BASE 10)
 
-(IL:FILECREATED " 8-May-2025 16:18:23" IL:{HTMLSTREAM}U-PNG.\;4 18002  
+(IL:FILECREATED " 9-May-2025 10:46:24" IL:{HTMLSTREAM}U-PNG.\;5 18025  
 
-      :CHANGES-TO (IL:FUNCTIONS WRITE-BITMAP TEST-IT)
+      :CHANGES-TO (IL:FUNCTIONS TEST-IT WRITE-BITMAP)
 
       :PREVIOUS-DATE "19-Dec-2024 10:55:02" IL:{HTMLSTREAM}U-PNG.\;1)
 
@@ -314,7 +314,7 @@
    (FORMAT T "Byte: ~2,'0X " BYTE))
 
 (DEFUN TEST-IT (&OPTIONAL (ROOT-FILE-NAME "{DSK}/tmp/test-images/test-image."))
-   "Write a small bitmap as a PNG file"
+   "Write a small bitmap as a series of PNG files of different regions"
    (LET* ((TEST-BITMAP (IL:BITMAPCREATE 16 16))
           (STREAM (IL:DSPCREATE TEST-BITMAP)))
          (FLET ((OPEN (SUFFIX)
@@ -338,7 +338,7 @@
                                       (IL:BOUT OUT BYTE))
                              #'PIXEL-TO-MONOCHROME-RGBA))
                (WITH-OPEN-STREAM (OUT (OPEN "@8x8"))         (IL:* IL:\; 
-                                                    "write the upper right corner - did lower right!")
+                                                             "write the upper right corner")
                       (WRITE-BITMAP TEST-BITMAP NIL 8 8 NIL NIL NIL #'(LAMBDA (BYTE)
                                                                              (IL:BOUT OUT BYTE))
                              #'PIXEL-TO-MONOCHROME-RGBA))
@@ -393,6 +393,6 @@
  . 5939)) (5941 6154 (SVPNG-U8ADLER 5941 . 6154)) (6156 6526 (SVPNG-U8C 6156 . 6526)) (6528 7154 (
 PIXEL-TO-MONOCHROME-RGBA 6528 . 7154)) (7156 7484 (LOGICAL-RIGHT-SHIFT 7156 . 7484)) (7486 7806 (
 LOGICAL-LEFT-SHIFT 7486 . 7806)) (7850 13182 (WRITE-BITMAP 7850 . 13182)) (13219 13288 (
-DEBUG-OUTPUT-FN 13219 . 13288)) (13290 17045 (TEST-IT 13290 . 17045)) (17047 17529 (
-WRITE-BITMAP-AS-PNG 17047 . 17529)) (17531 17973 (TEST-PNG-BASE64 17531 . 17973)))))
+DEBUG-OUTPUT-FN 13219 . 13288)) (13290 17068 (TEST-IT 13290 . 17068)) (17070 17552 (
+WRITE-BITMAP-AS-PNG 17070 . 17552)) (17554 17996 (TEST-PNG-BASE64 17554 . 17996)))))
 IL:STOP
