@@ -6,8 +6,8 @@ An implementation of the Medley Interlisp device-independent graphics API for HT
 
 ### Code
 
-Clone this project and copy `HTMLSTREAM.DFASL` and, optionally, its Lisp source file, to a local directory
-accessible by Medley.
+Clone this project and copy `HTMLSTREAM.DFASL`, `U-PNG.DFASL`, `BASE64.DFASL` and optionally their Lisp source files,
+to a local directory accessible by Medley.
 
 ### Font metrics
 
