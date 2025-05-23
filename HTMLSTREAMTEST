@@ -1,10 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "12-May-2025 16:05:07" {HTMLSTREAM}HTMLSTREAMTEST.;38 53919  
+(FILECREATED "23-May-2025 15:38:22" {HTMLSTREAM}HTMLSTREAMTEST.;43 55443  
 
-      :CHANGES-TO (FUNCTIONS WITH-BACKTRACE HTML-FILES CONVERT-SOURCE-TO-HTML CONVERT-TEDIT-TO-HTML)
+      :CHANGES-TO (FUNCTIONS HTML-FILES DOT-FILE-P MAKE-CHILD-DIRECTORY PARSE-DIRECTORIES)
+                  (VARS HTMLSTREAMTESTCOMS)
 
-      :PREVIOUS-DATE " 9-May-2025 12:16:27" {HTMLSTREAM}HTMLSTREAMTEST.;34)
+      :PREVIOUS-DATE "12-May-2025 16:05:07" {HTMLSTREAM}HTMLSTREAMTEST.;38)
 
 
 (PRETTYCOMPRINT HTMLSTREAMTESTCOMS)
@@ -41,6 +42,7 @@
         
         (* ;; "HCFILES for HTML")
 
+        (FUNCTIONS PARSE-DIRECTORIES DOT-FILE-P MAKE-CHILD-DIRECTORY)
         (FUNCTIONS WITH-BACKTRACE HTML-FILES CONVERT-SOURCE-TO-HTML CONVERT-TEDIT-TO-HTML)
         
         (* ;; "misc")
@@ -843,6 +845,27 @@
 (* ;; "HCFILES for HTML")
 
 
+(CL:DEFUN PARSE-DIRECTORIES (FILEPATH)
+   "Return a list of the component directories in PATHNAME"
+   [for POS from 1 until (IGREATERP POS (NCHARS FILEPATH))
+      collect (LET ((END (STRPOS ">" FILEPATH POS)))
+                   (COND
+                      (END (PROG1 (SUBSTRING FILEPATH POS (IPLUS END -1))
+                                  (SETQ POS END)))
+                      (T (PROG1 (SUBSTRING FILEPATH POS)
+                             (SETQ POS (IPLUS 1 (NCHARS FILEPATH))))])
+
+(CL:DEFUN DOT-FILE-P (NAME)
+   "Does the NAME portion of a file path start with a period?"
+   (EQ (CHARCODE %.)
+       (NTHCHARCODE NAME 1)))
+
+(CL:DEFUN MAKE-CHILD-DIRECTORY (PARENT CHILD)
+   (LET ((UNPACKED (UNPACKFILENAME.STRING PARENT)))
+        (PACKFILENAME.STRING (APPEND (LIST 'DIRECTORY (CONCAT (LISTGET UNPACKED 'DIRECTORY)
+                                                             ">" CHILD))
+                                    UNPACKED))))
+
 (DEFMACRO WITH-BACKTRACE (&BODY (BODY DECLS ENV))
    "If the BODY's execution signals any condition, show a backtrace and continue"
    `(CONDITIONS:HANDLER-CASE (PROGN ,@BODY)
@@ -850,8 +873,11 @@
                   (CL:FORMAT T "!! Handling error ~s~%%" E)
                   (BACKTRACE NIL NIL 3))))
 
-(CL:DEFUN HTML-FILES (&KEY BASE (OUTPUT-DIR "{DSK}/tmp/html")
-                           REDO SUBSETS (DRIBBLE T))
+(CL:DEFUN HTML-FILES (&KEY (BASE (PSEUDOFILENAME (MEDLEYDIR)))
+                           INCLUDE
+                           (OUTPUT-DIR "{DSK}/tmp/html")
+                           REDO SUBSETS (DRIBBLE T)
+                           (PAUSE T))
 
    (* ;; "BASE is the root directory. Doesn't replace HTML files except when REDO")
 
@@ -861,71 +887,83 @@
    (LET*
     [(THIS.WINDOW (PROCESSPROP (THIS.PROCESS)
                          'WINDOW]
-    (CL:IF DRIBBLE (DRIBBLE "{DSK}<tmp>html.log"))
-    (WINDOWPROP THIS.WINDOW 'PAGEFULLFN #'NILL)
+    (FILESLOAD SKETCH)
+    (FONTSET 'STANDARD)
+    (COND
+       (DRIBBLE (DRIBBLE "{DSK}<tmp>html.log")))
+    [COND
+       ((NOT PAUSE)
+        (WINDOWPROP THIS.WINDOW 'PAGEFULLFN #'NILL]
     (CL:UNWIND-PROTECT
-        [LET ([DIRLIST (LIST (OR BASE (PSEUDOFILENAME (MEDLEYDIR]
-              [PHASES (OR SUBSETS '(TEDIT PRETTY INDEX HRULE]
-              (OUTPUT-EXT ".html"))
-             (FILESLOAD SKETCH)
-             (FONTSET 'STANDARD)
-             (WHILE DIRLIST
-                DO (SETQ BASE (POP DIRLIST))
-                   (FOR SRCPATH IN (DIRECTORY (CONCAT BASE "*.*;"))
-                      DO (PROG* [(SRC (UNPACKFILENAME SRCPATH))
-                                 [EXT (U-CASE (LISTGET SRC 'EXTENSION]
-                                 (DIR (LISTGET SRC 'DIRECTORY))
-                                 FRDY LDGP DEST (NOV (PACKFILENAME `(VERSION NIL ,@SRC]
-                                (CL:FORMAT T "Starting on ~a:~%%" SRCPATH)
-                                (CL:WHEN (DIRECTORYNAMEP SRCPATH)
+        [CL:FLET
+         ((CHILD (DIR)
+                 (MAKE-CHILD-DIRECTORY BASE DIR)))
+         (LET
+          ((DIRLIST (LIST (OR (MAPCAR #'CHILD INCLUDE)
+                              BASE)))
+           [PHASES (OR SUBSETS '(TEDIT PRETTY INDEX HRULE]
+           (OUTPUT-EXT ".html"))
+          (WHILE DIRLIST
+             DO
+             (SETQ BASE (POP DIRLIST))
+             (FOR SRCPATH IN (DIRECTORY (CONCAT BASE "*.*;"))
+                DO (PROG* [(SRC (UNPACKFILENAME.STRING SRCPATH))
+                           [NAME (U-CASE (LISTGET SRC 'NAME]
+                           [EXT (U-CASE (LISTGET SRC 'EXTENSION]
+                           (DIR (LISTGET SRC 'DIRECTORY))
+                           (DIR-HIERARCHY (PARSE-DIRECTORIES DIR))
+                           (DEEPEST-CHILD-DIR (CAR (LAST DIR-HIERARCHY)))
+                           FRDY LDGP DEST (NOV (PACKFILENAME `(VERSION NIL ,@SRC]
 
-                                    (* ;; 
-                                    "any directory names, push them off and do them in another phase")
+                    (* ;; "any directory names, push them off and do them in another phase")
 
-                                    (CL:UNLESS (OR (STRPOS ">." NOV)
-                                                   (INFILEP (CONCAT NOV ".skip")))
-                                        (CL:FORMAT T "Will process dir ~a later~%%" SRCPATH)
-                                        (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH)))
-                                    (RETURN))
-                                (CL:WHEN 
-                                    (MEMB EXT
-                                          '(PDF PS SKIP HTML LCOM DFASL SH SYSOUT DRIBBLE IMPTR 
-                                                DISPLAYFONT ALL DATABASE DOCKERIGNORE GITIGNORE 
-                                                DS_STORE))
+                          (COND
+                             ((DIRECTORYNAMEP SRCPATH)
+                              [COND
+                                 ((DOT-FILE-P DEEPEST-CHILD-DIR)
+                                  (CL:FORMAT T "Skipping dot-dir ~a~%%" SRCPATH))
+                                 (T (CL:FORMAT T "Will process dir ~a later~%%" SRCPATH)
+                                    (SETQ DIRLIST (NCONC1 DIRLIST SRCPATH]
+                              (RETURN)))
+                          (COND
+                             ((DOT-FILE-P NAME)
+                              (CL:FORMAT T "Skipping dot-file ~a~%%" SRCPATH)
+                              (RETURN)))
+                          (COND
+                             ((MEMBER EXT
+                                     '("PDF" "PS" "SKIP" "HTML" "LCOM" "DFASL" "SH" "SYSOUT" 
+                                             "DRIBBLE" "IMPTR" "DISPLAYFONT" "ALL" "DATABASE" 
+                                             "DOCKERIGNORE" "GITIGNORE"))
 
-                                    (* ;; "ignore any of these extensions")
+                              (* ;; "ignore any of these extensions")
 
-                                    (RETURN))
-
-                          (* ;; 
-                  " doesn't (yet) implement  / to - translation. .readme should show up as -.readme.")
-
-                                (SETQ DEST (PACKFILENAME.STRING 'DIRECTORY OUTPUT-DIR 'BODY
-                                                  (CONCAT NOV OUTPUT-EXT)))
-                                (CL:WHEN (AND (NOT REDO)
-                                              (INFILEP DEST))
-                                    (CL:FORMAT T "~a already exists, skipping it~%%" DEST)
-                                    (RETURN))
-                                (CL:WHEN (INFILEP (CONCAT DEST ".skip"))
-                                    (CL:FORMAT T "We're told to .skip ~a~%%" DEST)
-                                    (RETURN))
-                                (IF (MEMB 'TEDIT PHASES)
-                                    THEN (CL:WHEN [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
-                                                      (CAR (NLSETQ (TEDIT.FORMATTEDFILEP SRCPATH]
-                                             (IF (EQ REDO 'TEST)
-                                                 THEN (CL:FORMAT T "Testing open ~a..." SRCPATH)
-                                                      (CLOSEF? (OPENTEXTSTREAM SRCPATH))
-                                               ELSE (CONVERT-TEDIT-TO-HTML SRCPATH DEST))
-                                             (CL:FORMAT T "Done~%%")))
-                                (LET (LSFP)
-                                     (CL:WHEN (AND (MEMB 'PRETTY PHASES)
-                                                   (MEMB EXT '(NIL IL))
-                                                   [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
-                                                   (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
-                                         (CL:FORMAT T "Converting source file ~a to ~a...~%%" SRCPATH
-                                                DEST)
-                                         (CONVERT-SOURCE-TO-HTML SRCPATH DEST)
-                                         (CL:FORMAT T "Done~%%"))]
+                              (CL:FORMAT T "Ignoring ~a due to extension~%%" SRCPATH)
+                              (RETURN)))
+                          (SETQ DEST (PACKFILENAME.STRING 'DIRECTORY OUTPUT-DIR 'BODY
+                                            (CONCAT NOV OUTPUT-EXT)))
+                          (COND
+                             ((AND (NOT REDO)
+                                   (INFILEP DEST))
+                              (CL:FORMAT T "~a already exists, skipping it~%%" DEST)
+                              (RETURN)))
+                          (IF (MEMB 'TEDIT PHASES)
+                              THEN (IF [OR (MEMB EXT '(TEDIT TED SKETCH BRAVO))
+                                           (CAR (NLSETQ (TEDIT.FORMATTEDFILEP SRCPATH]
+                                       THEN (IF (EQ REDO 'TEST)
+                                                THEN (CL:FORMAT T "Testing open ~a..." SRCPATH)
+                                                     (CLOSEF? (OPENTEXTSTREAM SRCPATH))
+                                              ELSE (CL:FORMAT T "Printing ~a to ~a~%%" SRCPATH DEST)
+                                                   (CONVERT-TEDIT-TO-HTML SRCPATH DEST))
+                                            (CL:FORMAT T "Done with TEdit file~%%"))
+                            ELSE (LET (LSFP)
+                                      (IF (AND (MEMB 'PRETTY PHASES)
+                                               (MEMBER EXT '(NIL IL "IL" "" "LISP" LISP))
+                                               [SETQ LSFP (CAR (NLSETQ (LISPSOURCEFILEP SRCPATH]
+                                               (NEQ LSFP *COMMON-LISP-READ-ENVIRONMENT*))
+                                          THEN (CL:FORMAT T "Converting source file ~a to ~a...~%%" 
+                                                      SRCPATH DEST)
+                                               (CONVERT-SOURCE-TO-HTML SRCPATH DEST)
+                                               (CL:FORMAT T "Done with source file~%%"]
         (WINDOWPROP THIS.WINDOW 'PAGEFULLFN NIL)
         (DRIBBLE))))
 
@@ -994,22 +1032,23 @@
    "Translate and scale a list of points"
    (for PT in POINTS collect (HTMLTEST.TRANSFORM PT X-TRANSLATE Y-TRANSLATE X-SCALE Y-SCALE)))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1759 2418 (GEN-TEST-BITMAP 1759 . 2418)) (2420 3235 (HTMLTEST.BITBLT 2420 . 3235)) (
-3237 4233 (HTMLTEST.TALL-BITBLT 3237 . 4233)) (4235 5785 (HTMLTEST.BLTSHADE 4235 . 5785)) (5787 6505 (
-HTMLTEST.ONE-PAGE-SIMPLE 5787 . 6505)) (6507 10071 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6507 . 
-10071)) (10073 10910 (HTMLTEST.ONE-PAGE-WITH-CURVE 10073 . 10910)) (10912 11734 (
-HTMLTEST.ONE-PAGE-DASHING 10912 . 11734)) (11736 13080 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11736 . 13080)) 
-(13082 15246 (HTMLTEST.TEXT-TWO-FONTS 13082 . 15246)) (15248 15763 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
-15248 . 15763)) (15765 16581 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15765 . 16581)) (16583 17333 (
-HTMLTEST.SPECIAL-TEXT-ENTITIES 16583 . 17333)) (17335 17808 (HTMLTEST.BRIEF-TEXT 17335 . 17808)) (
-17810 18551 (HTMLTEST.TABS-IN-TEXT 17810 . 18551)) (18553 20259 (HTMLTEST.BRUSHES 18553 . 20259)) (
-20284 22704 (HTMLTEST.ONE-PAGE-WITH-COLOR 20284 . 22704)) (22732 28650 (HTMLTEST.FUNNY-CHARS 22732 . 
-28650)) (28652 30230 (HTMLTEST.UNDEFINED-CHARS 28652 . 30230)) (30257 33689 (HTMLTEST.SHOW-TEXT-BOUNDS
- 30257 . 33689)) (33691 38231 (HTMLTEST.SHOW-CHAR-BOUNDS 33691 . 38231)) (38233 43175 (
-HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 38233 . 43175)) (43200 44001 (HTMLTEST.NOTO-SANS 43200 . 44001)) (
-44043 44871 (HTMLTEST.URL-ENCODE 44043 . 44871)) (44873 45989 (HTMLTEST.HTML-ENCODE 44873 . 45989)) (
-46025 46333 (WITH-BACKTRACE 46025 . 46333)) (46335 50927 (HTML-FILES 46335 . 50927)) (50929 51206 (
-CONVERT-SOURCE-TO-HTML 50929 . 51206)) (51208 51493 (CONVERT-TEDIT-TO-HTML 51208 . 51493)) (51517 
-53380 (WINDOWTEST.SHOW-TEXT-BOUNDS 51517 . 53380)) (53382 53653 (HTMLTEST.TRANSFORM 53382 . 53653)) (
-53655 53896 (HTMLTEST.TRANSFORM-POINTS 53655 . 53896)))))
+  (FILEMAP (NIL (1863 2522 (GEN-TEST-BITMAP 1863 . 2522)) (2524 3339 (HTMLTEST.BITBLT 2524 . 3339)) (
+3341 4337 (HTMLTEST.TALL-BITBLT 3341 . 4337)) (4339 5889 (HTMLTEST.BLTSHADE 4339 . 5889)) (5891 6609 (
+HTMLTEST.ONE-PAGE-SIMPLE 5891 . 6609)) (6611 10175 (HTMLTEST.ONE-PAGE-WITH-SIMPLE-GRAPHICS 6611 . 
+10175)) (10177 11014 (HTMLTEST.ONE-PAGE-WITH-CURVE 10177 . 11014)) (11016 11838 (
+HTMLTEST.ONE-PAGE-DASHING 11016 . 11838)) (11840 13184 (HTMLTEST.ONE-PAGE-WITH-SPIRAL 11840 . 13184)) 
+(13186 15350 (HTMLTEST.TEXT-TWO-FONTS 13186 . 15350)) (15352 15867 (HTMLTEST.TEXT-VERTICAL-OVERFLOW 
+15352 . 15867)) (15869 16685 (HTMLTEST.TEXT-HORIZONTAL-OVERFLOW 15869 . 16685)) (16687 17437 (
+HTMLTEST.SPECIAL-TEXT-ENTITIES 16687 . 17437)) (17439 17912 (HTMLTEST.BRIEF-TEXT 17439 . 17912)) (
+17914 18655 (HTMLTEST.TABS-IN-TEXT 17914 . 18655)) (18657 20363 (HTMLTEST.BRUSHES 18657 . 20363)) (
+20388 22808 (HTMLTEST.ONE-PAGE-WITH-COLOR 20388 . 22808)) (22836 28754 (HTMLTEST.FUNNY-CHARS 22836 . 
+28754)) (28756 30334 (HTMLTEST.UNDEFINED-CHARS 28756 . 30334)) (30361 33793 (HTMLTEST.SHOW-TEXT-BOUNDS
+ 30361 . 33793)) (33795 38335 (HTMLTEST.SHOW-CHAR-BOUNDS 33795 . 38335)) (38337 43279 (
+HTMLTEST.SHOW-COLOR-CHAR-BOUNDS 38337 . 43279)) (43304 44105 (HTMLTEST.NOTO-SANS 43304 . 44105)) (
+44147 44975 (HTMLTEST.URL-ENCODE 44147 . 44975)) (44977 46093 (HTMLTEST.HTML-ENCODE 44977 . 46093)) (
+46129 46637 (PARSE-DIRECTORIES 46129 . 46637)) (46639 46784 (DOT-FILE-P 46639 . 46784)) (46786 47101 (
+MAKE-CHILD-DIRECTORY 46786 . 47101)) (47103 47411 (WITH-BACKTRACE 47103 . 47411)) (47413 52451 (
+HTML-FILES 47413 . 52451)) (52453 52730 (CONVERT-SOURCE-TO-HTML 52453 . 52730)) (52732 53017 (
+CONVERT-TEDIT-TO-HTML 52732 . 53017)) (53041 54904 (WINDOWTEST.SHOW-TEXT-BOUNDS 53041 . 54904)) (54906
+ 55177 (HTMLTEST.TRANSFORM 54906 . 55177)) (55179 55420 (HTMLTEST.TRANSFORM-POINTS 55179 . 55420)))))
 STOP
