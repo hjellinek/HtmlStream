@@ -35,4 +35,5 @@ software to generate the metrics files.
 
 `HTMLSTREAM` maps common Medley font names to Noto font names using the a-list `*WEB-FONT-MAPPINGS*`.
 
-More details TK.
+See the file `HTMLSTREAM.TEdit` for further details.
+
