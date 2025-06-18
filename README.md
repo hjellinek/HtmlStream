@@ -16,13 +16,14 @@ Clone the project [HtmlStreamFontMetrics](https://github.com/hjellinek/HtmlStrea
 
 ## Running
 
-Load `HTMLSTREAM.DFASL` into your running Medley system.   Set the variable `*WEB-FONT-DIRECTORY*` to the `fonts`
-subdirectory of the `HtmlStreamFontMetrics` directory above, using Interlisp/Tenex syntax.  In our example that would
-be `{DSK}/Users/lisphacker/HtmlStreamFontMetrics/fonts` or `{DSK}<Users>lisphacker>HtmlStreamFontMetrics>fonts>`.
+1. Set the variable `*WEB-FONT-DIRECTORY*` to the `fonts` subdirectory of the `HtmlStreamFontMetrics` directory above,
+using Interlisp/Tenex syntax.  In our example that would be `{DSK}/Users/lisphacker/HtmlStreamFontMetrics/fonts`
+or `{DSK}<Users>lisphacker>HtmlStreamFontMetrics>fonts>`.  You can do this in your `INIT` file.
 
-Generate HTML output by "printing" to a file with the extension `html`.
+2. Load `HTMLSTREAM.DFASL` into your running Medley system.
 
-You can open the resulting file in any modern Web browser.
+3. Generate HTML output by "printing" to a file with the extension `html`.  You can open the resulting file in any
+modern Web browser.
 
 ## Implementation details
 
