@@ -30,8 +30,9 @@ You can open the resulting file in any modern Web browser.
 
 `HTMLSTREAM` generates pages using Google's Noto webfonts.  The font metrics files above
 describe the line height, max ascent, max descent, and character widths of all characters in
-the intersection of XCCS 3.0.0 and Unicode, segmented by XCCS charset.  We run the [WebFontMetrics](../WebFontMetrics)
-software to generate the metrics files.
+the intersection of XCCS 3.0.0 and Unicode, segmented by XCCS charset.  We run the
+[WebFontMetrics](https://github.com/hjellinek/WebFontMetrics) software (not yet public)
+to generate the metrics files.
 
 `HTMLSTREAM` maps common Medley font names to Noto font names using the a-list `*WEB-FONT-MAPPINGS*`.
 

@@ -1,0 +1,289 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>{HTMLSTREAM}HTMLSTREAM.HTML;1</title>
+<!-- Created by Medley Interlisp software. Details at interlisp.org. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans&family=Noto+Sans+Simplified+Chinese&family=Noto+Sans+Traditional+Chinese&family=Noto+Sans+JP&family=Noto+Sans+KR&family=Noto+Sans+Arabic&family=Noto+Sans+Hebrew&family=Noto+Sans+Runic&family=Noto+Sans+Georgian&family=Noto+Sans+Armenian&family=Noto+Sans+Thai&family=Noto+Sans+Lao&family=Noto+Sans+Gurmukhi&family=Noto+Sans+Bengali&family=Noto+Sans+Math&family=Noto+Sans+Symbols&family=Noto+Sans+Symbols+2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif&family=Noto+Serif+Simplified+Chinese&family=Noto+Serif+Traditional+Chinese&family=Noto+Serif+JP&family=Noto+Serif+KR&family=Noto+Naskh+Arabic&family=Noto+Serif+Hebrew&family=Noto+Sans+Runic&family=Noto+Serif+Georgian&family=Noto+Serif+Armenian&family=Noto+Serif+Thai&family=Noto+Serif+Lao&family=Noto+Serif+Devanagari&family=Noto+Serif+Gurmukhi&family=Noto+Serif+Bengali&family=Noto+Sans+Math&family=Noto+Sans+Symbols&family=Noto+Sans+Symbols+2">
+<script>
+function singleQuote(fn) { return "'" + fn + "'"; }
+    const notoSans = ["Noto Sans","Noto Sans Simplified Chinese","Noto Sans Traditional Chinese","Noto Sans JP","Noto Sans KR","Noto Sans Arabic","Noto Sans Hebrew","Noto Sans Runic","Noto Sans Georgian","Noto Sans Armenian","Noto Sans Thai","Noto Sans Lao","Noto Sans Gurmukhi","Noto Sans Bengali","Noto Sans Math","Noto Sans Symbols","Noto Sans Symbols 2"].map(singleQuote).join(",");
+    const notoSansMono = ["Noto Sans Mono"].map(singleQuote).join(",");
+    const notoSansDisplay = ["Noto Sans Display"].map(singleQuote).join(",");
+    const notoSerif = ["Noto Serif","Noto Serif Simplified Chinese","Noto Serif Traditional Chinese","Noto Serif JP","Noto Serif KR","Noto Naskh Arabic","Noto Serif Hebrew","Noto Sans Runic","Noto Serif Georgian","Noto Serif Armenian","Noto Serif Thai","Noto Serif Lao","Noto Serif Devanagari","Noto Serif Gurmukhi","Noto Serif Bengali","Noto Sans Math","Noto Sans Symbols","Noto Sans Symbols 2"].map(singleQuote).join(",");
+    const sizes = [8, 10, 12, 14, 16, 18, 20, 24, 32, 40, 92, ];
+    const families = [notoSans, notoSansMono, notoSansDisplay, notoSerif];
+    const fontLoadPromises = [];
+    for (const family of families) {
+        for (const size of sizes) {
+            fontLoadPromises.push(document.fonts.load(size+"pt "+family));
+        }
+    }
+    Promise.all(fontLoadPromises).then(_ => { console.log('All fonts loaded');});
+</script>
+<style>
+text { white-space: pre; }
+.ns { font-family: 'Noto Sans', 'Noto Sans Simplified Chinese', 'Noto Sans Traditional Chinese', 'Noto Sans JP', 'Noto Sans KR', 'Noto Sans Arabic', 'Noto Sans Hebrew', 'Noto Sans Runic', 'Noto Sans Georgian', 'Noto Sans Armenian', 'Noto Sans Thai', 'Noto Sans Lao', 'Noto Sans Gurmukhi', 'Noto Sans Bengali', 'Noto Sans Math', 'Noto Sans Symbols', 'Noto Sans Symbols 2', sans-serif; }
+.nsm { font-family: 'Noto Sans Mono', monospace; }
+.nsd { font-family: 'Noto Sans Display', sans-serif; }
+.nsf { font-family: 'Noto Serif', 'Noto Serif Simplified Chinese', 'Noto Serif Traditional Chinese', 'Noto Serif JP', 'Noto Serif KR', 'Noto Naskh Arabic', 'Noto Serif Hebrew', 'Noto Sans Runic', 'Noto Serif Georgian', 'Noto Serif Armenian', 'Noto Serif Thai', 'Noto Serif Lao', 'Noto Serif Devanagari', 'Noto Serif Gurmukhi', 'Noto Serif Bengali', 'Noto Sans Math', 'Noto Sans Symbols', 'Noto Sans Symbols 2', serif; }
+.sz8 { font-size: 800pt; }
+.sz10 { font-size: 1000pt; }
+.sz12 { font-size: 1200pt; }
+.sz14 { font-size: 1400pt; }
+.sz16 { font-size: 1600pt; }
+.sz18 { font-size: 1800pt; }
+.sz20 { font-size: 2000pt; }
+.sz24 { font-size: 2400pt; }
+.sz32 { font-size: 3200pt; }
+.sz40 { font-size: 4000pt; }
+.sz92 { font-size: 9200pt; }
+.bold { font-weight: bold; }
+.italic { font-style: italic; }
+.capb { stroke-linecap: butt; }
+.capr { stroke-linecap: round; }
+.caps { stroke-linecap: square; }
+.joinm { stroke-linejoin: miter; }
+.joinr { stroke-linejoin: round; }
+.joinb { stroke-linejoin: bevel; }
+</style>
+</head>
+<body>
+<svg width='612.0pt' height='792.0pt' viewBox='0 0 61200 79200' style='background-color: #FFFFFF;'>
+<text class='ns sz14 bold' fill='#000000' x='0' y='8825'>HTMLSTREAM</text>
+<text class='ns sz8 italic' fill='#000000' x='7200' y='11164'>Herb Jellinek &lt;jellinek@interlisp.org&gt;, June 2025</text>
+<text class='ns sz10' fill='#000000' x='7200' y='14012'>An implementation of the Medley Interlisp device-independent graphics </text>
+<text class='ns sz10' fill='#000000' x='7200' y='15465'>API for HTML.  This package makes it possible to print ("hardcopy") to a file </text>
+<text class='ns sz10' fill='#000000' x='7200' y='16918'>with the extension </text>
+<text class='nsm sz10' fill='#000000' x='19108' y='16918'>.html;</text>
+<text class='ns sz10' fill='#000000' x='23902' y='16918'> the output will be formatted in HTML.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='19824'>Installation</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='22730'>Code</text>
+<text class='ns sz10' fill='#000000' x='7200' y='25636'>Clone this project and copy </text>
+<text class='nsm sz10' fill='#000000' x='24501' y='25636'>HTMLSTREAM.DFASL</text>
+<text class='ns sz10' fill='#000000' x='37285' y='25636'>, </text>
+<text class='nsm sz10' fill='#000000' x='37988' y='25636'>U-PNG.DFASL</text>
+<text class='ns sz10' fill='#000000' x='46777' y='25636'>, </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='27089'>BASE64.DFASL,</text>
+<text class='ns sz10' fill='#000000' x='17587' y='27089'> and optionally their Lisp source files, to a local directory </text>
+<text class='ns sz10' fill='#000000' x='7200' y='28542'>accessible by Medley.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='31448'>Font metrics</text>
+<text class='ns sz10' fill='#000000' x='7200' y='34354'>Clone the project HtmlStreamFontMetrics </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='35807'>(https://github.com/hjellinek/HtmlStreamFontMetrics</text>
+<text class='ns sz10' fill='#000000' x='47949' y='35807'>) into </text>
+<text class='ns sz10' fill='#000000' x='7200' y='37260'>another local directory, say </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='38713'>/Users/lisphacker/HtmlStreamFontMetrics</text>
+<text class='ns sz10' fill='#000000' x='38361' y='38713'>.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='41619'>Running</text>
+<text class='ns sz10' fill='#000000' x='7200' y='44525'>Load </text>
+<text class='nsm sz10' fill='#000000' x='10616' y='44525'>HTMLSTREAM.DFASL</text>
+<text class='ns sz10' fill='#000000' x='23400' y='44525'> into your running Medley system.   Set the </text>
+<text class='ns sz10' fill='#000000' x='7200' y='45978'>variable </text>
+<text class='nsm sz10' fill='#000000' x='12523' y='45978'>*WEB-FONT-DIRECTORY*</text>
+<text class='ns sz10' fill='#000000' x='28503' y='45978'> to the fonts subdirectory of the </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='47431'>HtmlStreamFontMetrics</text>
+<text class='ns sz10' fill='#000000' x='23979' y='47431'> directory above, using Interlisp/Tenex syntax.  </text>
+<text class='ns sz10' fill='#000000' x='7200' y='48884'>In our example that would be </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='50337'>{DSK}/Users/lisphacker/HtmlStreamFontMetrics/fonts</text>
+<text class='ns sz10' fill='#000000' x='47150' y='50337'> or </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='51790'>{DSK}&lt;Users&gt;lisphacker&gt;HtmlStreamFontMetrics&gt;fonts&gt;</text>
+<text class='ns sz10' fill='#000000' x='47949' y='51790'>.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='54696'>Generate HTML output by "printing" to a file with the extension </text>
+<text class='nsm sz10' fill='#000000' x='47082' y='54696'>html</text>
+<text class='ns sz10' fill='#000000' x='50278' y='54696'>.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='57602'>You can open the resulting file in any modern Web browser.  </text>
+<text class='nsm sz10' fill='#000000' x='45401' y='57602'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='53391' y='57602'> </text>
+<text class='ns sz10' fill='#000000' x='7200' y='59055'>adds a </text>
+<text class='nsm sz10' fill='#000000' x='11662' y='59055'>SEE</text>
+<text class='ns sz10' fill='#000000' x='14059' y='59055'> method to FileBrowser to allow you to view HTML files.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='61961'>Fonts</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='64867'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='64867'> uses Google's Noto webfonts (see</text>
+<text class='nsm sz10' fill='#000000' x='36670' y='64867'> </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='66320'>https://fonts.google.com/noto</text>
+<text class='ns sz10' fill='#000000' x='30371' y='66320'>). The font metrics files describe the </text>
+<text class='ns sz10' fill='#000000' x='7200' y='67773'>line height, max ascent, max descent, and character widths of all </text>
+<text class='ns sz10' fill='#000000' x='7200' y='69226'>characters in the intersection of XCCS 3.0.0 and Unicode, segmented by </text>
+<text class='ns sz10' fill='#000000' x='7200' y='70679'>XCCS charset.</text>
+</svg>
+<svg width='612.0pt' height='792.0pt' viewBox='0 0 61200 79200' style='background-color: #FFFFFF;'>
+<text class='nsm sz10' fill='#000000' x='0' y='3600'>2</text>
+<text class='ns sz10' fill='#000000' x='7200' y='9814'>We generate the metrics files with the </text>
+<text class='nsm sz10' fill='#000000' x='31270' y='9814'>WebFontMetrics</text>
+<text class='ns sz10' fill='#000000' x='42456' y='9814'> </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='11267'>(https://github.com/hjellinek/WebFontMetrics</text>
+<text class='ns sz10' fill='#000000' x='42356' y='11267'>) software I (hdj) </text>
+<text class='ns sz10' fill='#000000' x='7200' y='12720'>wrote.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='15626'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='15626'> maps common Medley font names to Noto font names using </text>
+<text class='ns sz10' fill='#000000' x='7200' y='17079'>the a-list </text>
+<text class='nsm sz10' fill='#000000' x='12928' y='17079'>*WEB-FONT-MAPPINGS*</text>
+<text class='ns sz10' fill='#000000' x='28109' y='17079'>.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='19985'>Your browser downloads and caches the webfonts the first time you open </text>
+<text class='ns sz10' fill='#000000' x='7200' y='21438'>an </text>
+<text class='nsm sz10' fill='#000000' x='9116' y='21438'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='17106' y='21438'>-generated HTML file, or another file that uses the same </text>
+<text class='ns sz10' fill='#000000' x='7200' y='22891'>webfonts.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='25344'>Customization</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='27797'>*WEB-FONT-DIRECTORY*</text>
+<text class='nsm sz10' fill='#000000' x='35210' y='27797'>[VARIABLE]</text>
+<text class='ns sz10' fill='#000000' x='7200' y='30250'>The location of the font metrics files.  In the example above, this is </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='31703'>{DSK}&lt;Users&gt;lisphacker&gt;HtmlStreamFontMetrics&gt;fonts&gt;.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='34156'>*WEB-FONT-MAPPINGS*</text>
+<text class='nsm sz10' fill='#000000' x='35210' y='34156'>[VARIABLE]</text>
+<text class='ns sz10' fill='#000000' x='7200' y='36609'>Maps font family names (e.g., </text>
+<text class='nsm sz10' fill='#000000' x='25972' y='36609'>HELVETICA</text>
+<text class='ns sz10' fill='#000000' x='33163' y='36609'>) to Web font names (e.g., </text>
+<text class='nsm sz10' fill='#000000' x='49547' y='36609'>NOTO-</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='38062'>SANS</text>
+<text class='ns sz10' fill='#000000' x='10396' y='38062'>).</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='40515'>*HTML-DEBUG-FONTCREATE*</text>
+<text class='nsm sz10' fill='#000000' x='35210' y='40515'>[VARIABLE]</text>
+<text class='ns sz10' fill='#000000' x='7200' y='41968'>Set this to </text>
+<text class='nsm sz10' fill='#000000' x='13773' y='41968'>T</text>
+<text class='ns sz10' fill='#000000' x='14572' y='41968'> to permit the </text>
+<text class='nsm sz10' fill='#000000' x='23488' y='41968'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='31478' y='41968'> font creation code to log what it's </text>
+<text class='ns sz10' fill='#000000' x='7200' y='43421'>doing.  Normally set to </text>
+<text class='nsm sz10' fill='#000000' x='21781' y='43421'>NIL</text>
+<text class='ns sz10' fill='#000000' x='24178' y='43421'>.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='45874'>*HTML.DEFAULT-PAGE-REGION*</text>
+<text class='nsm sz10' fill='#000000' x='35210' y='45874'>[VARIABLE]</text>
+<text class='ns sz10' fill='#000000' x='7200' y='48327'>The default page region, an Interlisp </text>
+<text class='nsm sz10' fill='#000000' x='30367' y='48327'>REGION</text>
+<text class='ns sz10' fill='#000000' x='35161' y='48327'> measured in centipoints </text>
+<text class='ns sz10' fill='#000000' x='7200' y='49780'>(hundredths of a printer's point).</text>
+<text class='ns sz10' fill='#000000' x='7200' y='52233'>.  See also </text>
+<text class='nsm sz10' fill='#000000' x='13708' y='52233'>OPENIMAGESTREAM</text>
+<text class='ns sz10' fill='#000000' x='25693' y='52233'> below.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='54686'>(OPENIMAGESTREAM FILE 'HTML </text>
+<text class='nsm sz10 italic' fill='#000000' x='29572' y='54686'>OPTIONS</text>
+<text class='nsm sz10' fill='#000000' x='35165' y='54686'>)</text>
+<text class='nsm sz10' fill='#000000' x='36264' y='54686'>[PARAMETER]</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='56139'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='56139'> accepts several optional parameters, passed as properties of </text>
+<text class='ns sz10' fill='#000000' x='7200' y='57592'>the </text>
+<text class='nsm sz10' fill='#000000' x='9601' y='57592'>OPTIONS</text>
+<text class='ns sz10' fill='#000000' x='15194' y='57592'> p-list parameter to the </text>
+<text class='nsm sz10' fill='#000000' x='29961' y='57592'>OPENIMAGESTREAM</text>
+<text class='ns sz10' fill='#000000' x='41946' y='57592'> function:</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='60045'>FONT</text>
+<text class='ns sz10' fill='#000000' x='10396' y='60045'> - the stream's initial font.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='62498'>TITLE</text>
+<text class='ns sz10' fill='#000000' x='11195' y='62498'> - a string, the title to assign to the HTML document.  </text>
+<text class='nsm sz10' fill='#000000' x='44351' y='62498'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='52341' y='62498'> </text>
+<text class='ns sz10' fill='#000000' x='7200' y='63951'>will escape characters that HTML considers special.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='66404'>REGION</text>
+<text class='ns sz10' fill='#000000' x='11994' y='66404'> - an Interlisp </text>
+<text class='nsm sz10' fill='#000000' x='20576' y='66404'>REGION object</text>
+<text class='ns sz10' fill='#000000' x='30963' y='66404'>, the default page region, in </text>
+<text class='ns sz10' fill='#000000' x='7200' y='67857'>centipoints.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='70763'>Font families, faces, and sizes</text>
+</svg>
+<svg width='612.0pt' height='792.0pt' viewBox='0 0 61200 79200' style='background-color: #FFFFFF;'>
+<text class='nsm sz10' fill='#000000' x='0' y='3600'>3</text>
+<text class='ns sz10' fill='#000000' x='7200' y='9814'>We define four font families:</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='12720'>Name</text>
+<text class='ns sz10 bold' fill='#000000' x='21600' y='12720'>Description</text>
+<text class='ns sz10 bold' fill='#000000' x='43200' y='12720'>Lisp font name</text>
+<text class='ns sz10 italic' fill='#000000' x='7200' y='14173'>Noto Sans</text>
+<text class='ns sz10' fill='#000000' x='21600' y='14173'>Noto "unmodulated" (sans-serif)</text>
+<text class='nsm sz10' fill='#000000' x='43200' y='14173'>NOTO-SANS</text>
+<text class='ns sz10 italic' fill='#000000' x='7200' y='15626'>Noto Sans Mono</text>
+<text class='ns sz10' fill='#000000' x='21600' y='15626'>Noto monospaced unmodulated</text>
+<text class='nsm sz10' fill='#000000' x='43200' y='15626'>NOTO-SANS-</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='17079'>MONO</text>
+<text class='ns sz10 italic' fill='#000000' x='7200' y='18532'>Noto Sans Display</text>
+<text class='ns sz10' fill='#000000' x='21600' y='18532'>Noto unmodulated display typeface (see </text>
+<text class='nsm sz10' fill='#000000' x='7200' y='19985'>https://en.wikipedia.org/wiki/Display←typeface</text>
+<text class='ns sz10' fill='#000000' x='43954' y='19985'>)</text>
+<text class='nsm sz10' fill='#000000' x='43200' y='21438'>NOTO-DISPLAY</text>
+<text class='ns sz10 italic' fill='#000000' x='7200' y='22891'>Noto Serif</text>
+<text class='ns sz10' fill='#000000' x='21600' y='22891'>Noto "modulated" (serif)</text>
+<text class='nsm sz10' fill='#000000' x='43200' y='22891'>NOTO-SERIF</text>
+<text class='ns sz10' fill='#000000' x='7200' y='25797'>We've created four faces for each: plain, bold, italic, bold italic.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='28703'>Every family and face combination is available in 6, 8, 10, 12, 14, 16, 18, 20, </text>
+<text class='ns sz10' fill='#000000' x='7200' y='30156'>24, 32, 40, and 92 points.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='33062'>The default font for new streams is </text>
+<text class='nsm sz10' fill='#000000' x='29394' y='33062'>NOTO-SANS 10 MRR</text>
+<text class='ns sz10' fill='#000000' x='42178' y='33062'>.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='35515'>Supported character sets</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='38421'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='38421'> can write all of the characters in the intersection of Xerox </text>
+<text class='ns sz10' fill='#000000' x='7200' y='39874'>Character Code Standard (XCCS) 3-0-0 and Unicode 14.0.0 (hdj note to self: </text>
+<text class='ns sz10' fill='#000000' x='7200' y='41327'>check this).  Writing a character that isn't present in that set produces the </text>
+<text class='ns sz10' fill='#000000' x='7200' y='42780'>Unicode </text>
+<text class='nsm sz10' fill='#000000' x='12701' y='42780'>REPLACEMENT CHARACTER</text>
+<text class='ns sz10' fill='#000000' x='29480' y='42780'> </text>
+<text class='nsm sz10' fill='#000000' x='29826' y='42780'>U+FFFD</text>
+<text class='ns sz10' fill='#000000' x='34620' y='42780'>.</text>
+<text class='ns sz10 bold' fill='#000000' x='7200' y='45233'>Graphical operations</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='48139'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='48139'> defines the </text>
+<text class='nsm sz10' fill='#000000' x='22866' y='48139'>HTML</text>
+<text class='ns sz10' fill='#000000' x='26062' y='48139'> output device and font types.</text>
+<text class='ns sz10' fill='#000000' x='7200' y='51045'>It supports HLS, RGB, and named colors in the standard but as-yet </text>
+<text class='ns sz10' fill='#000000' x='7200' y='52498'>undocumented way.</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='55404'>HTMLSTREAM</text>
+<text class='ns sz10' fill='#000000' x='15190' y='55404'> implements the bulk of the Interlisp-D/Medley Device-</text>
+<text class='ns sz10' fill='#000000' x='7200' y='56857'>Independent Graphics API, including these methods:</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='59963'>OUTCHARFN</text>
+<text class='ns sz10' fill='#000000' x='14391' y='59763'>*</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='61416'>IMCLOSEFN</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='62869'>IMDRAWLINE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='64322'>IMDRAWCURVE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='65775'>IMDRAWCIRCLE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='67228'>IMDRAWELLIPSE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='68681'>IMFILLPOLYGON</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='70134'>IMDRAWPOLYGON</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='71587'>IMFILLCIRCLE</text>
+</svg>
+<svg width='612.0pt' height='792.0pt' viewBox='0 0 61200 79200' style='background-color: #FFFFFF;'>
+<text class='nsm sz10' fill='#000000' x='0' y='3600'>4</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='8361'>IMBLTSHADE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='9814'>IMBITBLT</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='11267'>IMSCALEDBITBLT</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='12720'>IMMOVETO</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='14173'>IMCHARWIDTH</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='15626'>IMNEWPAGE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='17079'>IMTERPRI</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='18532'>IMRESET</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='19985'>IMCLIPPINGREGION</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='21438'>IMXPOSITION</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='22891'>IMYPOSITION</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='24344'>IMFONT</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='25797'>IMLEFTMARGIN</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='27250'>IMRIGHTMARGIN</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='28703'>IMTOPMARGIN</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='30156'>IMBOTTOMMARGIN</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='31609'>IMLINEFEED</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='33062'>IMSCALE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='34515'>IMSPACEFACTOR</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='35968'>IMOPERATION</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='37421'>IMBACKCOLOR</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='38874'>IMCOLOR</text>
+<text class='ns sz10' fill='#000000' x='7200' y='41780'>These methods are implemented as no-ops (#'</text>
+<text class='nsm sz10' fill='#000000' x='36230' y='41780'>NILL</text>
+<text class='ns sz10' fill='#000000' x='39426' y='41780'>):</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='44686'>IMWRITEPIXEL</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='46139'>IMROTATE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='47592'>IMTRANSLATE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='49045'>IMSCALE2</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='50498'>IMPUSHSTATE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='51951'>IMPOPSTATE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='53404'>IMDEFAULTSTATE</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='54857'>IMCHARWIDTHY</text>
+<text class='nsm sz10' fill='#000000' x='7200' y='56310'>IMOPERATION</text>
+<text class='ns sz10' fill='#000000' x='7200' y='59416'>(</text>
+<text class='nsm sz10' fill='#000000' x='7599' y='59216'>*</text>
+<text class='ns sz10' fill='#000000' x='8398' y='59416'> = not documented as part of the DIG API)</text>
+
+</svg>
+</body>
+</html>
