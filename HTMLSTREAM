@@ -1,11 +1,11 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "25-Jun-2025 13:54:02" {HTMLSTREAM}HTMLSTREAM.;35 87417  
+(FILECREATED " 9-Jul-2025 15:19:40" {HTMLSTREAM}HTMLSTREAM.;37 89068  
 
-      :CHANGES-TO (FUNCTIONS HTML.WRITE-PREFACE HTML.DRAWCURVE OPENHTMLSTREAM)
+      :CHANGES-TO (FUNCTIONS HTML.MOVETO HTML.OUTCHARFN \HTML.CHARWIDTH HTML.CHARWIDTH HTML.CLOSEFN)
                   (VARS HTMLSTREAMCOMS)
 
-      :PREVIOUS-DATE "29-May-2025 15:37:27" {HTMLSTREAM}HTMLSTREAM.;31)
+      :PREVIOUS-DATE "25-Jun-2025 13:54:02" {HTMLSTREAM}HTMLSTREAM.;35)
 
 
 (PRETTYCOMPRINT HTMLSTREAMCOMS)
@@ -33,7 +33,7 @@
         (STRUCTURES HTML.IMAGEDATA HTML.FONTINFO)
         (FUNCTIONS with-htmldata)
         (FUNCTIONS HTML.OUTPUT-GRAPHICS HTML.OUTPUT-TEXT \HTML.MAYBE-START-PAGE \HTML.END-PAGE 
-               \HTML.TAB-DELTA-X HTML.WRITE-PREFACE CONVERT-FAMILY-TO-QUERY-PARAM 
+               \HTML.TAB-DELTA-X \HTML.CHARWIDTH HTML.WRITE-PREFACE CONVERT-FAMILY-TO-QUERY-PARAM 
                \HTML.MAKE-STYLESHEET-URL)
         (FUNCTIONS OPENHTMLSTREAM HTML.BACKCOLOR HTML.BITBLT HTML.BLTSHADE HTML.BOTTOMMARGIN 
                HTML.CHARWIDTH HTML.CLIPPINGREGION HTML.CLOSEFN HTML.COLOR HTML.DRAWCIRCLE 
@@ -564,6 +564,15 @@
                                                  (\HTML-LEFT-MARGIN HTML-DATA))
                                      TABSPACE))))
 
+(CL:DEFUN \HTML.CHARWIDTH (STREAM CHCODE)
+   "Raw character width accessor that coerces undefined characters to slug"
+   [with-htmldata (DATA STREAM)
+          (LET* [(FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of (\HTML-FONT DATA]
+                (if (= CHCODE *XCCS-UNDEFINED-CHARCODE*)
+                    then (\HTMLFONT-SLUG-WIDTH FONT-INFO)
+                  else (\FGETCHARWIDTH (\HTML-FONT DATA)
+                              CHCODE])
+
 (CL:DEFUN HTML.WRITE-PREFACE (STREAM)
    "Write the preamble to the file: <html><head>... etc."
    (with-htmldata
@@ -876,7 +885,7 @@
                                            CHCODE)))
                  (SPACE-FACTOR (\HTML-SPACE-FACTOR DATA)))
                 (if (AND (= CHCODE (CHARCODE SPACE))
-                         (NOT (= SPACE-FACTOR 1.0)))
+                         (NOT (= SPACE-FACTOR 1)))
                     then (FTIMES SPACE-FACTOR CHAR-WIDTH)
                   else CHAR-WIDTH))))
 
@@ -894,7 +903,10 @@
                (if (EQ (\HTML-STATE DATA)
                        HTML.STATE.TEXT-OUTPUT)
                    then (HTML.OUTPUT-GRAPHICS STREAM))
-               (printout BACKING T "</svg>" T "</body>" T "</html>" T)
+               (if (EQ (\HTML-STATE DATA)
+                       HTML.STATE.BETWEEN-PAGES)
+                   then (printout BACKING T "</body>" T "</html>" T)
+                 else (printout BACKING T "</svg>" T "</body>" T "</html>" T))
                (CLOSEF BACKING)
                (CL:SETF (\HTML-STATE DATA)
                       HTML.STATE.CLOSED))))
@@ -1139,8 +1151,7 @@
           (CL:SETF (\HTML-X-POSITION DATA)
                  X)
           (CL:SETF (\HTML-Y-POSITION DATA)
-                 Y)
-          (HTML.OUTPUT-GRAPHICS STREAM)))
+                 Y)))
 
 (CL:DEFUN HTML.NEWPAGE (STREAM)
    (with-htmldata (DATA STREAM)
@@ -1156,73 +1167,86 @@
 
 (CL:DEFUN HTML.OUTCHARFN (STREAM CHCODE)
    "Write a character, which may cause us to write other markup first"
-   [with-htmldata (DATA STREAM)
-          (LET [(BACKING (\HTML-BACKING-STREAM DATA))
-                (FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of (\HTML-FONT DATA]
+   [with-htmldata
+    (DATA STREAM)
+    (LET [(BACKING (\HTML-BACKING-STREAM DATA))
+          (FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of (\HTML-FONT DATA]
+         (if (NOT (XTOUCODE? CHCODE))                        (* ; 
+                                                       "if unmapped, write *XCCS-UNDEFINED-CHARCODE*")
+             then (SETQ CHCODE *XCCS-UNDEFINED-CHARCODE*)
+                  [LET* ((CHAR-WIDTH (\HTMLFONT-SLUG-WIDTH FONT-INFO))
+                         (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                            CHAR-WIDTH)))
+                        (CL:FLET ((SLUG-OUT NIL (HTML.OUTPUT-TEXT STREAM)
+                                         (\OUTCHAR BACKING CHCODE)))
+                               (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
+                                   then (HTML.TERPRI STREAM)
+                                        (SLUG-OUT)
+                                        (CL:INCF (\HTML-X-POSITION DATA)
+                                               CHAR-WIDTH)
+                                 else (SLUG-OUT)
+                                      (CL:SETF (\HTML-X-POSITION DATA)
+                                             NEW-X-POSITION]
+           else 
+                (* ;; "Deal with real (mapped) characters")
 
-               (* ;; "if the char is unmapped, write *XCCS-UNDEFINED-CHARCODE*")
+                (LET ((CHARSET (\CHARSET CHCODE))
+                      (CHAR8CODE (\CHAR8CODE CHCODE)))
+                     (SELECTC CHCODE
+                         ((CHARCODE ^J)                      (* ; "handle LF")
+                              (HTML.TERPRI STREAM))
+                         ((CHARCODE ^M)                      (* ; "handle CR")
+                              (HTML.TERPRI STREAM))
+                         ((CHARCODE ^L)                      (* ; "handle pagefeed")
+                              (HTML.NEWPAGE STREAM))
+                         ((CHARCODE SPACE)                   (* ; "handle spacefactor")
+                              [LET ((SPACE-FACTOR (\HTML-SPACE-FACTOR DATA))
+                                    (CHAR-WIDTH (\HTML.CHARWIDTH STREAM CHCODE)))
+                                   (if (= SPACE-FACTOR 1)    (* ; "do normal stuff")
+                                       then (LET ((NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                                                     CHAR-WIDTH)))
+                                                 (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
+                                                     then (HTML.TERPRI STREAM))
+                                                 (CL:INCF (\HTML-X-POSITION DATA)
+                                                        CHAR-WIDTH)
+                                                 (HTML.OUTPUT-TEXT STREAM)
+                                                 (\OUTCHAR BACKING CHCODE))
+                                     else (LET [(NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                                                   (FTIMES SPACE-FACTOR CHAR-WIDTH]
+                                               (HTML.MOVETO STREAM NEW-X-POSITION (\HTML-Y-POSITION
+                                                                                   DATA])
+                         ((CHARCODE TAB)                     (* ; "handle TAB")
+                              (LET [(NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                                       (\HTML.TAB-DELTA-X DATA]
+                                   [if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
+                                       then (HTML.TERPRI STREAM)
+                                            (SETQ NEW-X-POSITION (IPLUS (\HTML-X-POSITION DATA)
+                                                                        (\HTML.TAB-DELTA-X DATA]
+                                   (HTML.MOVETO STREAM NEW-X-POSITION (\HTML-Y-POSITION DATA))))
+                         (LET* ((CHAR-WIDTH (\HTML.CHARWIDTH STREAM CHCODE))
+                                (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
+                                                   CHAR-WIDTH)))
+                               (CL:FLET [(OUT NIL (HTML.OUTPUT-TEXT STREAM)
 
-               (if (NOT (XTOUCODE? CHCODE))
-                   then (SETQ CHCODE *XCCS-UNDEFINED-CHARCODE*)
-                        [LET* ((CHAR-WIDTH (\HTMLFONT-SLUG-WIDTH FONT-INFO))
-                               (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
-                                                  CHAR-WIDTH)))
-                              (CL:FLET ((SLUG-OUT NIL (HTML.OUTPUT-TEXT STREAM)
-                                               (\OUTCHAR BACKING CHCODE)))
-                                     (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
-                                         then (HTML.TERPRI STREAM)
-                                              (SLUG-OUT)
-                                              (CL:INCF (\HTML-X-POSITION DATA)
-                                                     CHAR-WIDTH)
-                                       else (SLUG-OUT)
-                                            (CL:SETF (\HTML-X-POSITION DATA)
-                                                   NEW-X-POSITION]
-                 else 
-                      (* ;; "Otherwise do the normal stuff")
+                                              (* ;; 
+                                              "probably no need to encode >, but just in case...")
 
-                      (LET ((CHARSET (\CHARSET CHCODE))
-                            (CHAR8CODE (\CHAR8CODE CHCODE)))
-                           (SELECTC CHCODE
-                               ((CHARCODE ^J)                (* ; "handle LF")
-                                    (HTML.TERPRI STREAM))
-                               ((CHARCODE ^M)                (* ; "handle CR")
-                                    (HTML.TERPRI STREAM))
-                               ((CHARCODE ^L)                (* ; "handle pagefeed")
-                                    (HTML.NEWPAGE STREAM))
-                               ((CHARCODE TAB)               (* ; "handle TAB")
-                                    (LET [(NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
-                                                             (\HTML.TAB-DELTA-X DATA]
-                                         [if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
-                                             then (HTML.TERPRI STREAM)
-                                                  (SETQ NEW-X-POSITION (IPLUS (\HTML-X-POSITION
-                                                                               DATA)
-                                                                              (\HTML.TAB-DELTA-X
-                                                                               DATA]
-                                         (HTML.MOVETO STREAM NEW-X-POSITION (\HTML-Y-POSITION DATA))))
-                               (LET* ((CHAR-WIDTH (HTML.CHARWIDTH STREAM CHCODE))
-                                      (NEW-X-POSITION (+ (\HTML-X-POSITION DATA)
-                                                         CHAR-WIDTH)))
-                                     (CL:FLET [(OUT NIL (HTML.OUTPUT-TEXT STREAM)
-
-                                                    (* ;; 
-                                                  "probably no need to encode >, but just in case...")
-
-                                                    (SELECTC CHCODE
-                                                        ((CHARCODE &) 
-                                                             (CL:FORMAT BACKING "&amp;"))
-                                                        ((CHARCODE <) 
-                                                             (CL:FORMAT BACKING "&lt;"))
-                                                        ((CHARCODE >) 
-                                                             (CL:FORMAT BACKING "&gt;"))
-                                                        (\OUTCHAR BACKING CHCODE]
-                                            (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
-                                                then (HTML.TERPRI STREAM)
-                                                     (OUT)
-                                                     (CL:INCF (\HTML-X-POSITION DATA)
-                                                            CHAR-WIDTH)
-                                              else (OUT)
-                                                   (CL:SETF (\HTML-X-POSITION DATA)
-                                                          NEW-X-POSITION])
+                                              (SELECTC CHCODE
+                                                  ((CHARCODE &) 
+                                                       (CL:FORMAT BACKING "&amp;"))
+                                                  ((CHARCODE <) 
+                                                       (CL:FORMAT BACKING "&lt;"))
+                                                  ((CHARCODE >) 
+                                                       (CL:FORMAT BACKING "&gt;"))
+                                                  (\OUTCHAR BACKING CHCODE]
+                                      (if (> NEW-X-POSITION (\HTML-RIGHT-MARGIN DATA))
+                                          then (HTML.TERPRI STREAM)
+                                               (OUT)
+                                               (CL:INCF (\HTML-X-POSITION DATA)
+                                                      CHAR-WIDTH)
+                                        else (OUT)
+                                             (CL:SETF (\HTML-X-POSITION DATA)
+                                                    NEW-X-POSITION])
 
 (CL:DEFUN HTML.RESET (STREAM)
    (with-htmldata (DATA STREAM)
@@ -1719,44 +1743,44 @@
    "Ignore the body, return NIL"
    NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (4627 4816 (CLOSE-KNOTS 4627 . 4816)) (4818 4974 (HTML.INCHES-TO-POINTS 4818 . 4974)) (
-4976 5078 (HTML.INCHES-TO-CENTIPOINTS 4976 . 5078)) (5080 5169 (CP-TO-P 5080 . 5169)) (5171 5337 (
-ICP-TO-P 5171 . 5337)) (5339 5415 (P-TO-CP 5339 . 5415)) (5417 5576 (PIXEL-TO-PT 5417 . 5576)) (5578 
-5738 (PT-TO-PIXEL 5578 . 5738)) (5740 5836 (\SF 5740 . 5836)) (5838 5986 (\HTML.SVG-Y 5838 . 5986)) (
-5988 6331 (MAKE-FONT-METRICS-FILE-NAME 5988 . 6331)) (6333 6733 (MAKE-CHARSET-METRICS-FILE-NAME 6333
- . 6733)) (13508 13898 (CHECK-BROWSER-METRICS-FORMAT 13508 . 13898)) (13900 15436 (CSS-CLASS-FROM 
-13900 . 15436)) (15438 15576 (CSS-CLASS-FROM-FAMILY 15438 . 15576)) (15578 17275 (
-\HTML.READ-FONT-METRICS 15578 . 17275)) (17277 18666 (\HTML.READ-CHARSET-METRICS 17277 . 18666)) (
-18668 19590 (\HTML.SVG-STROKE-DASHARRAY 18668 . 19590)) (19592 19943 (\HTML.SVG-BRUSH-WIDTH 19592 . 
-19943)) (19945 20969 (\HTML.SVG-BRUSH-CLASS 19945 . 20969)) (20971 21293 (\HTML.SVG-COLOR 20971 . 
-21293)) (22193 22425 (with-htmldata 22193 . 22425)) (22427 23086 (HTML.OUTPUT-GRAPHICS 22427 . 23086))
- (23088 24292 (HTML.OUTPUT-TEXT 23088 . 24292)) (24294 25539 (\HTML.MAYBE-START-PAGE 24294 . 25539)) (
-25541 25948 (\HTML.END-PAGE 25541 . 25948)) (25950 26376 (\HTML.TAB-DELTA-X 25950 . 26376)) (26378 
-32400 (HTML.WRITE-PREFACE 26378 . 32400)) (32402 33380 (CONVERT-FAMILY-TO-QUERY-PARAM 32402 . 33380)) 
-(33382 34043 (\HTML.MAKE-STYLESHEET-URL 33382 . 34043)) (34045 39453 (OPENHTMLSTREAM 34045 . 39453)) (
-39455 40008 (HTML.BACKCOLOR 39455 . 40008)) (40010 40558 (HTML.BITBLT 40010 . 40558)) (40560 42528 (
-HTML.BLTSHADE 40560 . 42528)) (42530 42864 (HTML.BOTTOMMARGIN 42530 . 42864)) (42866 43654 (
-HTML.CHARWIDTH 42866 . 43654)) (43656 43971 (HTML.CLIPPINGREGION 43656 . 43971)) (43973 44445 (
-HTML.CLOSEFN 43973 . 44445)) (44447 45000 (HTML.COLOR 44447 . 45000)) (45002 45758 (HTML.DRAWCIRCLE 
-45002 . 45758)) (45760 48827 (HTML.DRAWCURVE 45760 . 48827)) (48829 49765 (HTML.DRAWELLIPSE 48829 . 
-49765)) (49767 50718 (HTML.DRAWLINE 49767 . 50718)) (50720 51717 (HTML.DRAWPOLYGON 50720 . 51717)) (
-51719 53914 (HTML.DRAWARC 51719 . 53914)) (53916 54491 (HTML.FILLCIRCLE 53916 . 54491)) (54493 55384 (
-HTML.FILLPOLYGON 54493 . 55384)) (55386 56269 (HTML.FONT 55386 . 56269)) (56271 56594 (HTML.LEFTMARGIN
- 56271 . 56594)) (56596 56946 (HTML.LINEFEED 56596 . 56946)) (56948 57249 (HTML.MOVETO 56948 . 57249))
- (57251 57367 (HTML.NEWPAGE 57251 . 57367)) (57369 57691 (HTML.OPERATION 57369 . 57691)) (57693 62489 
-(HTML.OUTCHARFN 57693 . 62489)) (62491 62816 (HTML.RESET 62491 . 62816)) (62818 63148 (
-HTML.RIGHTMARGIN 62818 . 63148)) (63150 63524 (HTML.SCALE 63150 . 63524)) (63526 64939 (
-HTML.SCALEDBITBLT 63526 . 64939)) (64941 65247 (HTML.SPACEFACTOR 64941 . 65247)) (65249 65890 (
-HTML.TERPRI 65249 . 65890)) (65892 66208 (HTML.TOPMARGIN 65892 . 66208)) (66210 66585 (HTML.XPOSITION 
-66210 . 66585)) (66587 66962 (HTML.YPOSITION 66587 . 66962)) (66964 67209 (MAKE-HTML-IMAGETYPE 66964
- . 67209)) (67211 68279 (\HTML.INIT-IMAGEDATA 67211 . 68279)) (68281 68969 (\HTMLSTREAM.INIT 68281 . 
-68969)) (68971 69214 (WRITE-BASE64-PNG 68971 . 69214)) (69216 69984 (CONVERT-TO-PNG-BASE64 69216 . 
-69984)) (69986 71273 (URL-ENCODE 69986 . 71273)) (71275 72492 (HTML-ENCODE 71275 . 72492)) (72615 
-76529 (\HTML.FONTCREATE 72615 . 76529)) (76531 79380 (\HTML.FONTSAVAILABLE 76531 . 79380)) (79382 
-80996 (\HTML.CREATECHARSET 79382 . 80996)) (80998 81836 (\HTML.CHANGECHARSET 80998 . 81836)) (81838 
-82175 (MAKE-CHARSET-BIT-ARRAY 81838 . 82175)) (82177 82401 (KNOWN-CHARSET? 82177 . 82401)) (82403 
-82937 (\HTML.WARN-CHARSET 82403 . 82937)) (82939 84296 (\HTML.ADD-FONT-DEFS 82939 . 84296)) (84736 
-85919 (HTMLFILEP 84736 . 85919)) (85921 86063 (MAKE-HTML-FROM-TEXT 85921 . 86063)) (86065 86474 (
-MAKE-HTML-FROM-TEDIT 86065 . 86474)) (86767 87318 (\CLEAN-FONT-CACHE 86767 . 87318)) (87320 87394 (
-DO-NOT 87320 . 87394)))))
+  (FILEMAP (NIL (4665 4854 (CLOSE-KNOTS 4665 . 4854)) (4856 5012 (HTML.INCHES-TO-POINTS 4856 . 5012)) (
+5014 5116 (HTML.INCHES-TO-CENTIPOINTS 5014 . 5116)) (5118 5207 (CP-TO-P 5118 . 5207)) (5209 5375 (
+ICP-TO-P 5209 . 5375)) (5377 5453 (P-TO-CP 5377 . 5453)) (5455 5614 (PIXEL-TO-PT 5455 . 5614)) (5616 
+5776 (PT-TO-PIXEL 5616 . 5776)) (5778 5874 (\SF 5778 . 5874)) (5876 6024 (\HTML.SVG-Y 5876 . 6024)) (
+6026 6369 (MAKE-FONT-METRICS-FILE-NAME 6026 . 6369)) (6371 6771 (MAKE-CHARSET-METRICS-FILE-NAME 6371
+ . 6771)) (13546 13936 (CHECK-BROWSER-METRICS-FORMAT 13546 . 13936)) (13938 15474 (CSS-CLASS-FROM 
+13938 . 15474)) (15476 15614 (CSS-CLASS-FROM-FAMILY 15476 . 15614)) (15616 17313 (
+\HTML.READ-FONT-METRICS 15616 . 17313)) (17315 18704 (\HTML.READ-CHARSET-METRICS 17315 . 18704)) (
+18706 19628 (\HTML.SVG-STROKE-DASHARRAY 18706 . 19628)) (19630 19981 (\HTML.SVG-BRUSH-WIDTH 19630 . 
+19981)) (19983 21007 (\HTML.SVG-BRUSH-CLASS 19983 . 21007)) (21009 21331 (\HTML.SVG-COLOR 21009 . 
+21331)) (22231 22463 (with-htmldata 22231 . 22463)) (22465 23124 (HTML.OUTPUT-GRAPHICS 22465 . 23124))
+ (23126 24330 (HTML.OUTPUT-TEXT 23126 . 24330)) (24332 25577 (\HTML.MAYBE-START-PAGE 24332 . 25577)) (
+25579 25986 (\HTML.END-PAGE 25579 . 25986)) (25988 26414 (\HTML.TAB-DELTA-X 25988 . 26414)) (26416 
+26898 (\HTML.CHARWIDTH 26416 . 26898)) (26900 32922 (HTML.WRITE-PREFACE 26900 . 32922)) (32924 33902 (
+CONVERT-FAMILY-TO-QUERY-PARAM 32924 . 33902)) (33904 34565 (\HTML.MAKE-STYLESHEET-URL 33904 . 34565)) 
+(34567 39975 (OPENHTMLSTREAM 34567 . 39975)) (39977 40530 (HTML.BACKCOLOR 39977 . 40530)) (40532 41080
+ (HTML.BITBLT 40532 . 41080)) (41082 43050 (HTML.BLTSHADE 41082 . 43050)) (43052 43386 (
+HTML.BOTTOMMARGIN 43052 . 43386)) (43388 44174 (HTML.CHARWIDTH 43388 . 44174)) (44176 44491 (
+HTML.CLIPPINGREGION 44176 . 44491)) (44493 45145 (HTML.CLOSEFN 44493 . 45145)) (45147 45700 (
+HTML.COLOR 45147 . 45700)) (45702 46458 (HTML.DRAWCIRCLE 45702 . 46458)) (46460 49527 (HTML.DRAWCURVE 
+46460 . 49527)) (49529 50465 (HTML.DRAWELLIPSE 49529 . 50465)) (50467 51418 (HTML.DRAWLINE 50467 . 
+51418)) (51420 52417 (HTML.DRAWPOLYGON 51420 . 52417)) (52419 54614 (HTML.DRAWARC 52419 . 54614)) (
+54616 55191 (HTML.FILLCIRCLE 54616 . 55191)) (55193 56084 (HTML.FILLPOLYGON 55193 . 56084)) (56086 
+56969 (HTML.FONT 56086 . 56969)) (56971 57294 (HTML.LEFTMARGIN 56971 . 57294)) (57296 57646 (
+HTML.LINEFEED 57296 . 57646)) (57648 57905 (HTML.MOVETO 57648 . 57905)) (57907 58023 (HTML.NEWPAGE 
+57907 . 58023)) (58025 58347 (HTML.OPERATION 58025 . 58347)) (58349 64140 (HTML.OUTCHARFN 58349 . 
+64140)) (64142 64467 (HTML.RESET 64142 . 64467)) (64469 64799 (HTML.RIGHTMARGIN 64469 . 64799)) (64801
+ 65175 (HTML.SCALE 64801 . 65175)) (65177 66590 (HTML.SCALEDBITBLT 65177 . 66590)) (66592 66898 (
+HTML.SPACEFACTOR 66592 . 66898)) (66900 67541 (HTML.TERPRI 66900 . 67541)) (67543 67859 (
+HTML.TOPMARGIN 67543 . 67859)) (67861 68236 (HTML.XPOSITION 67861 . 68236)) (68238 68613 (
+HTML.YPOSITION 68238 . 68613)) (68615 68860 (MAKE-HTML-IMAGETYPE 68615 . 68860)) (68862 69930 (
+\HTML.INIT-IMAGEDATA 68862 . 69930)) (69932 70620 (\HTMLSTREAM.INIT 69932 . 70620)) (70622 70865 (
+WRITE-BASE64-PNG 70622 . 70865)) (70867 71635 (CONVERT-TO-PNG-BASE64 70867 . 71635)) (71637 72924 (
+URL-ENCODE 71637 . 72924)) (72926 74143 (HTML-ENCODE 72926 . 74143)) (74266 78180 (\HTML.FONTCREATE 
+74266 . 78180)) (78182 81031 (\HTML.FONTSAVAILABLE 78182 . 81031)) (81033 82647 (\HTML.CREATECHARSET 
+81033 . 82647)) (82649 83487 (\HTML.CHANGECHARSET 82649 . 83487)) (83489 83826 (MAKE-CHARSET-BIT-ARRAY
+ 83489 . 83826)) (83828 84052 (KNOWN-CHARSET? 83828 . 84052)) (84054 84588 (\HTML.WARN-CHARSET 84054
+ . 84588)) (84590 85947 (\HTML.ADD-FONT-DEFS 84590 . 85947)) (86387 87570 (HTMLFILEP 86387 . 87570)) (
+87572 87714 (MAKE-HTML-FROM-TEXT 87572 . 87714)) (87716 88125 (MAKE-HTML-FROM-TEDIT 87716 . 88125)) (
+88418 88969 (\CLEAN-FONT-CACHE 88418 . 88969)) (88971 89045 (DO-NOT 88971 . 89045)))))
 STOP
