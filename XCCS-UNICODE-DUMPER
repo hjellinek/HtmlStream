@@ -1,26 +1,75 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED "12-Feb-2025 15:19:44" {DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;15 3558   
+(FILECREATED " 3-Nov-2025 14:57:20" {HTMLSTREAM}XCCS-UNICODE-DUMPER.;2 6254   
 
       :CHANGES-TO (VARS XCCS-UNICODE-DUMPERCOMS)
-                  (RECORDS WEB-FONT-FACE)
+                  (VARIABLES MCCS-TO-UNICODE-TXT-FILE-NAME)
+                  (FUNCTIONS WRITE-M-TO-U-MAPPING-TABLE)
 
-      :PREVIOUS-DATE " 2-Feb-2025 13:29:33" 
-{DSK}<Users>hjellinek>Projects>TrySVG>Lisp>XCCS-UNICODE-DUMPER.;13)
+      :PREVIOUS-DATE "12-Feb-2025 15:19:44" {HTMLSTREAM}XCCS-UNICODE-DUMPER.;1)
 
 
 (PRETTYCOMPRINT XCCS-UNICODE-DUMPERCOMS)
 
 (RPAQQ XCCS-UNICODE-DUMPERCOMS (
                                 (* ;; 
-        "Call (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE :output-dir %"yy%") to write xccs_to_unicode.js")
+                  "Call (WRITE-M-TO-U-MAPPING-TABLE :output-dir %"yy%") to write mccs_to_unicode.txt")
+
+                                (VARIABLES MCCS-TO-UNICODE-TXT-FILE-NAME)
+                                (FUNCTIONS WRITE-M-TO-U-MAPPING-TABLE)
+                                
+                                (* ;; "OLD Javascript-based XCCS code")
 
                                 (VARIABLES XCCS-TO-UNICODE-JS-FILE-NAME)
                                 (FUNCTIONS WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE)))
 
 
 
-(* ;; "Call (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE :output-dir %"yy%") to write xccs_to_unicode.js")
+(* ;; "Call (WRITE-M-TO-U-MAPPING-TABLE :output-dir %"yy%") to write mccs_to_unicode.txt")
+
+
+(CL:DEFCONSTANT MCCS-TO-UNICODE-TXT-FILE-NAME "mccs_to_unicode.txt"
+   "The name part of the MCCS to Unicode mapping file")
+
+(CL:DEFUN WRITE-M-TO-U-MAPPING-TABLE (&KEY (OUTPUT-DIR *WEB-FONT-DIRECTORY*))
+   "Write the MCCS to Unicode mapping table to mccs_to_unicode.txt"
+   [LET* [(TXT-FILE (APPLY #'PACKFILENAME.STRING (APPEND (UNPACKFILENAME.STRING OUTPUT-DIR)
+                                                        (LIST 'NAME MCCS-TO-UNICODE-TXT-FILE-NAME]
+         (CL:FORMAT T "Writing mapping file ~A~%%" TXT-FILE)
+         (CL:WITH-OPEN-STREAM (STREAM (OPENSTREAM TXT-FILE 'OUTPUT))
+                (CL:FORMAT STREAM "// mccs unicode~%%")
+                (LET ((USED-CHARSETS (HASHARRAY (IPLUS \MAXCHARSET 1)))
+                      (NUM-MAPPED-MCCS-CODES 0))
+                     [for MCCS-CODE from 0 to 65535
+                        do (LET* [(U-CODES (MTOUCODE? MCCS-CODE))
+                                  (U-CODE (COND
+                                             ((LISTP U-CODES)
+                                              (CAR U-CODES))
+                                             ((NUMBERP U-CODES)
+                                              U-CODES)
+                                             (T NIL]
+                                 (CL:WHEN U-CODE
+                                     (CL:INCF NUM-MAPPED-MCCS-CODES)
+                                     (CL:FORMAT STREAM "0x~4,'0x 0x~4,'0x~%%" MCCS-CODE U-CODE)
+                                     (PUTHASH (\CHARSET MCCS-CODE)
+                                            T USED-CHARSETS))]
+                     (LET ((SORTED-CHARSETS NIL))
+
+                          (* ;; "sort the charsets and print them out")
+
+                          [MAPHASH USED-CHARSETS #'(LAMBDA (VAL KEY)
+                                                     (CL:PUSH KEY SORTED-CHARSETS]
+                          (SORT SORTED-CHARSETS #'ILESSP)
+                          (CL:FORMAT STREAM "// charsets: ")
+                          (FOR CHARSET IN SORTED-CHARSETS DO (CL:FORMAT STREAM "0x~2,'0x, " CHARSET))
+                          (CL:FORMAT STREAM "~%%"))
+                     (CL:FORMAT STREAM 
+                            "// There were ~d MCCS codes among ~d charsets that mapped to Unicode~%%"
+                            NUM-MAPPED-MCCS-CODES (HARRAYPROP USED-CHARSETS 'NUMKEYS])
+
+
+
+(* ;; "OLD Javascript-based XCCS code")
 
 
 (CL:DEFCONSTANT XCCS-TO-UNICODE-JS-FILE-NAME "xccs_to_unicode.js"
@@ -65,5 +114,6 @@
                           (FOR CHARSET IN SORTED-CHARSETS DO (CL:FORMAT STREAM "0x~2,'0x, " CHARSET))
                           (CL:FORMAT STREAM "]);~%%"])
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (1033 3535 (WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE 1033 . 3535)))))
+  (FILEMAP (NIL (1279 3541 (WRITE-M-TO-U-MAPPING-TABLE 1279 . 3541)) (3729 6231 (
+WRITE-JAVASCRIPT-X-TO-U-MAPPING-TABLE 3729 . 6231)))))
 STOP
