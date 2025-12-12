@@ -1,11 +1,17 @@
 (DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
 
-(FILECREATED " 1-Oct-2025 14:00:43" {HTMLSTREAM}HTMLSTREAM.;47 91013  
+(FILECREATED "12-Dec-2025 15:03:02" {HTMLSTREAM}HTMLSTREAM.;60 94894  
 
-      :CHANGES-TO (VARS HTMLSTREAMCOMS)
-                  (FUNCTIONS HTML.FONT \HTML.COERCE-FONT)
+      :CHANGES-TO (FUNCTIONS \HTML.READ-FONT-METRICS \HTML.FONTEXISTS? \HTML.FONTSAVAILABLE 
+                         \HTML.ADD-FONT-DEFS \HTML.FONTCREATE \HTML.READ-CHARSET-METRICS HTMLFILEP 
+                         \HTML.COERCE-OR-IDENTITY \HTML.CREATECHARSET \HTML.COERCE-FONT 
+                         CHECK-BROWSER-METRICS-FORMAT \HTMLSTREAM.INIT)
+                  (VARIABLES *ADD-FONT-DEFS* HTMLFONTCOERCIONS HTMLFONTDIRECTORIES HTMLFONTEXTENSIONS
+                         )
+                  (VARS HTMLSTREAMCOMS)
+                  (RECORDS WEB-CHARSET-METRICS)
 
-      :PREVIOUS-DATE "30-Sep-2025 10:57:09" {HTMLSTREAM}HTMLSTREAM.;45)
+      :PREVIOUS-DATE " 1-Oct-2025 14:00:43" {HTMLSTREAM}HTMLSTREAM.;48)
 
 
 (PRETTYCOMPRINT HTMLSTREAMCOMS)
@@ -18,12 +24,13 @@
                P-TO-CP PIXEL-TO-PT PT-TO-PIXEL \SF \HTML.SVG-Y)
         (FUNCTIONS INSURE-COLOR-OR-SHADE)
         (FUNCTIONS MAKE-FONT-METRICS-FILE-NAME MAKE-CHARSET-METRICS-FILE-NAME)
-        (VARIABLES *WEB-FONT-DIRECTORY* *WEB-FONT-MAPPINGS* *GOOGLE-FONTS-BASE-URL* 
-               *HTML-STANDARD-PAGE-WEB-FONT-FAMILIES* *HTML-STYLESHEET-FONT-FAMILY-DEFS* 
-               *DEFAULT-WEB-FONT-METRICS-FILE-NAME* *WEB-FONT-EXPANSIONS* *WEB-FONT-FAMILIES* 
-               *WEB-FONT-FAMILY-NAMES* *WEB-FONT-SIZES* *WEB-FONT-SLOPES* *WEB-FONT-WEIGHTS* 
-               *BROWSER-FONTS-MAP* *WEB-CHARSET-METRICS-EXT* *WEB-CHARSET-METRICS-DOT-EXT* 
-               *WEB-FONT-METRICS-EXT* *WEB-FONT-METRICS-DOT-EXT*)
+        (VARIABLES *WEB-FONT-MAPPINGS* HTMLFONTCOERCIONS HTMLFONTDIRECTORIES HTMLFONTEXTENSIONS 
+               *GOOGLE-FONTS-BASE-URL* *HTML-STANDARD-PAGE-WEB-FONT-FAMILIES* 
+               *HTML-STYLESHEET-FONT-FAMILY-DEFS* *DEFAULT-WEB-FONT-METRICS-FILE-NAME* 
+               *WEB-FONT-EXPANSIONS* *WEB-FONT-FAMILIES* *WEB-FONT-FAMILY-NAMES* *WEB-FONT-SIZES* 
+               *WEB-FONT-SLOPES* *WEB-FONT-WEIGHTS* *BROWSER-FONTS-MAP* *WEB-CHARSET-METRICS-EXT* 
+               *WEB-CHARSET-METRICS-DOT-EXT* *WEB-FONT-METRICS-EXT* *WEB-FONT-METRICS-DOT-EXT* 
+               *ADD-FONT-DEFS*)
         (VARIABLES *BROWSER-FONT-FILE-VERSION* *HTML.DEFAULT-PAGE-REGION* HTML.FONTCREATE.DEVICENAME
                HTML.IMAGETYPE HTML.STATE.BETWEEN-PAGES HTML.STATE.CLOSED HTML.STATE.NON-TEXT 
                HTML.STATE.NON-TEXT-OUTPUT HTML.STATE.TEXT-OUTPUT HTML.STATES \HTMLSTREAM.FDEV 
@@ -48,7 +55,7 @@
         (VARIABLES *HTML-DEBUG-FONTCREATE*)
         (FUNCTIONS \HTML.FONTCREATE \HTML.FONTEXISTS? \HTML.FONTSAVAILABLE \HTML.CREATECHARSET 
                \HTML.CHANGECHARSET MAKE-CHARSET-BIT-ARRAY KNOWN-CHARSET? \HTML.WARN-CHARSET 
-               \HTML.ADD-FONT-DEFS \HTML.COERCE-FAMILY \HTML.COERCE-FONT)
+               \HTML.ADD-FONT-DEFS \HTML.COERCE-OR-IDENTITY \HTML.COERCE-FONT)
         (P (\HTMLSTREAM.INIT))
         
         (* ;; "PRINTFILETYPES-related")
@@ -81,7 +88,7 @@
 (PROPRECORD WEB-FONT-METRICS (:FAMILY :SIZE :WEIGHT :STYLE :HEIGHT :MAX-ASCENT :MAX-DESCENT :CHARSETS
                                     :LISP-NAME :LISP-FACE :LISP-SIZE))
 
-(PROPRECORD WEB-CHARSET-METRICS (:CHARSET :MAX-ASCENT :MAX-DESCENT :XCCS-WIDTHS))
+(PROPRECORD WEB-CHARSET-METRICS (:CHARSET :MAX-ASCENT :MAX-DESCENT :WIDTHS))
 )
 
 (CL:DEFUN CLOSE-KNOTS (KNOTS)
@@ -165,9 +172,6 @@
    (CL:FORMAT NIL "~A-~d-~A-~A-~A-~d.~A" FAMILY SIZE WEIGHT SLOPE EXPANSION CHARSET-NUM 
           *WEB-CHARSET-METRICS-EXT*))
 
-(DEFGLOBALVAR *WEB-FONT-DIRECTORY* "."
-   "The directory that holds .wfm and .wcm files")
-
 (DEFGLOBALVAR *WEB-FONT-MAPPINGS*
    '((HELVETICA . NOTO-SANS)
      (HELVETICAD . NOTO-SANS-DISPLAY)
@@ -183,6 +187,40 @@
      (OPTIMA . NOTO-SERIF)
      (TITAN . NOTO-SANS-MONO))
    "Map common font families to Web font families")
+
+(CL:DEFPARAMETER HTMLFONTCOERCIONS
+   '[(HELVETICA NOTO-SANS)
+     (HELVETICAD NOTO-SANS-DISPLAY)
+     (TIMESROMAN NOTO-SERIF)
+     (TIMESROMAND NOTO-SERIF-DISPLAY)
+     (COURIER NOTO-SANS-MONO)
+     (GACHA NOTO-SANS-MONO)
+     (CLASSIC NOTO-SERIF)
+     (MODERN NOTO-SANS)
+     (CREAM NOTO-SANS)
+     (TERMINAL NOTO-SANS-MONO)
+     (LOGO NOTO-SANS-MONO)
+     (OPTIMA NOTO-SERIF)
+     (TITAN NOTO-SANS-MONO)
+     (                                                       (* (<= * 5))
+                                                             (* 6)
+      )
+     (                                                       (* (<= 51 * 91))
+                                                             (* 50)
+      )
+     (                                                       (* (< 92 *))
+                                                             (* 92)
+      )
+     (                                                       (* (ODDP *))
+                                                             (* (ADD1 *))
+      ]
+   "Font coercion rules for COERCEFONTSPEC")
+
+(CL:DEFPARAMETER HTMLFONTDIRECTORIES '(".")
+                                     "The directory that holds .wfm and .wcm files")
+
+(CL:DEFPARAMETER HTMLFONTEXTENSIONS '("wfm")
+                                    "The extension that identifies HTML files")
 
 (CL:DEFPARAMETER *GOOGLE-FONTS-BASE-URL* "https://fonts.googleapis.com/css2"
    "The base of the Google Fonts font stylesheet URL")
@@ -268,6 +306,9 @@
                                            
                            "The file extension for a web font metrics file, prepended with a dot (.)")
 
+(CL:DEFPARAMETER *ADD-FONT-DEFS* T
+   "Initialize font defs and font vars upon loading HTMLSTREAM?")
+
 (CL:DEFCONSTANT *BROWSER-FONT-FILE-VERSION* 2
    "The current version of the font-metrics.data file")
 
@@ -321,7 +362,7 @@
                  (EQ ':FORMAT (CAR VERSION))
                  (EQUAL (CADR VERSION)
                         *BROWSER-FONT-FILE-VERSION*)))
-       then (ERROR "File does not begin with expected format declaration"))
+       then (ERROR "File does not begin with expected format declaration" VERSION))
    VERSION)
 
 (CL:DEFUN CSS-CLASS-FROM (FAMILY SIZE FACE)
@@ -359,13 +400,13 @@
    "Compute the CSS class name from the FAMILY"
    (CDR (FASSOC FAMILY *WEB-FONT-FAMILIES*)))
 
-(CL:DEFUN \HTML.READ-FONT-METRICS (FAMILY FACE SIZE)
+(CL:DEFUN \HTML.READ-FONT-METRICS (FAMILY FACE SIZE DIR)
    "Read the font metrics file and return the WEB-FONT-DESCR"
    (LET* ((WEIGHT (fetch (WEB-FONT-FACE :WEIGHT) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE :SLOPE) of FACE))
           (EXPANSION (fetch (WEB-FONT-FACE :EXPANSION) of FACE))
-          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
-                            (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION)))
+          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY DIR 'NAME (MAKE-FONT-METRICS-FILE-NAME FAMILY 
+                                                                      SIZE WEIGHT SLOPE EXPANSION)))
           (*PACKAGE* (CL:FIND-PACKAGE "IL")))
          (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
                 (CHECK-BROWSER-METRICS-FORMAT (READ IN))
@@ -383,25 +424,26 @@
                                                           FAMILY FACE SIZE HEIGHT (LENGTH CHARSETS)))
                       DESCR))))
 
-(CL:DEFUN \HTML.READ-CHARSET-METRICS (FAMILY SIZE FACE CHARSET-NUM)
+(CL:DEFUN \HTML.READ-CHARSET-METRICS (FAMILY SIZE FACE CHARSET-NUM DIR)
    "Read a file containing a charset's metrics and return the WEB-CHARSET-METRICS"
-   (LET* ((WEIGHT (fetch (WEB-FONT-FACE :WEIGHT) of FACE))
+   [LET* ((WEIGHT (fetch (WEB-FONT-FACE :WEIGHT) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE :SLOPE) of FACE))
           (EXPANSION (fetch (WEB-FONT-FACE :EXPANSION) of FACE))
-          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
-                            (MAKE-CHARSET-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION 
-                                   CHARSET-NUM)))
+          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY DIR 'NAME (MAKE-CHARSET-METRICS-FILE-NAME FAMILY
+                                                                      SIZE WEIGHT SLOPE EXPANSION 
+                                                                      CHARSET-NUM)))
           (*PACKAGE* (CL:FIND-PACKAGE "IL")))
-         (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
-                (CHECK-BROWSER-METRICS-FORMAT (READ IN))
-                (LET* ((CHARSET (READ IN))
-                       (MAX-ASCENT (fetch (WEB-CHARSET-METRICS :MAX-ASCENT) of CHARSET))
-                       (MAX-DESCENT (fetch (WEB-CHARSET-METRICS :MAX-DESCENT) of CHARSET))
-                       (WIDTHS (fetch (WEB-CHARSET-METRICS :XCCS-WIDTHS) of CHARSET)))
-                      (AND *HTML-DEBUG-FONTCREATE* (CL:FORMAT T 
+         (AND (INFILEP FILE-NAME)
+              (CL:WITH-OPEN-STREAM (IN (OPENSTREAM FILE-NAME 'INPUT))
+                     (CHECK-BROWSER-METRICS-FORMAT (READ IN))
+                     (LET* ((CHARSET (READ IN))
+                            (MAX-ASCENT (fetch (WEB-CHARSET-METRICS :MAX-ASCENT) of CHARSET))
+                            (MAX-DESCENT (fetch (WEB-CHARSET-METRICS :MAX-DESCENT) of CHARSET))
+                            (WIDTHS (fetch (WEB-CHARSET-METRICS :WIDTHS) of CHARSET)))
+                           (AND *HTML-DEBUG-FONTCREATE* (CL:FORMAT T 
                                                 "charset family: ~A face: ~A size: ~A charset: ~d~%%"
-                                                          FAMILY FACE SIZE CHARSET-NUM))
-                      CHARSET))))
+                                                               FAMILY FACE SIZE CHARSET-NUM))
+                           CHARSET])
 
 (CL:DEFUN \HTML.SVG-STROKE-DASHARRAY (DASHING)
    "Turn an array of dashes (on/off sequences) to an SVG stroke-dasharray attribute"
@@ -1427,7 +1469,8 @@
 
    (* ;; "set up FONTDEFS")
 
-   (\HTML.ADD-FONT-DEFS))
+   (COND
+      (*ADD-FONT-DEFS* (\HTML.ADD-FONT-DEFS))))
 
 (CL:DEFUN WRITE-BASE64-PNG (STREAM BITMAP SOURCELEFT SOURCEBOTTOM WIDTH HEIGHT)
    "Write a BASE64-encoded PNG rendition of the bitmap, clipped as directed"
@@ -1487,81 +1530,93 @@
 (CL:DEFPARAMETER *HTML-DEBUG-FONTCREATE* NIL
    "Set to T to make the font creation machinery log what it's doing")
 
-(CL:DEFUN \HTML.FONTCREATE (FAMILY SIZE FACE ROTATION DEVICE CHARSET)
+(CL:DEFUN \HTML.FONTCREATE (FONTSPEC)
    "Create a font for the HTML device"
-
-   (* ;; "FAMILY must be a litatom")
-
-   (* ;; "SIZE is a positive integer number of printer's points")
-
-   (* ;; "FACE = (WEIGHT SLOPE EXPANSION)")
-
-   (* ;; "    WEIGHT = one of BOLD, MEDIUM, LIGHT")
-
-   (* ;; "    SLOPE = one of ITALIC or REGULAR")
-
-   (* ;; "    EXPANSION = one of REGULAR, COMPRESSED, EXPANDED")
-
-   (* ;; "CHARSET is a positive integer or NIL")
-
    (DECLARE (GLOBALVARS \DEFAULTCHARSET))
-   (AND *HTML-DEBUG-FONTCREATE* (CL:FORMAT T "\HTML.FONTCREATE ~a ~a ~a ~a ~a ~a~%%" FAMILY SIZE FACE
-                                       ROTATION DEVICE CHARSET))
-   (if (NEQ ROTATION 0)
-       then (ERROR "We only support ROTATION = 0"))
-   (LET* [(COERCED-FAMILY (\HTML.COERCE-FAMILY FAMILY))
-          (FONT-DESCR (\HTML.READ-FONT-METRICS COERCED-FAMILY FACE SIZE))
-          (PRIVATE-FONT-INFO (MAKE-HTML.FONTINFO :SLUG-WIDTH (fetch (WEB-FONT-DESCR :SLUG-WIDTH)
-                                                                of FONT-DESCR)
-                                    :CHARSETS
-                                    (MAKE-CHARSET-BIT-ARRAY (fetch (WEB-FONT-DESCR :CHARSETS)
-                                                               of FONT-DESCR))
-                                    :CSS-CLASS
-                                    (CSS-CLASS-FROM COERCED-FAMILY SIZE FACE]
-         (COND
-            ((AND *HTML-DEBUG-FONTCREATE* (NEQ FAMILY COERCED-FAMILY))
-             (CL:FORMAT T "Coerced ~A to ~A~%%" FAMILY COERCED-FAMILY)))
+   (AND *HTML-DEBUG-FONTCREATE* (CL:FORMAT T "\HTML.FONTCREATE ~a~%%" FONTSPEC))
+   (if (NEQ (fetch FSDEVICE of FONTSPEC)
+            HTML.FONTCREATE.DEVICENAME)
+       then (ERROR "Calling \HTML.FONTCREATE on a non-HTML fontspec"))
+   [LET* ((ORIGINAL-FAMILY (fetch (FONTSPEC FSFAMILY) of FONTSPEC))
+          (COERCED-FONT-SPEC (\HTML.COERCE-OR-IDENTITY FONTSPEC))
+          (FAMILY (fetch (FONTSPEC FSFAMILY) of COERCED-FONT-SPEC))
+          (SIZE (fetch (FONTSPEC FSSIZE) of COERCED-FONT-SPEC))
+          (FACE (fetch (FONTSPEC FSFACE) of COERCED-FONT-SPEC))
+          (ROTATION (fetch (FONTSPEC FSROTATION) of COERCED-FONT-SPEC))
+          (DEVICE (fetch (FONTSPEC FSDEVICE) of COERCED-FONT-SPEC))
+          (CHARSET \DEFAULTCHARSET))
+         (if (NEQ ROTATION 0)
+             then (ERROR "We only support ROTATION = 0"))
+         (LET [(FONT-DESCR (for DIR METRICS in HTMLFONTDIRECTORIES
+                              when (SETQ METRICS (\HTML.READ-FONT-METRICS FAMILY FACE SIZE DIR))
+                              do (RETURN METRICS]
+              [COND
+                 ((NOT FONT-DESCR)
+                  (ERROR "Could not find font metrics" (LIST FAMILY SIZE FACE]
+              (LET* [(SLUG-WIDTH (fetch (WEB-FONT-DESCR :SLUG-WIDTH) of FONT-DESCR))
+                     (PRIVATE-FONT-INFO (MAKE-HTML.FONTINFO :SLUG-WIDTH SLUG-WIDTH :CHARSETS
+                                               (MAKE-CHARSET-BIT-ARRAY (fetch (WEB-FONT-DESCR 
+                                                                                     :CHARSETS)
+                                                                          of FONT-DESCR))
+                                               :CSS-CLASS
+                                               (CSS-CLASS-FROM FAMILY SIZE FACE]
+                    (COND
+                       ((AND *HTML-DEBUG-FONTCREATE* (NEQ ORIGINAL-FAMILY FAMILY))
+                        (CL:FORMAT T "Coerced ~A to ~A~%%" ORIGINAL-FAMILY FAMILY)))
 
-         (* ;; "read the metrics for charset CHARSET")
+                    (* ;; "read the metrics for charset CHARSET")
 
-         (AND FONT-DESCR
-              (LET* ((CHARSET-DESCR (\HTML.READ-CHARSET-METRICS COERCED-FAMILY SIZE FACE CHARSET))
-                     (CHARSET0-WIDTHS (fetch (WEB-CHARSET-METRICS :XCCS-WIDTHS) of CHARSET-DESCR))
-                     (FD (create FONTDESCRIPTOR
-                                FONTDEVICE _ DEVICE
-                                FONTSCALE _ *CENTIPOINTS-PER-POINT*
-                                FONTFAMILY _ FAMILY
-                                FONTSIZE _ SIZE
-                                FONTFACE _ FACE
-                                \SFAscent _ (fetch (WEB-FONT-METRICS :MAX-ASCENT) of FONT-DESCR)
-                                \SFDescent _ (fetch (WEB-FONT-METRICS :MAX-DESCENT) of FONT-DESCR)
-                                \SFHeight _ (fetch (WEB-FONT-METRICS :HEIGHT) of FONT-DESCR)
-                                ROTATION _ 0
-                                FONTDEVICESPEC _ (LIST COERCED-FAMILY SIZE FACE ROTATION DEVICE)
-                                \SFFACECODE _ (\FACECODE FACE)
-                                OTHERDEVICEFONTPROPS _ PRIVATE-FONT-INFO))
-                     (CSINFO (\CREATECHARSET CHARSET FD T))
-                     (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
-                    (replace (CHARSETINFO CHARSETASCENT) of CSINFO with (fetch (WEB-CHARSET-METRICS
-                                                                                :MAX-ASCENT)
-                                                                           of CHARSET-DESCR))
-                    (replace (CHARSETINFO CHARSETDESCENT) of CSINFO with (fetch (WEB-CHARSET-METRICS
-                                                                                 :MAX-DESCENT)
-                                                                            of CHARSET-DESCR))
-                    (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
-                       do (CL:UNLESS (NULL WIDTH)
-                                 (\FSETWIDTH CS-WIDTHS CH WIDTH)))
-                    FD))))
+                    (LET [(CHARSET-DESCR (for DIR METRICS in HTMLFONTDIRECTORIES
+                                            when (SETQ METRICS (\HTML.READ-CHARSET-METRICS FAMILY 
+                                                                      SIZE FACE CHARSET DIR))
+                                            do (RETURN METRICS]
+                         [COND
+                            ((NOT CHARSET-DESCR)
+                             (ERROR "Could not find charset metrics" (LIST FAMILY SIZE FACE CHARSET]
+                         (LET* ((CHARSET0-WIDTHS (fetch (WEB-CHARSET-METRICS :WIDTHS) of 
+                                                                                        CHARSET-DESCR
+                                                        ))
+                                (FD (create FONTDESCRIPTOR
+                                           FONTDEVICE _ DEVICE
+                                           FONTSCALE _ *CENTIPOINTS-PER-POINT*
+                                           FONTFAMILY _ FAMILY
+                                           FONTSIZE _ SIZE
+                                           FONTFACE _ FACE
+                                           \SFAscent _ (fetch (WEB-FONT-METRICS :MAX-ASCENT)
+                                                          of FONT-DESCR)
+                                           \SFDescent _ (fetch (WEB-FONT-METRICS :MAX-DESCENT)
+                                                           of FONT-DESCR)
+                                           \SFHeight _ (fetch (WEB-FONT-METRICS :HEIGHT) of 
+                                                                                           FONT-DESCR
+                                                              )
+                                           ROTATION _ 0
+                                           FONTSLUGWIDTH _ SLUG-WIDTH
+                                           FONTCOMPLETEP _ T
+                                           FONTDEVICESPEC _ (LIST FAMILY SIZE FACE ROTATION DEVICE)
+                                           \SFFACECODE _ (\FACECODE FACE)
+                                           OTHERDEVICEFONTPROPS _ PRIVATE-FONT-INFO))
+                                (CSINFO (\CREATECHARSET CHARSET FD T))
+                                (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
+                               (replace (CHARSETINFO CHARSETASCENT) of CSINFO
+                                  with (fetch (WEB-CHARSET-METRICS :MAX-ASCENT) of CHARSET-DESCR))
+                               (replace (CHARSETINFO CHARSETDESCENT) of CSINFO
+                                  with (fetch (WEB-CHARSET-METRICS :MAX-DESCENT) of CHARSET-DESCR))
+                               (for WIDTH in CHARSET0-WIDTHS as CH from 0 to \MAXTHINCHAR
+                                  do (CL:UNLESS (NULL WIDTH)
+                                            (\FSETWIDTH CS-WIDTHS CH WIDTH)))
+                               FD])
 
-(CL:DEFUN \HTML.FONTEXISTS? (FAMILY SIZE FACE ROTATION DEVICE CHARSET)
+(CL:DEFUN \HTML.FONTEXISTS? (FONTSPEC)
    "If the font exists, return the file name of the WFM file."
-   (LET* [(COERCED-FAMILY (\HTML.COERCE-FAMILY FAMILY))
+   [LET* ((FAMILY (fetch (FONTSPEC FSFAMILY) of FONTSPEC))
+          (SIZE (fetch (FONTSPEC FSSIZE) of FONTSPEC))
+          (FACE (fetch (FONTSPEC FSFACE) of FONTSPEC))
           (WEIGHT (fetch (WEB-FONT-FACE :WEIGHT) of FACE))
           (SLOPE (fetch (WEB-FONT-FACE :SLOPE) of FACE))
-          (EXPANSION (fetch (WEB-FONT-FACE :EXPANSION) of FACE))
-          (FILE-NAME (PACKFILENAME.STRING 'DIRECTORY *WEB-FONT-DIRECTORY* 'NAME
-                            (MAKE-FONT-METRICS-FILE-NAME COERCED-FAMILY SIZE WEIGHT SLOPE EXPANSION]
-         (INFILEP FILE-NAME)))
+          (EXPANSION (fetch (WEB-FONT-FACE :EXPANSION) of FACE)))
+         (for DIR FILE-NAME in HTMLFONTDIRECTORIES
+            thereis (INFILEP (PACKFILENAME.STRING 'DIRECTORY DIR 'NAME
+                                    (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION])
 
 (CL:DEFUN \HTML.FONTSAVAILABLE (FAMILY SIZE FACE ROTATION DEVICE)
    "Search for matching fonts for the HTML device"
@@ -1574,58 +1629,65 @@
           (WEIGHT (fetch (FONTFACE WEIGHT) of FACE-AS-LIST))
           (SLOPE (fetch (FONTFACE SLOPE) of FACE-AS-LIST))
           (EXPANSION (fetch (FONTFACE EXPANSION) of FACE-AS-LIST))
-          (FILE-NAME (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION))
-          (PATTERN (PACKFILENAME.STRING 'BODY *WEB-FONT-DIRECTORY* 'NAME FILE-NAME))
-          (MATCHING-FILES (DIRECTORY PATTERN)))
-         (FOR MATCH IN MATCHING-FILES 
+          (FILE-NAME (MAKE-FONT-METRICS-FILE-NAME FAMILY SIZE WEIGHT SLOPE EXPANSION)))
+         (LET [(MATCHING-FILES (for DIR in HTMLFONTDIRECTORIES
+                                  thereis (LET ((PATTERN (PACKFILENAME.STRING 'BODY DIR 'NAME 
+                                                                FILE-NAME)))
+                                               (DIRECTORY PATTERN]
+              [COND
+                 ((NULL MATCHING-FILES)
+                  (ERROR "Could not find font" (LIST FAMILY SIZE FACE ROTATION]
+              (FOR MATCH IN MATCHING-FILES 
 
-                       (* ;; 
-                       "the name will look like <font name>-<size>-<weight>-<slope>-<expansion>")
+                            (* ;; 
+                            "the name will look like <font name>-<size>-<weight>-<slope>-<expansion>")
 
-                       (* ;; 
-                       "<font name> may contain hyphens, so parse from the end to the beginning")
+                            (* ;; 
+                            "<font name> may contain hyphens, so parse from the end to the beginning")
 
-                        COLLECT (LET* ((MATCHING-NAME (UNPACKFILENAME.STRING MATCH 'NAME))
-                                       (EXPANSION-POS (STRPOS "-" MATCHING-NAME NIL NIL NIL NIL NIL T
-                                                             ))
-                                       (SLOPE-POS (STRPOS "-" MATCHING-NAME (CL:1- EXPANSION-POS)
-                                                         NIL NIL NIL NIL T))
-                                       (WEIGHT-POS (STRPOS "-" MATCHING-NAME (CL:1- SLOPE-POS)
-                                                          NIL NIL NIL NIL T))
-                                       (SIZE-POS (STRPOS "-" MATCHING-NAME (CL:1- WEIGHT-POS)
-                                                        NIL NIL NIL NIL T)))
-                                      (LIST (MKATOM (SUBSTRING MATCHING-NAME 1 (CL:1- SIZE-POS)))
-                                            (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ SIZE-POS)
-                                                           (CL:1- WEIGHT-POS)))
-                                            [LIST (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ WEIGHT-POS)
-                                                                 (CL:1- SLOPE-POS)))
-                                                  (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ SLOPE-POS)
-                                                                 (CL:1- EXPANSION-POS)))
-                                                  (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ 
-                                                                                        EXPANSION-POS
-                                                                                          ]
-                                            0 HTML.FONTCREATE.DEVICENAME])
+                            
+                 COLLECT (LET* ((MATCHING-NAME (UNPACKFILENAME.STRING MATCH 'NAME))
+                                (EXPANSION-POS (STRPOS "-" MATCHING-NAME NIL NIL NIL NIL NIL T))
+                                (SLOPE-POS (STRPOS "-" MATCHING-NAME (CL:1- EXPANSION-POS)
+                                                  NIL NIL NIL NIL T))
+                                (WEIGHT-POS (STRPOS "-" MATCHING-NAME (CL:1- SLOPE-POS)
+                                                   NIL NIL NIL NIL T))
+                                (SIZE-POS (STRPOS "-" MATCHING-NAME (CL:1- WEIGHT-POS)
+                                                 NIL NIL NIL NIL T)))
+                               (LIST (MKATOM (SUBSTRING MATCHING-NAME 1 (CL:1- SIZE-POS)))
+                                     (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ SIZE-POS)
+                                                    (CL:1- WEIGHT-POS)))
+                                     [LIST (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ WEIGHT-POS)
+                                                          (CL:1- SLOPE-POS)))
+                                           (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ SLOPE-POS)
+                                                          (CL:1- EXPANSION-POS)))
+                                           (MKATOM (SUBSTRING MATCHING-NAME (CL:1+ EXPANSION-POS]
+                                     0 HTML.FONTCREATE.DEVICENAME])
 
 (CL:DEFUN \HTML.CREATECHARSET (FAMILY SIZE FACE ROTATION DEVICE CHARSET FONTDESC NOSLUG?)
-   (LET ((PRIVATE-FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of FONTDESC)))
-        (CL:IF (KNOWN-CHARSET? PRIVATE-FONT-INFO CHARSET)
-            (LET* ((CHARSET-DESCR (\HTML.READ-CHARSET-METRICS FAMILY SIZE FACE CHARSET))
-                   (CHARSET-WIDTHS (fetch (WEB-CHARSET-METRICS :XCCS-WIDTHS) of CHARSET-DESCR))
-                   (CSINFO (create CHARSETINFO
-                                  OFFSETS _ NIL))
-                   (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
-                  (replace (CHARSETINFO CHARSETASCENT) of CSINFO with (fetch (WEB-CHARSET-METRICS
-                                                                              :MAX-ASCENT)
-                                                                         of CHARSET-DESCR))
-                  (replace (CHARSETINFO CHARSETDESCENT) of CSINFO with (fetch (WEB-CHARSET-METRICS
-                                                                               :MAX-DESCENT)
-                                                                          of CHARSET-DESCR))
-                  (for WIDTH in CHARSET-WIDTHS as CH from 0 to \MAXTHINCHAR
-                     do (CL:WHEN WIDTH (\FSETWIDTH CS-WIDTHS CH WIDTH)))
-                  (replace (CHARSETINFO IMAGEWIDTHS) of CSINFO with CS-WIDTHS)
-                  CSINFO)
-            (PROGN (\HTML.WARN-CHARSET FONTDESC CHARSET T)
-                   NIL))))
+   [LET ((PRIVATE-FONT-INFO (fetch (FONTDESCRIPTOR OTHERDEVICEFONTPROPS) of FONTDESC)))
+        (COND
+           ((KNOWN-CHARSET? PRIVATE-FONT-INFO CHARSET)
+            (LET [(CHARSET-DESCR (for DIR in HTMLFONTDIRECTORIES
+                                    thereis (\HTML.READ-CHARSET-METRICS FAMILY SIZE FACE CHARSET DIR]
+                 [COND
+                    ((NOT CHARSET-DESCR)
+                     (ERROR "Could not find charset metrics" (LIST FAMILY SIZE FACE CHARSET]
+                 (LET* ((CHARSET-WIDTHS (fetch (WEB-CHARSET-METRICS :WIDTHS) of CHARSET-DESCR))
+                        (CSINFO (create CHARSETINFO
+                                       CHARSETNO _ CHARSET
+                                       CSCOMPLETEP _ T
+                                       CHARSETASCENT _ (fetch (WEB-CHARSET-METRICS :MAX-ASCENT)
+                                                          of CHARSET-DESCR)
+                                       CHARSETDESCENT _ (fetch (WEB-CHARSET-METRICS :MAX-DESCENT)
+                                                           of CHARSET-DESCR)))
+                        (CS-WIDTHS (fetch (CHARSETINFO WIDTHS) of CSINFO)))
+                       (for WIDTH in CHARSET-WIDTHS as CH from 0 to \MAXTHINCHAR
+                          do (CL:WHEN WIDTH (\FSETWIDTH CS-WIDTHS CH WIDTH)))
+                       (replace (CHARSETINFO IMAGEWIDTHS) of CSINFO with CS-WIDTHS)
+                       CSINFO)))
+           (T (PROGN (\HTML.WARN-CHARSET FONTDESC CHARSET T)
+                     NIL])
 
 (CL:DEFUN \HTML.CHANGECHARSET (DATA CHARSET)
    "Set the new character set, creating the charset info if necessary"
@@ -1690,29 +1752,27 @@
                     (COND
                        ((EQ 'FONTCLASS (TYPENAME FONTCLASS))
                         (SETFONTCLASSCOMPONENT FONTCLASS HTML.FONTCREATE.DEVICENAME DEFAULT-FONT)
-                        (CL:FORMAT T "Updated FONTCLASS ~s~%%" FONTVAR))
-                       (T (CL:FORMAT T "~s is not a FONTCLASS~%%" FONTCLASS])
+                        (DO-NOT (CL:FORMAT T "Updated FONTCLASS ~s~%%" FONTVAR)))
+                       (T (DO-NOT (CL:FORMAT T "~s is not a FONTCLASS~%%" FONTCLASS])
 
-(CL:DEFUN \HTML.COERCE-FAMILY (FAMILY)
-   "Coerce the font family to an HTML font family"
-   (OR (CDR (FASSOC FAMILY *WEB-FONT-MAPPINGS*))
-       FAMILY))
+(CL:DEFUN \HTML.COERCE-OR-IDENTITY (FONTSPEC)
+   "Coerce the fontspec to something we can use. If it's already usable, return it, else return NIL."
+   (LET ((COERCED (COERCEFONTSPEC FONTSPEC)))
+        (CL:IF COERCED
+            (CAR COERCED)
+            FONTSPEC)))
 
 (CL:DEFUN \HTML.COERCE-FONT (ORIGINAL-FONT)
    "Coerce the font or font spec to an HTML font"
+
+   (* ;; "the original fontspec might be for a different device, so overwrite FSDEVICE")
+
    (LET* ((FONTSPEC (COND
                        ((type? FONTDESCRIPTOR ORIGINAL-FONT)
                         (FONTPROP ORIGINAL-FONT 'SPEC))
                        (T ORIGINAL-FONT)))
-          (FAMILY (CAR FONTSPEC))
-          (NEW-FAMILY (\HTML.COERCE-FAMILY FAMILY))
-          (SIZE (CADR FONTSPEC))
-          (FACE (CADDR FONTSPEC))
-          (ROTATION (CADDDR FONTSPEC))
-          (DEVICE (CAR (CDDDDR FONTSPEC)))
-          (CHARSET (CADR (CDDDDR FONTSPEC)))
-          (NEW-SPEC (LIST NEW-FAMILY SIZE FACE ROTATION HTML.FONTCREATE.DEVICENAME)))
-         (FONTCREATE NEW-SPEC)))
+          (NEW-SPEC (create FONTSPEC using FONTSPEC FSDEVICE _ HTML.FONTCREATE.DEVICENAME)))
+         (FONTCREATE (\HTML.COERCE-OR-IDENTITY NEW-SPEC))))
 
 (\HTMLSTREAM.INIT)
 
@@ -1750,8 +1810,8 @@
                                  "see if it starts with any of the elements of *HTML-FINGERPRINTS*")
 
                                  (AND (for FINGERPRINT in *HTML-FINGERPRINTS*
-                                         thereis (EQUAL 1 (STRPOS (L-CASE FINGERPRINT)
-                                                                 FIRST-LINE NIL NIL T)))
+                                         thereis (= 1 (STRPOS (L-CASE FINGERPRINT)
+                                                             FIRST-LINE NIL NIL T)))
                                       T])
 
 (CL:DEFUN MAKE-HTML-FROM-TEXT (FILE HTMLFILE FONTS HEADING TABS)
@@ -1788,46 +1848,46 @@
    "Ignore the body, return NIL"
    NIL)
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (4736 4925 (CLOSE-KNOTS 4736 . 4925)) (4927 5083 (HTML.INCHES-TO-POINTS 4927 . 5083)) (
-5085 5187 (HTML.INCHES-TO-CENTIPOINTS 5085 . 5187)) (5189 5278 (CP-TO-P 5189 . 5278)) (5280 5446 (
-ICP-TO-P 5280 . 5446)) (5448 5524 (P-TO-CP 5448 . 5524)) (5526 5685 (PIXEL-TO-PT 5526 . 5685)) (5687 
-5847 (PT-TO-PIXEL 5687 . 5847)) (5849 5945 (\SF 5849 . 5945)) (5947 6095 (\HTML.SVG-Y 5947 . 6095)) (
-6097 6664 (INSURE-COLOR-OR-SHADE 6097 . 6664)) (6666 7009 (MAKE-FONT-METRICS-FILE-NAME 6666 . 7009)) (
-7011 7411 (MAKE-CHARSET-METRICS-FILE-NAME 7011 . 7411)) (14186 14576 (CHECK-BROWSER-METRICS-FORMAT 
-14186 . 14576)) (14578 16114 (CSS-CLASS-FROM 14578 . 16114)) (16116 16254 (CSS-CLASS-FROM-FAMILY 16116
- . 16254)) (16256 17953 (\HTML.READ-FONT-METRICS 16256 . 17953)) (17955 19344 (
-\HTML.READ-CHARSET-METRICS 17955 . 19344)) (19346 20268 (\HTML.SVG-STROKE-DASHARRAY 19346 . 20268)) (
-20270 20621 (\HTML.SVG-BRUSH-WIDTH 20270 . 20621)) (20623 21647 (\HTML.SVG-BRUSH-CLASS 20623 . 21647))
- (21649 21971 (\HTML.SVG-COLOR 21649 . 21971)) (22871 23103 (with-htmldata 22871 . 23103)) (23105 
-23764 (HTML.OUTPUT-GRAPHICS 23105 . 23764)) (23766 24970 (HTML.OUTPUT-TEXT 23766 . 24970)) (24972 
-26164 (\HTML.MAYBE-START-PAGE 24972 . 26164)) (26166 26573 (\HTML.END-PAGE 26166 . 26573)) (26575 
-27001 (\HTML.TAB-DELTA-X 26575 . 27001)) (27003 27485 (\HTML.CHARWIDTH 27003 . 27485)) (27487 33509 (
-HTML.WRITE-PREFACE 27487 . 33509)) (33511 34489 (CONVERT-FAMILY-TO-QUERY-PARAM 33511 . 34489)) (34491 
-35152 (\HTML.MAKE-STYLESHEET-URL 34491 . 35152)) (35154 40640 (OPENHTMLSTREAM 35154 . 40640)) (40642 
-41295 (HTML.BACKCOLOR 40642 . 41295)) (41297 41845 (HTML.BITBLT 41297 . 41845)) (41847 43815 (
-HTML.BLTSHADE 41847 . 43815)) (43817 44154 (HTML.BOTTOMMARGIN 43817 . 44154)) (44156 44942 (
-HTML.CHARWIDTH 44156 . 44942)) (44944 45259 (HTML.CLIPPINGREGION 44944 . 45259)) (45261 45913 (
-HTML.CLOSEFN 45261 . 45913)) (45915 46581 (HTML.COLOR 45915 . 46581)) (46583 47339 (HTML.DRAWCIRCLE 
-46583 . 47339)) (47341 50408 (HTML.DRAWCURVE 47341 . 50408)) (50410 51346 (HTML.DRAWELLIPSE 50410 . 
-51346)) (51348 52299 (HTML.DRAWLINE 51348 . 52299)) (52301 53298 (HTML.DRAWPOLYGON 52301 . 53298)) (
-53300 55495 (HTML.DRAWARC 53300 . 55495)) (55497 56072 (HTML.FILLCIRCLE 55497 . 56072)) (56074 56965 (
-HTML.FILLPOLYGON 56074 . 56965)) (56967 57847 (HTML.FONT 56967 . 57847)) (57849 58172 (HTML.LEFTMARGIN
- 57849 . 58172)) (58174 58524 (HTML.LINEFEED 58174 . 58524)) (58526 58783 (HTML.MOVETO 58526 . 58783))
- (58785 58901 (HTML.NEWPAGE 58785 . 58901)) (58903 59225 (HTML.OPERATION 58903 . 59225)) (59227 65018 
-(HTML.OUTCHARFN 59227 . 65018)) (65020 65364 (HTML.RESET 65020 . 65364)) (65366 65696 (
-HTML.RIGHTMARGIN 65366 . 65696)) (65698 66072 (HTML.SCALE 65698 . 66072)) (66074 67487 (
-HTML.SCALEDBITBLT 66074 . 67487)) (67489 67795 (HTML.SPACEFACTOR 67489 . 67795)) (67797 68438 (
-HTML.TERPRI 67797 . 68438)) (68440 68756 (HTML.TOPMARGIN 68440 . 68756)) (68758 69133 (HTML.XPOSITION 
-68758 . 69133)) (69135 69510 (HTML.YPOSITION 69135 . 69510)) (69512 69794 (MAKE-HTML-IMAGETYPE 69512
- . 69794)) (69796 70864 (\HTML.INIT-IMAGEDATA 69796 . 70864)) (70866 71554 (\HTMLSTREAM.INIT 70866 . 
-71554)) (71556 71799 (WRITE-BASE64-PNG 71556 . 71799)) (71801 72569 (CONVERT-TO-PNG-BASE64 71801 . 
-72569)) (72571 73858 (URL-ENCODE 72571 . 73858)) (73860 75077 (HTML-ENCODE 73860 . 75077)) (75200 
-79063 (\HTML.FONTCREATE 75200 . 79063)) (79065 79683 (\HTML.FONTEXISTS? 79065 . 79683)) (79685 82534 (
-\HTML.FONTSAVAILABLE 79685 . 82534)) (82536 84150 (\HTML.CREATECHARSET 82536 . 84150)) (84152 84990 (
-\HTML.CHANGECHARSET 84152 . 84990)) (84992 85329 (MAKE-CHARSET-BIT-ARRAY 84992 . 85329)) (85331 85555 
-(KNOWN-CHARSET? 85331 . 85555)) (85557 86091 (\HTML.WARN-CHARSET 85557 . 86091)) (86093 87450 (
-\HTML.ADD-FONT-DEFS 86093 . 87450)) (87452 87610 (\HTML.COERCE-FAMILY 87452 . 87610)) (87612 88302 (
-\HTML.COERCE-FONT 87612 . 88302)) (88742 89925 (HTMLFILEP 88742 . 89925)) (89927 90069 (
-MAKE-HTML-FROM-TEXT 89927 . 90069)) (90071 90480 (MAKE-HTML-FROM-TEDIT 90071 . 90480)) (90773 90914 (
-\CLEAN-FONT-CACHE 90773 . 90914)) (90916 90990 (DO-NOT 90916 . 90990)))))
+  (FILEMAP (NIL (5277 5466 (CLOSE-KNOTS 5277 . 5466)) (5468 5624 (HTML.INCHES-TO-POINTS 5468 . 5624)) (
+5626 5728 (HTML.INCHES-TO-CENTIPOINTS 5626 . 5728)) (5730 5819 (CP-TO-P 5730 . 5819)) (5821 5987 (
+ICP-TO-P 5821 . 5987)) (5989 6065 (P-TO-CP 5989 . 6065)) (6067 6226 (PIXEL-TO-PT 6067 . 6226)) (6228 
+6388 (PT-TO-PIXEL 6228 . 6388)) (6390 6486 (\SF 6390 . 6486)) (6488 6636 (\HTML.SVG-Y 6488 . 6636)) (
+6638 7205 (INSURE-COLOR-OR-SHADE 6638 . 7205)) (7207 7550 (MAKE-FONT-METRICS-FILE-NAME 7207 . 7550)) (
+7552 7952 (MAKE-CHARSET-METRICS-FILE-NAME 7552 . 7952)) (16100 16498 (CHECK-BROWSER-METRICS-FORMAT 
+16100 . 16498)) (16500 18036 (CSS-CLASS-FROM 16500 . 18036)) (18038 18176 (CSS-CLASS-FROM-FAMILY 18038
+ . 18176)) (18178 19905 (\HTML.READ-FONT-METRICS 18178 . 19905)) (19907 21432 (
+\HTML.READ-CHARSET-METRICS 19907 . 21432)) (21434 22356 (\HTML.SVG-STROKE-DASHARRAY 21434 . 22356)) (
+22358 22709 (\HTML.SVG-BRUSH-WIDTH 22358 . 22709)) (22711 23735 (\HTML.SVG-BRUSH-CLASS 22711 . 23735))
+ (23737 24059 (\HTML.SVG-COLOR 23737 . 24059)) (24959 25191 (with-htmldata 24959 . 25191)) (25193 
+25852 (HTML.OUTPUT-GRAPHICS 25193 . 25852)) (25854 27058 (HTML.OUTPUT-TEXT 25854 . 27058)) (27060 
+28252 (\HTML.MAYBE-START-PAGE 27060 . 28252)) (28254 28661 (\HTML.END-PAGE 28254 . 28661)) (28663 
+29089 (\HTML.TAB-DELTA-X 28663 . 29089)) (29091 29573 (\HTML.CHARWIDTH 29091 . 29573)) (29575 35597 (
+HTML.WRITE-PREFACE 29575 . 35597)) (35599 36577 (CONVERT-FAMILY-TO-QUERY-PARAM 35599 . 36577)) (36579 
+37240 (\HTML.MAKE-STYLESHEET-URL 36579 . 37240)) (37242 42728 (OPENHTMLSTREAM 37242 . 42728)) (42730 
+43383 (HTML.BACKCOLOR 42730 . 43383)) (43385 43933 (HTML.BITBLT 43385 . 43933)) (43935 45903 (
+HTML.BLTSHADE 43935 . 45903)) (45905 46242 (HTML.BOTTOMMARGIN 45905 . 46242)) (46244 47030 (
+HTML.CHARWIDTH 46244 . 47030)) (47032 47347 (HTML.CLIPPINGREGION 47032 . 47347)) (47349 48001 (
+HTML.CLOSEFN 47349 . 48001)) (48003 48669 (HTML.COLOR 48003 . 48669)) (48671 49427 (HTML.DRAWCIRCLE 
+48671 . 49427)) (49429 52496 (HTML.DRAWCURVE 49429 . 52496)) (52498 53434 (HTML.DRAWELLIPSE 52498 . 
+53434)) (53436 54387 (HTML.DRAWLINE 53436 . 54387)) (54389 55386 (HTML.DRAWPOLYGON 54389 . 55386)) (
+55388 57583 (HTML.DRAWARC 55388 . 57583)) (57585 58160 (HTML.FILLCIRCLE 57585 . 58160)) (58162 59053 (
+HTML.FILLPOLYGON 58162 . 59053)) (59055 59935 (HTML.FONT 59055 . 59935)) (59937 60260 (HTML.LEFTMARGIN
+ 59937 . 60260)) (60262 60612 (HTML.LINEFEED 60262 . 60612)) (60614 60871 (HTML.MOVETO 60614 . 60871))
+ (60873 60989 (HTML.NEWPAGE 60873 . 60989)) (60991 61313 (HTML.OPERATION 60991 . 61313)) (61315 67106 
+(HTML.OUTCHARFN 61315 . 67106)) (67108 67452 (HTML.RESET 67108 . 67452)) (67454 67784 (
+HTML.RIGHTMARGIN 67454 . 67784)) (67786 68160 (HTML.SCALE 67786 . 68160)) (68162 69575 (
+HTML.SCALEDBITBLT 68162 . 69575)) (69577 69883 (HTML.SPACEFACTOR 69577 . 69883)) (69885 70526 (
+HTML.TERPRI 69885 . 70526)) (70528 70844 (HTML.TOPMARGIN 70528 . 70844)) (70846 71221 (HTML.XPOSITION 
+70846 . 71221)) (71223 71598 (HTML.YPOSITION 71223 . 71598)) (71600 71882 (MAKE-HTML-IMAGETYPE 71600
+ . 71882)) (71884 72952 (\HTML.INIT-IMAGEDATA 71884 . 72952)) (72954 73673 (\HTMLSTREAM.INIT 72954 . 
+73673)) (73675 73918 (WRITE-BASE64-PNG 73675 . 73918)) (73920 74688 (CONVERT-TO-PNG-BASE64 73920 . 
+74688)) (74690 75977 (URL-ENCODE 74690 . 75977)) (75979 77196 (HTML-ENCODE 75979 . 77196)) (77319 
+82702 (\HTML.FONTCREATE 77319 . 82702)) (82704 83448 (\HTML.FONTEXISTS? 82704 . 83448)) (83450 86314 (
+\HTML.FONTSAVAILABLE 83450 . 86314)) (86316 88045 (\HTML.CREATECHARSET 86316 . 88045)) (88047 88885 (
+\HTML.CHANGECHARSET 88047 . 88885)) (88887 89224 (MAKE-CHARSET-BIT-ARRAY 88887 . 89224)) (89226 89450 
+(KNOWN-CHARSET? 89226 . 89450)) (89452 89986 (\HTML.WARN-CHARSET 89452 . 89986)) (89988 91370 (
+\HTML.ADD-FONT-DEFS 89988 . 91370)) (91372 91642 (\HTML.COERCE-OR-IDENTITY 91372 . 91642)) (91644 
+92191 (\HTML.COERCE-FONT 91644 . 92191)) (92631 93806 (HTMLFILEP 92631 . 93806)) (93808 93950 (
+MAKE-HTML-FROM-TEXT 93808 . 93950)) (93952 94361 (MAKE-HTML-FROM-TEDIT 93952 . 94361)) (94654 94795 (
+\CLEAN-FONT-CACHE 94654 . 94795)) (94797 94871 (DO-NOT 94797 . 94871)))))
 STOP
