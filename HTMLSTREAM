@@ -1,10 +1,16 @@
-(DEFINE-FILE-INFO PACKAGE "INTERLISP" READTABLE "INTERLISP" BASE 10)
+(DEFINE-FILE-INFO :PACKAGE "INTERLISP" :READTABLE "INTERLISP" :BASE 10)
 
-(FILECREATED "25-Feb-2026 13:53:32" {HTMLSTREAM}HTMLSTREAM.;92 106562 
+(FILECREATED " 9-Mar-2026 14:12:57" {HTMLSTREAM}HTMLSTREAM.;96 108566 
 
-      :CHANGES-TO (FUNCTIONS \HTML.CHARWIDTH HTML.FONT \HTML.COERCE-FONT)
+      :CHANGES-TO (FUNCTIONS HTML.FONT HTML.COLOR HTML.BACKCOLOR HTML.LINEFEED \HTML.FONTCREATE 
+                         \HTML.TOADDR HTMLFONT.GETCHARSET HTML.OUTPUT-TEXT HTML.WRITE-PREFACE 
+                         HTML.MOVETO HTML.XPOSITION)
+                  (STRUCTURES HTML.FONTINFO)
+                  (VARIABLES HTMLCHARSETFNS *WEB-FONT-FAMILIES* 
+                         *HTML-STANDARD-PAGE-WEB-FONT-FAMILIES* *HTML-STYLESHEET-FONT-FAMILY-DEFS* 
+                         *WEB-FONT-FAMILY-NAMES* *BROWSER-FONTS-MAP*)
 
-      :PREVIOUS-DATE "24-Feb-2026 14:02:41" {HTMLSTREAM}HTMLSTREAM.;90)
+      :PREVIOUS-DATE "25-Feb-2026 13:53:32" {HTMLSTREAM}HTMLSTREAM.;92)
 
 
 (PRETTYCOMPRINT HTMLSTREAMCOMS)
@@ -12,9 +18,9 @@
 (RPAQQ HTMLSTREAMCOMS
        ((FILES BASE64 U-PNG)
         
-        (* ;; "handy macros")
+        (* ;; "handy macros and functions")
 
-        (FUNCTIONS DO-NOT \HTML-DBG)
+        (FUNCTIONS DO-NOT \HTML-DBG \HTML.TOADDR)
         (VARIABLES *CENTIPOINTS-PER-POINT* TAB-WIDTH-IN-CHARACTERS)
         (RECORDS WEB-FONT-DESCR WEB-FONT-FACE WEB-FONT-METRICS WEB-CHARSET-METRICS)
         (FUNCTIONS CLOSE-KNOTS HTML.INCHES-TO-POINTS HTML.INCHES-TO-CENTIPOINTS CP-TO-P ICP-TO-P 
@@ -85,7 +91,7 @@
 
 
 
-(* ;; "handy macros")
+(* ;; "handy macros and functions")
 
 
 (DEFMACRO DO-NOT (&BODY BODY)
@@ -96,6 +102,12 @@
    "Produce HTML/font-related debug info if enabled"
    `(CL:WHEN *HTML-DEBUG-FONTCREATE*
         (CL:FORMAT T ,@REST)))
+
+(CL:DEFUN \HTML.TOADDR (X)
+   "Convert the object to a string made from its address"
+   (CL:FORMAT NIL "~a/~o,~o" (TYPENAME X)
+          (\HILOC X)
+          (\LOLOC X)))
 
 (CL:DEFCONSTANT *CENTIPOINTS-PER-POINT* 100
    "There are 100 centipoints per point, by definition and by golly!")
@@ -257,15 +269,20 @@
 (CL:DEFPARAMETER HTMLFONTEXTENSIONS '("medleyhtmlfont" "wcm")
                                     "The extensions that identify HTML font metrics files")
 
-(CL:DEFPARAMETER HTMLCHARSETFNS '((MEDLEYFONT MEDLEYFONT.FILEP MEDLEYFONT.GETCHARSET)
-                                  (HTMLFONT HTMLFONT.FILEP HTMLFONT.GETCHARSET))
-                                "HTML charset functions. Try MEDLEYFONT first, fall back to WFM/WCM.")
+(CL:DEFPARAMETER HTMLCHARSETFNS (LET [(ORIGINAL '((MEDLEYFONT MEDLEYFONT.FILEP MEDLEYFONT.GETCHARSET)
+                                                  (HTMLFONT HTMLFONT.FILEP HTMLFONT.GETCHARSET]
+                                     (CDR ORIGINAL))
+
+                                (* ;; 
+                   "%"comment out%" the MEDLEYFONT support, which was smashing the CSS-CLASS somehow")
+
+                                "HTML charset functions. Ignore MEDLEYFONT for now.")
 
 (CL:DEFVAR *GOOGLE-FONTS-BASE-URL* "https://fonts.googleapis.com/css2"
    "The base of the Google Fonts font stylesheet URL")
 
 (CL:DEFPARAMETER *HTML-STANDARD-PAGE-WEB-FONT-FAMILIES* '(NOTO-SANS NOTO-SANS-MONO NOTO-SANS-DISPLAY
-                                                                NOTO-SERIF)
+                                                                NOTO-SERIF NOTO-SERIF-DISPLAY)
 
                                                         (* ;; 
                        "these correspond to the property names in *HTML-STYLESHEET-FONT-FAMILY-DEFS*")
@@ -274,7 +291,7 @@
                   "The names of the standard font families to be included in the HTML pages we write")
 
 (CL:DEFPARAMETER *HTML-STYLESHEET-FONT-FAMILY-DEFS*
-   `[NOTO-SANS ("Noto Sans" "Noto Sans Simplified Chinese" "Noto Sans Traditional Chinese" 
+   `(NOTO-SANS ("Noto Sans" "Noto Sans Simplified Chinese" "Noto Sans Traditional Chinese" 
                       "Noto Sans JP" "Noto Sans KR" "Noto Sans Arabic" "Noto Sans Hebrew" 
                       "Noto Sans Runic" "Noto Sans Georgian" "Noto Sans Armenian" "Noto Sans Thai" 
                       "Noto Sans Lao" "Noto Sans Gurmukhi" "Noto Sans Bengali" "Noto Sans Math" 
@@ -291,7 +308,9 @@
                   "Noto Serif Devanagari" "Noto Serif Gurmukhi" "Noto Serif Bengali"
                   ,(\SF "Noto Sans Math")
                   ,(\SF "Noto Sans Symbols")
-                  ,(\SF "Noto Sans Symbols 2"]
+                  ,(\SF "Noto Sans Symbols 2"))
+           NOTO-SERIF-DISPLAY
+           ("Noto Serif Display"))
    "The font family styles we'll load into the page")
 
 (CL:DEFCONSTANT *DEFAULT-WEB-FONT-METRICS-FILE-NAME* "font-metrics.data"
@@ -303,12 +322,13 @@
 (CL:DEFCONSTANT *WEB-FONT-FAMILIES* '((NOTO-SANS . "ns")
                                       (NOTO-SANS-MONO . "nsm")
                                       (NOTO-SANS-DISPLAY . "nsd")
-                                      (NOTO-SERIF . "nsf"))
+                                      (NOTO-SERIF . "nsf")
+                                      (NOTO-SERIF-DISPLAY . "nsfd"))
                                     
                               "A-list of supported Web font names, as atoms, with the CSS class name")
 
 (CL:DEFCONSTANT *WEB-FONT-FAMILY-NAMES* '("Noto Sans" "Noto Sans Mono" "Noto Sans Display" 
-                                                "Noto Serif")
+                                                "Noto Serif" "Noto Serif Display")
 
                                         (* ;; "keep this synchronized with *WEB-FONT-FAMILIES*")
 
@@ -332,7 +352,8 @@
 (CL:DEFPARAMETER *BROWSER-FONTS-MAP* '((NOTO-SANS . "sans-serif")
                                        (NOTO-SANS-MONO . "monospace")
                                        (NOTO-SANS-DISPLAY . "sans-serif")
-                                       (NOTO-SERIF . "serif"))
+                                       (NOTO-SERIF . "serif")
+                                       (NOTO-SERIF-DISPLAY . "serif"))
                                      
      "Map each of our fonts to a browser default. The metrics for these characters may be incorrect.")
 
@@ -572,7 +593,12 @@
    (STATE HTML.STATE.BETWEEN-PAGES)
    PAGE-HEIGHT PAGE-WIDTH TITLE)
 
-(CL:DEFSTRUCT (HTML.FONTINFO (:CONC-NAME \HTMLFONT-))
+(CL:DEFSTRUCT (HTML.FONTINFO (:CONC-NAME \HTMLFONT-)
+                             [:PRINT-FUNCTION (LAMBDA (OBJ STREAM DEPTH)
+                                                (CL:FORMAT STREAM "<~a css: '~a' slug: ~a>"
+                                                       (\HTML.TOADDR OBJ)
+                                                       (\HTMLFONT-CSS-CLASS OBJ)
+                                                       (\HTMLFONT-SLUG-WIDTH OBJ])
    "Private data for an HTML FONTDESCRIPTOR"
    (CHARSETS NIL)
    (CSS-CLASS NIL)
@@ -690,9 +716,11 @@
    (with-htmldata
     (DATA STREAM)
     (LET ((BACKING (\HTML-BACKING-STREAM DATA))
-          (TITLE (\HTML-TITLE DATA)))
+          (TITLE (\HTML-TITLE DATA))
+          (FAMILY-VAR-NAMES NIL))
          (CL:FLET ((FONT-DEF (VAR-NAME FAMILY)
                           (CL:FORMAT BACKING "    const ~a = [" VAR-NAME)
+                          (PUSH FAMILY-VAR-NAMES VAR-NAME)
                           [LET ((FAMILY-MEMBERS (LISTGET *HTML-STYLESHEET-FONT-FAMILY-DEFS* FAMILY)))
                                (for FONT in FAMILY-MEMBERS as TAIL on FAMILY-MEMBERS
                                   do (if (CDR TAIL)
@@ -715,17 +743,18 @@
                              (\HTML.MAKE-STYLESHEET-URL (LISTGET *HTML-STYLESHEET-FONT-FAMILY-DEFS* 
                                                                FAMILY]
                 (CL:FORMAT BACKING "<script>~%%")
-                (CL:FORMAT BACKING "function singleQuote(fn) { return %"'%" + fn + %"'%"; }~%%")
+                (CL:FORMAT BACKING "    function singleQuote(fn) { return %"'%" + fn + %"'%"; }~%%")
                 (FONT-DEF "notoSans" 'NOTO-SANS)
                 (FONT-DEF "notoSansMono" 'NOTO-SANS-MONO)
                 (FONT-DEF "notoSansDisplay" 'NOTO-SANS-DISPLAY)
                 (FONT-DEF "notoSerif" 'NOTO-SERIF)
+                (FONT-DEF "notoSerifDisplay" 'NOTO-SERIF-DISPLAY)
                 (CL:FORMAT BACKING "    const sizes = [")
                 (for SIZE in *WEB-FONT-SIZES* do (CL:FORMAT BACKING "~d, " SIZE))
                 (CL:FORMAT BACKING "];~%%")
-                (CL:FORMAT BACKING 
-                      "    const families = [notoSans, notoSansMono, notoSansDisplay, notoSerif];~%%"
-                       )
+                (CL:FORMAT BACKING "    const families = [")
+                (for FAMILY-VAR in FAMILY-VAR-NAMES do (CL:FORMAT BACKING "~a, " FAMILY-VAR))
+                (CL:FORMAT BACKING "];~%%")
                 (CL:FORMAT BACKING "    const fontLoadPromises = [];~%%")
                 (CL:FORMAT BACKING "    for (const family of families) {~%%")
                 (CL:FORMAT BACKING "        for (const size of sizes) {~%%")
@@ -930,10 +959,12 @@
           (LET ((OLD-VALUE (\HTML-BG-COLOR DATA)))
                [COND
                   (NEW-COLOR (LET ((EFFECTIVE-COLOR (INSURE-COLOR-OR-SHADE NEW-COLOR)))
-                                  (CL:SETF (\HTML-BG-COLOR DATA)
-                                         EFFECTIVE-COLOR)
-                                  (CL:SETF (\HTML-SVG-BG-COLOR DATA)
-                                         (\HTML.SVG-COLOR EFFECTIVE-COLOR]
+                                  (CL:WHEN (NEQ EFFECTIVE-COLOR OLD-VALUE)
+                                      (CL:SETF (\HTML-BG-COLOR DATA)
+                                             EFFECTIVE-COLOR)
+                                      (CL:SETF (\HTML-SVG-BG-COLOR DATA)
+                                             (\HTML.SVG-COLOR EFFECTIVE-COLOR))
+                                      (HTML.OUTPUT-GRAPHICS STREAM))]
                OLD-VALUE)))
 
 (CL:DEFUN HTML.BITBLT (SOURCEBITMAP SOURCELEFT SOURCEBOTTOM STREAM DESTINATIONLEFT DESTINATIONBOTTOM
@@ -1030,11 +1061,12 @@
           (LET ((OLD-VALUE (\HTML-FG-COLOR DATA)))
                [COND
                   (NEW-COLOR (LET ((EFFECTIVE-COLOR (INSURE-COLOR-OR-SHADE NEW-COLOR)))
-                                  (CL:SETF (\HTML-FG-COLOR DATA)
-                                         EFFECTIVE-COLOR)
-                                  (CL:SETF (\HTML-SVG-FG-COLOR DATA)
-                                         (\HTML.SVG-COLOR EFFECTIVE-COLOR))
-                                  (HTML.OUTPUT-GRAPHICS STREAM]
+                                  (CL:WHEN (NEQ EFFECTIVE-COLOR OLD-VALUE)
+                                      (CL:SETF (\HTML-FG-COLOR DATA)
+                                             EFFECTIVE-COLOR)
+                                      (CL:SETF (\HTML-SVG-FG-COLOR DATA)
+                                             (\HTML.SVG-COLOR EFFECTIVE-COLOR))
+                                      (HTML.OUTPUT-GRAPHICS STREAM))]
                OLD-VALUE)))
 
 (CL:DEFUN HTML.DRAWCIRCLE (STREAM CENTERX CENTERY RADIUS BRUSH DASHING)
@@ -1227,17 +1259,18 @@
 (CL:DEFUN HTML.FONT (STREAM NEW-FONT)
    (with-htmldata (DATA STREAM)
           (LET ((OLD-VALUE (\HTML-FONT DATA)))
-               (COND
+               [COND
                   (NEW-FONT                                  (* ; "NEW-FONT might be a FONTDESCRIPTOR, a FONTCLASS, or a list of properties to apply to the current FONTDESCRIPTOR")
                          (SETQ NEW-FONT (OR (FONTCREATE (\HTML.COERCE-FONT NEW-FONT))
                                             (FONTCREATE OLD-VALUE NIL NIL NIL 
                                                    HTML.FONTCREATE.DEVICENAME T)
                                             (ERROR "Font not found or illegal parameter")))
-                         (CL:SETF (\HTML-FONT DATA)
-                                NEW-FONT)
-                         (CL:SETF (\HTML-LINEFEED DATA)
-                                (FONTPROP NEW-FONT 'HEIGHT))
-                         (HTML.OUTPUT-GRAPHICS STREAM)))
+                         (CL:WHEN (NEQ OLD-VALUE NEW-FONT)
+                             (CL:SETF (\HTML-FONT DATA)
+                                    NEW-FONT)
+                             (CL:SETF (\HTML-LINEFEED DATA)
+                                    (FONTPROP NEW-FONT 'HEIGHT))
+                             (HTML.OUTPUT-GRAPHICS STREAM))]
                OLD-VALUE)))
 
 (CL:DEFUN HTML.LEFTMARGIN (STREAM NEW-LEFT-MARGIN)
@@ -1252,23 +1285,22 @@
    (with-htmldata (DATA STREAM)
           (LET ((OLD-VALUE (\HTML-LINEFEED DATA)))
                (COND
-                  (NEW-DELTA (CL:SETF (\HTML-LINEFEED DATA)
-                                    NEW-DELTA)
-                         (HTML.OUTPUT-GRAPHICS STREAM)))
+                  ((AND NEW-DELTA (NOT (EQP OLD-VALUE NEW-DELTA)))
+                   (CL:SETF (\HTML-LINEFEED DATA)
+                          NEW-DELTA)
+                   (HTML.OUTPUT-GRAPHICS STREAM)))
                OLD-VALUE)))
 
 (CL:DEFUN HTML.MOVETO (STREAM X Y)
    "Move to X, Y"
-   [with-htmldata (DATA STREAM)
-          (LET ((CURRENT-X (\HTML-X-POSITION DATA))
-                (CURRENT-Y (\HTML-Y-POSITION DATA)))
-               (CL:UNLESS (AND (EQP X CURRENT-X)
-                               (EQP Y CURRENT-Y))
-                   (CL:SETF (\HTML-X-POSITION DATA)
-                          X)
-                   (CL:SETF (\HTML-Y-POSITION DATA)
-                          Y)
-                   (HTML.OUTPUT-GRAPHICS STREAM))])
+   (with-htmldata (DATA STREAM)
+          (CL:UNLESS (AND (EQP X (\HTML-X-POSITION DATA))
+                          (EQP Y (\HTML-Y-POSITION DATA)))
+              (CL:SETF (\HTML-X-POSITION DATA)
+                     X)
+              (CL:SETF (\HTML-Y-POSITION DATA)
+                     Y)
+              (HTML.OUTPUT-GRAPHICS STREAM))))
 
 (CL:DEFUN HTML.NEWPAGE (STREAM)
    (with-htmldata (DATA STREAM)
@@ -1450,7 +1482,7 @@
 (CL:DEFUN HTML.XPOSITION (STREAM NEW-X-POSITION)
    (with-htmldata (DATA STREAM)
           (LET ((OLD-VALUE (\HTML-X-POSITION DATA)))
-               (CL:WHEN (AND NEW-X-POSITION (NEQ NEW-X-POSITION OLD-VALUE))
+               (CL:WHEN (AND NEW-X-POSITION (NOT (EQP NEW-X-POSITION OLD-VALUE)))
                    (CL:SETF (\HTML-X-POSITION DATA)
                           NEW-X-POSITION)
                    (HTML.OUTPUT-GRAPHICS STREAM))
@@ -1729,7 +1761,7 @@
 
    (* ;; "If open, assume it's a charset metrics stream, that the initial version expr has been checked, and we are positioned after that.  FONT is provided so we can update the fontdescriptor.")
 
-   (AND *HTML-DEBUG-FONTCREATE* (CL:FORMAT T "HTMLFONT.GETCHARSET ~a c~o ~a~%%" STREAM CHARSET FONT))
+   (\HTML-DBG "HTMLFONT.GETCHARSET ~a c~o ~a~%%" STREAM CHARSET FONT)
    (CL:UNLESS (<= 0 CHARSET \MAXCHARSET)
           (\ILLEGAL.ARG CHARSET))
    [LET ((*PACKAGE* (CL:FIND-PACKAGE "IL"))
@@ -2070,51 +2102,51 @@
    "Remove all HTML fonts from all caches"
    (FLUSHFONTCACHE NIL '* '* '* '* HTML.FONTCREATE.DEVICENAME))
 (DECLARE%: DONTCOPY
-  (FILEMAP (NIL (4697 4771 (DO-NOT 4697 . 4771)) (4773 4930 (\HTML-DBG 4773 . 4930)) (5602 5791 (
-CLOSE-KNOTS 5602 . 5791)) (5793 5949 (HTML.INCHES-TO-POINTS 5793 . 5949)) (5951 6053 (
-HTML.INCHES-TO-CENTIPOINTS 5951 . 6053)) (6055 6144 (CP-TO-P 6055 . 6144)) (6146 6312 (ICP-TO-P 6146
- . 6312)) (6314 6390 (P-TO-CP 6314 . 6390)) (6392 6551 (PIXEL-TO-PT 6392 . 6551)) (6553 6713 (
-PT-TO-PIXEL 6553 . 6713)) (6715 6811 (\SF 6715 . 6811)) (6813 6961 (\HTML.SVG-Y 6813 . 6961)) (6963 
-7530 (INSURE-COLOR-OR-SHADE 6963 . 7530)) (7532 8153 (MAKE-FONT-METRICS-FILE-NAME 7532 . 8153)) (8155 
-8942 (MAKE-CHARSET-METRICS-FILE-NAME 8155 . 8942)) (17450 17735 (HTML-FONT-METRICS-VERSION-OK? 17450
- . 17735)) (17737 18020 (CHECK-BROWSER-METRICS-FORMAT 17737 . 18020)) (18022 19558 (CSS-CLASS-FROM 
-18022 . 19558)) (19560 19698 (CSS-CLASS-FROM-FAMILY 19560 . 19698)) (19700 21324 (
-\HTML.READ-FONT-METRICS 19700 . 21324)) (21326 22746 (\HTML.READ-CHARSET-METRICS 21326 . 22746)) (
-22748 23670 (\HTML.SVG-STROKE-DASHARRAY 22748 . 23670)) (23672 24023 (\HTML.SVG-BRUSH-WIDTH 23672 . 
-24023)) (24025 25049 (\HTML.SVG-BRUSH-CLASS 24025 . 25049)) (25051 25373 (\HTML.SVG-COLOR 25051 . 
-25373)) (26273 26505 (with-htmldata 26273 . 26505)) (26507 27166 (HTML.OUTPUT-GRAPHICS 26507 . 27166))
- (27168 28372 (HTML.OUTPUT-TEXT 27168 . 28372)) (28374 29566 (\HTML.MAYBE-START-PAGE 28374 . 29566)) (
-29568 29975 (\HTML.END-PAGE 29568 . 29975)) (29977 30403 (\HTML.TAB-DELTA-X 29977 . 30403)) (30405 
-31208 (\HTML.CHARWIDTH 30405 . 31208)) (31210 37232 (HTML.WRITE-PREFACE 31210 . 37232)) (37234 38212 (
-CONVERT-FAMILY-TO-QUERY-PARAM 37234 . 38212)) (38214 38875 (\HTML.MAKE-STYLESHEET-URL 38214 . 38875)) 
-(38877 44367 (OPENHTMLSTREAM 38877 . 44367)) (44369 45022 (HTML.BACKCOLOR 44369 . 45022)) (45024 45572
- (HTML.BITBLT 45024 . 45572)) (45574 47542 (HTML.BLTSHADE 45574 . 47542)) (47544 47881 (
-HTML.BOTTOMMARGIN 47544 . 47881)) (47883 48669 (HTML.CHARWIDTH 47883 . 48669)) (48671 48986 (
-HTML.CLIPPINGREGION 48671 . 48986)) (48988 49640 (HTML.CLOSEFN 48988 . 49640)) (49642 50308 (
-HTML.COLOR 49642 . 50308)) (50310 51066 (HTML.DRAWCIRCLE 50310 . 51066)) (51068 54135 (HTML.DRAWCURVE 
-51068 . 54135)) (54137 55073 (HTML.DRAWELLIPSE 54137 . 55073)) (55075 56026 (HTML.DRAWLINE 55075 . 
-56026)) (56028 57025 (HTML.DRAWPOLYGON 56028 . 57025)) (57027 59222 (HTML.DRAWARC 57027 . 59222)) (
-59224 59799 (HTML.FILLCIRCLE 59224 . 59799)) (59801 60692 (HTML.FILLPOLYGON 59801 . 60692)) (60694 
-61666 (HTML.FONT 60694 . 61666)) (61668 61991 (HTML.LEFTMARGIN 61668 . 61991)) (61993 62343 (
-HTML.LINEFEED 61993 . 62343)) (62345 62859 (HTML.MOVETO 62345 . 62859)) (62861 62977 (HTML.NEWPAGE 
-62861 . 62977)) (62979 63301 (HTML.OPERATION 62979 . 63301)) (63303 69094 (HTML.OUTCHARFN 63303 . 
-69094)) (69096 69440 (HTML.RESET 69096 . 69440)) (69442 69772 (HTML.RIGHTMARGIN 69442 . 69772)) (69774
- 70148 (HTML.SCALE 69774 . 70148)) (70150 71563 (HTML.SCALEDBITBLT 70150 . 71563)) (71565 71871 (
-HTML.SPACEFACTOR 71565 . 71871)) (71873 72514 (HTML.TERPRI 71873 . 72514)) (72516 72832 (
-HTML.TOPMARGIN 72516 . 72832)) (72834 73227 (HTML.XPOSITION 72834 . 73227)) (73229 73628 (
-HTML.YPOSITION 73229 . 73628)) (73630 73912 (MAKE-HTML-IMAGETYPE 73630 . 73912)) (73914 74982 (
-\HTML.INIT-IMAGEDATA 73914 . 74982)) (74984 75687 (\HTMLSTREAM.INIT 74984 . 75687)) (75689 75932 (
-WRITE-BASE64-PNG 75689 . 75932)) (75934 76702 (CONVERT-TO-PNG-BASE64 75934 . 76702)) (76704 77991 (
-URL-ENCODE 76704 . 77991)) (77993 79210 (HTML-ENCODE 77993 . 79210)) (79494 84887 (\HTML.FONTCREATE 
-79494 . 84887)) (84889 85633 (\HTML.FONTEXISTS? 84889 . 85633)) (85635 88499 (\HTML.FONTSAVAILABLE 
-85635 . 88499)) (88501 92103 (HTMLFONT.GETCHARSET 88501 . 92103)) (92105 93327 (HTMLFONT.FILEP 92105
- . 93327)) (93329 96661 (\HTML.CREATECHARSET 93329 . 96661)) (96663 97501 (\HTML.CHANGECHARSET 96663
- . 97501)) (97503 97840 (MAKE-CHARSET-BIT-ARRAY 97503 . 97840)) (97842 98066 (KNOWN-CHARSET? 97842 . 
-98066)) (98068 98602 (\HTML.WARN-CHARSET 98068 . 98602)) (98604 99986 (\HTML.ADD-FONT-DEFS 98604 . 
-99986)) (99988 100410 (\FIRST-COERCION 99988 . 100410)) (100412 101168 (\HTML.COERCE-OR-IDENTITY 
-100412 . 101168)) (101170 102088 (\HTML.COERCE-FONT 101170 . 102088)) (102090 102457 (
-MAYBE-MARK-FONT-COMPLETE 102090 . 102457)) (102492 102784 (\HTML.FONTCREATE-NEW 102492 . 102784)) (
-103055 103959 (HTML.CREATE-MEDLEYFONT-FAMILY 103055 . 103959)) (104375 105550 (HTMLFILEP 104375 . 
-105550)) (105552 105694 (MAKE-HTML-FROM-TEXT 105552 . 105694)) (105696 106105 (MAKE-HTML-FROM-TEDIT 
-105696 . 106105)) (106398 106539 (\CLEAN-FONT-CACHE 106398 . 106539)))))
+  (FILEMAP (NIL (5189 5263 (DO-NOT 5189 . 5263)) (5265 5422 (\HTML-DBG 5265 . 5422)) (5424 5598 (
+\HTML.TOADDR 5424 . 5598)) (6270 6459 (CLOSE-KNOTS 6270 . 6459)) (6461 6617 (HTML.INCHES-TO-POINTS 
+6461 . 6617)) (6619 6721 (HTML.INCHES-TO-CENTIPOINTS 6619 . 6721)) (6723 6812 (CP-TO-P 6723 . 6812)) (
+6814 6980 (ICP-TO-P 6814 . 6980)) (6982 7058 (P-TO-CP 6982 . 7058)) (7060 7219 (PIXEL-TO-PT 7060 . 
+7219)) (7221 7381 (PT-TO-PIXEL 7221 . 7381)) (7383 7479 (\SF 7383 . 7479)) (7481 7629 (\HTML.SVG-Y 
+7481 . 7629)) (7631 8198 (INSURE-COLOR-OR-SHADE 7631 . 8198)) (8200 8821 (MAKE-FONT-METRICS-FILE-NAME 
+8200 . 8821)) (8823 9610 (MAKE-CHARSET-METRICS-FILE-NAME 8823 . 9610)) (18585 18870 (
+HTML-FONT-METRICS-VERSION-OK? 18585 . 18870)) (18872 19155 (CHECK-BROWSER-METRICS-FORMAT 18872 . 19155
+)) (19157 20693 (CSS-CLASS-FROM 19157 . 20693)) (20695 20833 (CSS-CLASS-FROM-FAMILY 20695 . 20833)) (
+20835 22459 (\HTML.READ-FONT-METRICS 20835 . 22459)) (22461 23881 (\HTML.READ-CHARSET-METRICS 22461 . 
+23881)) (23883 24805 (\HTML.SVG-STROKE-DASHARRAY 23883 . 24805)) (24807 25158 (\HTML.SVG-BRUSH-WIDTH 
+24807 . 25158)) (25160 26184 (\HTML.SVG-BRUSH-CLASS 25160 . 26184)) (26186 26508 (\HTML.SVG-COLOR 
+26186 . 26508)) (27814 28046 (with-htmldata 27814 . 28046)) (28048 28707 (HTML.OUTPUT-GRAPHICS 28048
+ . 28707)) (28709 29913 (HTML.OUTPUT-TEXT 28709 . 29913)) (29915 31107 (\HTML.MAYBE-START-PAGE 29915
+ . 31107)) (31109 31516 (\HTML.END-PAGE 31109 . 31516)) (31518 31944 (\HTML.TAB-DELTA-X 31518 . 31944)
+) (31946 32749 (\HTML.CHARWIDTH 31946 . 32749)) (32751 38987 (HTML.WRITE-PREFACE 32751 . 38987)) (
+38989 39967 (CONVERT-FAMILY-TO-QUERY-PARAM 38989 . 39967)) (39969 40630 (\HTML.MAKE-STYLESHEET-URL 
+39969 . 40630)) (40632 46122 (OPENHTMLSTREAM 40632 . 46122)) (46124 46943 (HTML.BACKCOLOR 46124 . 
+46943)) (46945 47493 (HTML.BITBLT 46945 . 47493)) (47495 49463 (HTML.BLTSHADE 47495 . 49463)) (49465 
+49802 (HTML.BOTTOMMARGIN 49465 . 49802)) (49804 50590 (HTML.CHARWIDTH 49804 . 50590)) (50592 50907 (
+HTML.CLIPPINGREGION 50592 . 50907)) (50909 51561 (HTML.CLOSEFN 50909 . 51561)) (51563 52326 (
+HTML.COLOR 51563 . 52326)) (52328 53084 (HTML.DRAWCIRCLE 52328 . 53084)) (53086 56153 (HTML.DRAWCURVE 
+53086 . 56153)) (56155 57091 (HTML.DRAWELLIPSE 56155 . 57091)) (57093 58044 (HTML.DRAWLINE 57093 . 
+58044)) (58046 59043 (HTML.DRAWPOLYGON 58046 . 59043)) (59045 61240 (HTML.DRAWARC 59045 . 61240)) (
+61242 61817 (HTML.FILLCIRCLE 61242 . 61817)) (61819 62710 (HTML.FILLPOLYGON 61819 . 62710)) (62712 
+63763 (HTML.FONT 62712 . 63763)) (63765 64088 (HTML.LEFTMARGIN 63765 . 64088)) (64090 64481 (
+HTML.LINEFEED 64090 . 64481)) (64483 64885 (HTML.MOVETO 64483 . 64885)) (64887 65003 (HTML.NEWPAGE 
+64887 . 65003)) (65005 65327 (HTML.OPERATION 65005 . 65327)) (65329 71120 (HTML.OUTCHARFN 65329 . 
+71120)) (71122 71466 (HTML.RESET 71122 . 71466)) (71468 71798 (HTML.RIGHTMARGIN 71468 . 71798)) (71800
+ 72174 (HTML.SCALE 71800 . 72174)) (72176 73589 (HTML.SCALEDBITBLT 72176 . 73589)) (73591 73897 (
+HTML.SPACEFACTOR 73591 . 73897)) (73899 74540 (HTML.TERPRI 73899 . 74540)) (74542 74858 (
+HTML.TOPMARGIN 74542 . 74858)) (74860 75259 (HTML.XPOSITION 74860 . 75259)) (75261 75660 (
+HTML.YPOSITION 75261 . 75660)) (75662 75944 (MAKE-HTML-IMAGETYPE 75662 . 75944)) (75946 77014 (
+\HTML.INIT-IMAGEDATA 75946 . 77014)) (77016 77719 (\HTMLSTREAM.INIT 77016 . 77719)) (77721 77964 (
+WRITE-BASE64-PNG 77721 . 77964)) (77966 78734 (CONVERT-TO-PNG-BASE64 77966 . 78734)) (78736 80023 (
+URL-ENCODE 78736 . 80023)) (80025 81242 (HTML-ENCODE 80025 . 81242)) (81526 86919 (\HTML.FONTCREATE 
+81526 . 86919)) (86921 87665 (\HTML.FONTEXISTS? 86921 . 87665)) (87667 90531 (\HTML.FONTSAVAILABLE 
+87667 . 90531)) (90533 94107 (HTMLFONT.GETCHARSET 90533 . 94107)) (94109 95331 (HTMLFONT.FILEP 94109
+ . 95331)) (95333 98665 (\HTML.CREATECHARSET 95333 . 98665)) (98667 99505 (\HTML.CHANGECHARSET 98667
+ . 99505)) (99507 99844 (MAKE-CHARSET-BIT-ARRAY 99507 . 99844)) (99846 100070 (KNOWN-CHARSET? 99846 . 
+100070)) (100072 100606 (\HTML.WARN-CHARSET 100072 . 100606)) (100608 101990 (\HTML.ADD-FONT-DEFS 
+100608 . 101990)) (101992 102414 (\FIRST-COERCION 101992 . 102414)) (102416 103172 (
+\HTML.COERCE-OR-IDENTITY 102416 . 103172)) (103174 104092 (\HTML.COERCE-FONT 103174 . 104092)) (104094
+ 104461 (MAYBE-MARK-FONT-COMPLETE 104094 . 104461)) (104496 104788 (\HTML.FONTCREATE-NEW 104496 . 
+104788)) (105059 105963 (HTML.CREATE-MEDLEYFONT-FAMILY 105059 . 105963)) (106379 107554 (HTMLFILEP 
+106379 . 107554)) (107556 107698 (MAKE-HTML-FROM-TEXT 107556 . 107698)) (107700 108109 (
+MAKE-HTML-FROM-TEDIT 107700 . 108109)) (108402 108543 (\CLEAN-FONT-CACHE 108402 . 108543)))))
 STOP
